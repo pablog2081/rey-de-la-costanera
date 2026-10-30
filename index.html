@@ -101,6 +101,10 @@ h2{font-family:var(--f-display);font-weight:400;font-size:24px;margin:0 0 4px;co
 .stat{background:var(--asfalto);border:1px solid var(--linea);border-radius:10px;padding:7px 6px;text-align:center}
 .stat b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
 .stat span{font-size:11px;letter-spacing:1.3px;text-transform:uppercase;color:var(--crema-2)}
+.pistas{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.pistas button{padding:10px 6px;border-radius:12px;border:2px solid var(--linea);background:var(--asfalto);font-weight:800;font-size:15px}
+.pistas button[aria-pressed="true"]{border-color:var(--oro);color:var(--oro);background:linear-gradient(to top,rgba(242,182,50,.14),transparent)}
+body.dunas{--asfalto:#2b2418}
 .mycars{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px}
 .mycars button{flex:0 0 auto;padding:7px 12px;border-radius:99px;border:1px solid var(--linea);background:var(--asfalto);font-weight:700;font-size:15px}
 .mycars button[aria-pressed="true"]{border-color:var(--oro);color:var(--oro)}
@@ -297,6 +301,10 @@ const PARTS = [
  {k:"cubiertas",t:"Cubiertas",lv:["Recapadas","Radiales","Anchas","Semi-slick","Slick de picada","Slick + bloqueo"],s:"Más agarre en la largada"},
  {k:"peso",t:"Alivianado",lv:["De fábrica","Sin rueda de auxilio","Sin asientos de atrás","Capot de fibra","Vidrios de policarbonato","Jaula liviana"],s:"−4% de peso por nivel"},
 ];
+const SAND_PARTS=[
+ {k:"arena",t:"Cubiertas de arena",lv:["De calle","Desinfladas a 18 libras","Taco de tierra","Balón todoterreno","Balón de médano","Paleta de arena"],s:"+5,5% de agarre en la arena y se hunde menos"},
+ {k:"susp",t:"Suspensión de playa",lv:["De fábrica","Espirales elevados","Amortiguadores de rally","Recorrido largo","Doble amortiguador","Suspensión de raid"],s:"Pasa los médanos sin frenarse y protege el filtro"}];
+const partsList=()=>TRACK.lvl===2&&S.lvl===2?PARTS.concat(SAND_PARTS):PARTS;
 const PREMIUM_LV = 5;
 const COLORS = [
  {c:"#e9e4d8",n:"Blanco"},{c:"#c0262f",n:"Rojo"},{c:"#74b9ef",n:"Celeste"},{c:"#8e959e",n:"Gris"},
@@ -320,27 +328,31 @@ BOTS.forEach(b=>{b.up=Object.fromEntries(UPK.map((k,i)=>[k,b.u[i]]));b.up.nitro=
 const BOT=Object.fromEntries(BOTS.map(b=>[b.id,b]));
 const ETC={};
 function simET(st,sk){const R=makeRacer(st);R.launched=true;R.clutch=true;R.rpm=optLaunch(st);const shX=.9-(1-sk)*.11,react=.15+(1-sk)*.175;
-  for(let k=1;k<60/H;k++){const top=R.gear>=RATIOS[st.gears].length-1;stepRacer(R,H,!(top&&R.rpm>=st.red*.97),k*H);
+  for(let k=1;k<(TRACK.lvl===2?160:60)/H;k++){const top=R.gear>=RATIOS[st.gears].length-1;stepRacer(R,H,!(top&&R.rpm>=st.red*.97),k*H);
     if(R.shiftT<=0&&!R.clutch&&R.rpm>=st.red*shX)doShift(R);
     if(R.nitroN>0&&R.gear>=1&&R.nitroT<=0&&R.shiftT<=0){R.nitroN--;R.nitroT=2;}
     if(R.fin!==null)return R.fin+react;}return 99;}
 // Dificultad: todos los del barrio corren un poco más fuerte; los 3 de arriba están calibrados aparte.
-const PF_BOTS=1.04, TOP_T={1:12.50,2:12.60,3:12.70}, EXIG={1:{pf:1.09,w:100},2:{pf:1.07,w:50},3:{pf:1.05,w:25}};
+const PF_BOTS=1.04, TOP_T={1:12.50,2:12.60,3:12.70}, TOP_T2={1:23.6,2:23.85,3:24.1}, EXIG={1:{pf:1.09,w:100},2:{pf:1.07,w:50},3:{pf:1.05,w:25}};
 const CATS=[{k:"primera",n:"Primera"},{k:"b",n:"La B"},{k:"tercera",n:"Tercera"},{k:"reserva",n:"Reserva"},{k:"promo",n:"Promoción"}];
-const CAT_PREMIO=[1000000,600000,350000,200000,120000];
+const CAT_PREMIO0=[1000000,600000,350000,200000,120000];
+// en la playa las copas tienen nombre propio y pagan 25% más (y además del trofeo, el campeón se lleva la tabla de oro)
+const CAT_PREMIO=new Proxy(CAT_PREMIO0,{get:(a,k)=>typeof k==="string"&&/^\d+$/.test(k)?Math.round(a[k]*(S&&S.lvl===2?1.25:1)):a[k]});
+const COPA_D=["Médano de Oro","Ola Grande","Caracola","Gaviota","Medio Mundo"];
+const copaNom=c=>S.lvl===2?"Copa "+COPA_D[c]+" ("+CATS[c].n+")":"Copa "+CATS[c].n;
 const catOf=i=>i<80?Math.floor(i/16):5; // i = índice 0-based en el ranking; 5 = desafiliados
 const catName=c=>c<5?CATS[c].n:"Desafiliados";
 function botPos(id){return S.ord?S.ord.indexOf(id)+1:0;}
 const pfCache={};
 function botPF(b){const pos=botPos(b.id);if(!(pos>=1&&pos<=3))return PF_BOTS;
-  const key=b.id+"|"+b.car+"|"+UPK.map(k=>b.up[k]).join("")+b.up.nitro+"|"+pos;if(pfCache[key])return pfCache[key];
+  const key=trackKey()+b.id+"|"+b.car+"|"+UPK.map(k=>b.up[k]).join("")+b.up.nitro+(b.up.arena|0)+(b.up.susp|0)+"|"+pos;if(pfCache[key])return pfCache[key];
   const sk=Math.max(b.sk,.95),et=pf=>simET(stats({id:b.car,up:b.up,pf}),sk);let lo=.7,hi=1.8;
-  for(let i=0;i<16;i++){const mid=(lo+hi)/2;if(et(mid)>TOP_T[pos])lo=mid;else hi=mid;}
+  const TT=TRACK.lvl===2?TOP_T2:TOP_T;for(let i=0;i<16;i++){const mid=(lo+hi)/2;if(et(mid)>TT[pos])lo=mid;else hi=mid;}
   return pfCache[key]=hi;}
 function botSk(b){const pos=botPos(b.id);return pos>=1&&pos<=3?Math.max(b.sk,.95):b.sk;}
-function botET(b,basePF){const pf=basePF?PF_BOTS:botPF(b),k=b.id+"|"+b.car+"|"+UPK.map(x=>b.up[x]).join("")+b.up.nitro+"|"+pf.toFixed(4)+"|"+botSk(b);
+function botET(b,basePF){const pf=basePF?PF_BOTS:botPF(b),k=trackKey()+b.id+"|"+b.car+"|"+UPK.map(x=>b.up[x]).join("")+b.up.nitro+(b.up.arena|0)+(b.up.susp|0)+"|"+pf.toFixed(4)+"|"+botSk(b);
   return ETC[k]||(ETC[k]=simET(stats({id:b.car,up:b.up,pf}),basePF?b.sk:botSk(b)));}
-function myET(c){c=c||curCar();const k="me:"+c.id+":"+UPK.map(x=>c.up[x]).join("")+(c.up.nitro|0);return ETC[k]||(ETC[k]=simET(stats(c),.85));}
+function myET(c){c=c||curCar();const k=trackKey()+"me:"+c.id+":"+UPK.map(x=>c.up[x]).join("")+(c.up.nitro|0)+(c.up.arena|0)+(c.up.susp|0);return ETC[k]||(ETC[k]=simET(stats(c),.85));}
 function avatarHTML(id,name,extra){return `<div class="avatar" ${extra||""}>${initial(name)}${id?`<img loading="lazy" alt="" src="perfiles/${id}.webp" onerror="this.remove()">`:""}</div>`;}
 // El orden del ranking se guarda: S.ord = ids de los bots + "yo"
 function ordInit(){if(S.ord&&S.ord.length===BOTS.length+1&&S.ord.includes("yo")&&S.ord.every(x=>x==="yo"||BOT[x]))return;
@@ -362,7 +374,9 @@ function botPierdeAuto(id){const b=BOT[id];if(!b)return "";const old=CAR[b.car],
   let k=o.findIndex(x=>botET(BOT[x],true)>et);if(k<0)k=o.length;o.splice(k,0,id);o.splice(myIdx,0,"yo");S.ord=o;
   return ` ${b.n} se compró un ${nc.name} y quedó ${S.ord.indexOf(id)+1}º.`;}
 function applyBotMod(id){const m=S.botMod&&S.botMod[id],b=BOT[id];if(!m||!b||!CAR[m.car])return;b.car=m.car;b.u=m.u.slice(0,6);b.nx=m.nx|0;
-  b.up=Object.fromEntries(UPK.map((k,i)=>[k,b.u[i]|0]));b.up.nitro=b.nx;}
+  b.up=Object.fromEntries(UPK.map((k,i)=>[k,b.u[i]|0]));b.up.nitro=b.nx;botSand(b);}
+// en la playa los del barrio también le ponen cubiertas balón y suspensión según su nivel
+function botSand(b){const v=TRACK.lvl===2?Math.min(5,b.t|0):0;b.up.arena=v;b.up.susp=v;}
 // respuesta del bot a un desafío según la distancia en el ranking
 function botTerms(r){const R=ranking(),bi=S.ord.indexOf(r.id),d=bi-R.myI,ad=Math.abs(d);
   const papeles=!r.rey&&ad<=5;let bet=r.bet,contra=false;
@@ -377,15 +391,31 @@ const PACKS = [
  {f:1200,p:"$ 13.999",t:"Lata de fichas",b:"+20% de regalo",dest:true},
  {f:3000,p:"$ 29.999",t:"Cajón del kiosquero",b:"+50% de regalo"},
 ];
-const BUILD="v30";
-const DIST = 402; // cuarto de milla
+const BUILD="v31";
+let DIST = 402; // cuarto de milla (en las Dunas: 1000 m)
 const GHOST_V = 402;
+/* ===== pistas: 1 = Costanera, 2 = El Crack de las Dunas ===== */
+const CLIMAS={
+  seco:{n:"Arena seca",ico:"☀️",grip:.72,roll:.05,drag:1,pow:.96,d:"Arena suelta y caliente: patina y el auto se hunde."},
+  mojada:{n:"Arena mojada",ico:"🌊",grip:.9,roll:.028,drag:1,pow:1,d:"Bajó la marea: la arena quedó dura, el mejor piso."},
+  lluvia:{n:"Lluvia",ico:"🌧️",grip:.8,roll:.036,drag:1.03,pow:1,d:"Llueve sobre la playa: barro, charcos y poca visibilidad."},
+  viento:{n:"Viento de frente",ico:"🌬️",grip:.8,roll:.042,drag:1.32,pow:.97,d:"Sopla del mar de frente y vuela la arena."}};
+const CLIMA_K=Object.keys(CLIMAS);
+const TRACK={lvl:1,clima:null};
+function setTrack(lvl,clima){TRACK.lvl=lvl===2?2:1;TRACK.clima=TRACK.lvl===2?(CLIMAS[clima]?clima:"mojada"):null;DIST=TRACK.lvl===2?1000:402;}
+const trackKey=()=>TRACK.lvl===2?"D"+TRACK.clima:"C";
+const ghostV=()=>TRACK.lvl===2?1000:GHOST_V;
+const climaAzar=()=>CLIMA_K[Math.floor(Math.random()*CLIMA_K.length)];
+// relieve de la playa: plano en la largada, después subidas y bajadas de médanos (alto en metros y pendiente)
+const DUNA=[[3.2,290,0],[1.4,113,1.3],[.6,47,2.1]];
+function elevAt(x){if(TRACK.lvl!==2)return 0;const r=Math.min(1,Math.max(0,(x-25)/80)),f=r*r*(3-2*r);let h=0;for(const [a,L,ph] of DUNA)h+=a*Math.sin(x/L*Math.PI*2+ph)-a*Math.sin(ph);return h*f;}
+function slopeAt(x){return (elevAt(x+.5)-elevAt(x-.5));}
 const H = 1/240;            // paso fijo de física: así una pasada grabada se reproduce igual en cualquier celular
 const BET_FANTASMA = 50000, BET_VIVO = 100000;
 
 /* ================= ESTADO ================= */
 const KEY="reyCostanera.v1";
-const fresh=()=>({rank:null,pesos:400000,fichas:30,cars:[],cur:null,beaten:[],unl:[],noAds:false,pase:false,lastMate:"",races:0,adAt:0,uid:1,
+const fresh=()=>({lvl:1,dunasOk:false,rank:null,pesos:400000,fichas:30,cars:[],cur:null,beaten:[],unl:[],noAds:false,pase:false,lastMate:"",races:0,adAt:0,uid:1,
   apodo:"",best:null,ghost:null,ganadas:0,perdidas:0,savedAt:0,refBy:null,refSent:false,refCob:[],shDay:"",shN:0});
 let S=fresh();
 let NUEVO=true;
@@ -394,9 +424,16 @@ const QS=new URLSearchParams(location.search);
 const PUB="https://pablog2081.github.io/rey-de-la-costanera/";
 if(NUEVO&&/^[A-Za-z0-9]{10,40}$/.test(QS.get("ref")||""))S.refBy=QS.get("ref");
 migrate();
+const BOT_BASE=BOTS.map(b=>({id:b.id,car:b.car,u:b.u.slice(),nx:b.nx}));
+if(QS.get("dunas")==="1")S.dunasOk=true;
+if(S.lvl===2&&S.dunasOk)setTrack(2,"mojada");else S.lvl=1;
+if(S.lvl===1&&S.rank===1)S.dunasOk=true;
+BOTS.forEach(botSand);
 if(S.botMod)for(const id in S.botMod)applyBotMod(id);
-if(S.ghost&&S.ghost.d!==GHOST_V){S.best=null;S.ghost=null;} // los récords de 200 m no valen para 400 m
-const newCar=(id,color)=>({uid:S.uid++,id,color:color||CAR[id].col,filete:false,up:{motor:0,carbu:0,escape:0,caja:0,cubiertas:0,peso:0,nitro:0}});
+S.cars.forEach(c=>{c.filete=false;});
+if(S.ghost&&S.ghost.d!==GHOST_V&&S.ghost.d!==1000){S.best=null;S.ghost=null;} // los récords de 200 m no valen para 400 m
+const zeroUp=()=>({motor:0,carbu:0,escape:0,caja:0,cubiertas:0,peso:0,nitro:0,arena:0,susp:0});
+const newCar=(id,color)=>({uid:S.uid++,id,color:color||CAR[id].col,filete:false,up:zeroUp()});
 const curCar=()=>S.cars.find(c=>c.uid===S.cur)||null;
 // MODO PRUEBA (provisorio): todos los autos en el garage y plata/fichas sin límite. Poner en false para el lanzamiento.
 const PRUEBA=false;
@@ -404,6 +441,19 @@ function pruebaTopUp(){if(!PRUEBA)return;if(S.pesos<5e8)S.pesos=1e9;if(S.fichas<
 function applyPrueba(){if(!PRUEBA)return;for(const id in CAR){if(!S.cars.some(c=>c.id===id))S.cars.push(newCar(id));if(!S.unl.includes(id))S.unl.push(id);}
   if(!S.cur&&S.cars.length)S.cur=S.cars[0].uid;pruebaTopUp();}
 applyPrueba();
+/* ===== niveles: cada pista tiene su propio ranking, copas, récord y mejoras de los autos ===== */
+const PERL=["rank","ord","copa","botMod","best","ghost","beaten","copas","copaHist","coronar"];
+const LVL_N={1:"La Costanera",2:"El Crack de las Dunas"};
+function setLvl(n){n=n===2?2:1;if(n===S.lvl){setTrack(n,"mojada");return;}
+  S.L=S.L||{};const cur={};PERL.forEach(k=>{cur[k]=S[k];});S.L[S.lvl]=cur;
+  const nx=S.L[n]||{};const fr=fresh();PERL.forEach(k=>{S[k]=nx[k]!==undefined?nx[k]:(fr[k]!==undefined?fr[k]:null);});
+  if(!S.beaten)S.beaten=[];
+  S.cars.forEach(c=>{c.upL=c.upL||{};c.upL[S.lvl]=c.up;c.up=Object.assign(zeroUp(),c.upL[n]||{});});
+  S.lvl=n;setTrack(n,"mojada");
+  BOTS.forEach(b=>{const o=BOT_BASE.find(x=>x.id===b.id);b.car=o.car;b.u=o.u.slice();b.nx=o.nx;b.up=Object.fromEntries(UPK.map((k,i)=>[k,b.u[i]|0]));b.up.nitro=b.nx;botSand(b);});
+  if(S.botMod)for(const id in S.botMod)applyBotMod(id);
+  if(n===2&&nx.rank===undefined){S.rank=BOTS.length+1;S.ord=null;} // en la playa se arranca último
+  save();}
 const fmt=n=>"$ "+Math.round(n).toLocaleString("es-AR");
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const $=s=>document.querySelector(s);
@@ -429,12 +479,12 @@ function cleanCar(c){if(!c||!CAR[c.id])return null;const up={};for(const k of ["
   let col=/^#[0-9a-f]{6}$/i.test(c.color||"")?c.color.toLowerCase():CAR[c.id].col;if(col===CAR[c.id].col0)col=CAR[c.id].col;
   return {id:c.id,color:col,filete:!!c.filete,up};}
 function cleanGhost(g){ // los datos de otros jugadores no son confiables: se validan y se recalcula el tiempo
-  if(!g||typeof g!=="object"||g.d!==GHOST_V)return null;const car=cleanCar(g.car);const r=g.rec;if(!car||!r)return null;
+  if(!g||typeof g!=="object"||(g.d!==GHOST_V&&g.d!==1000))return null;const car=cleanCar(g.car);const r=g.rec;if(!car||!r)return null;
   const ints=a=>Array.isArray(a)&&a.length<=60&&a.every(n=>Number.isInteger(n)&&n>=0&&n<20000);
   if(!Number.isFinite(r.l)||!Number.isInteger(r.r)||r.r<0||!ints(r.s)||!ints(r.z)||!Array.isArray(r.g)||r.g.length>60)return null;
   const gg=r.g.filter(x=>Array.isArray(x)&&Number.isInteger(x[0])&&(x[1]===0||x[1]===1));
-  const ghost={d:GHOST_V,car,rec:{l:Math.max(900,Math.min(9000,r.l)),r:r.r,s:r.s,z:r.z,g:gg,w:Number.isFinite(r.w)?Math.max(0,Math.min(99,r.w)):0}};
-  const t=simGhost(ghost);if(t===null)return null;ghost.t=t;return ghost;
+  const ghost={d:g.d,cl:g.d===1000&&CLIMAS[g.cl]?g.cl:null,car,rec:{l:Math.max(900,Math.min(9000,r.l)),r:r.r,s:r.s,z:r.z,g:gg,w:Number.isFinite(r.w)?Math.max(0,Math.min(99,r.w)):0}};
+  const T0={l:TRACK.lvl,c:TRACK.clima};setTrack(ghost.d===1000?2:1,ghost.cl);const t=simGhost(ghost);setTrack(T0.l,T0.c);if(t===null)return null;ghost.t=t;return ghost;
 }
 
 /* ---------- Firebase (cuando el juego corre fuera de claude.ai, ej. GitHub Pages) ---------- */
@@ -524,7 +574,7 @@ function stats(o){
   const hp=c.hp*(1+.12*u.motor+.05*u.carbu+.03*u.escape);
   const mass=c.kg*(1-.04*u.peso)+75;
   const pf=o.pf>0?o.pf:1;
-  return {hp:hp*pf,mass:mass/Math.sqrt(pf),grip:(.95+.08*u.cubiertas)*pf,shift:.42-.055*u.caja,nitro:u.nitro||0,red:c.red,gears:c.gears,fd:c.fd,trac:c.trac};
+  return {hp:hp*pf,mass:mass/Math.sqrt(pf),grip:(.95+.08*u.cubiertas)*pf,shift:.42-.055*u.caja,nitro:u.nitro||0,red:c.red,gears:c.gears,fd:c.fd,trac:c.trac,arena:u.arena|0,susp:u.susp|0};
 }
 const RATIOS={4:[3.3,2.05,1.42,1.0],5:[3.4,2.2,1.55,1.18,.95]};
 const WR=.3, EFF=.85;
@@ -559,18 +609,20 @@ function stepRacer(R,dt,thr,t,rng){
   else{
     if(R.clutch){R.rpm=Math.max(wheelRpm,R.rpm-(thr?1500:3500*SUELTA)*dt);if(R.rpm<=wheelRpm+30)R.clutch=false;}
     else R.rpm=Math.max(wheelRpm,900);
-    let T=thr&&!R.blown?torqueAt(st,R.rpm)*wearFactor(R.dmg):0;
+    const CL=TRACK.lvl===2?CLIMAS[TRACK.clima]:null;
+    let T=thr&&!R.blown?torqueAt(st,R.rpm)*wearFactor(R.dmg)*(CL?CL.pow+(1-CL.pow)*Math.min(1,st.susp*.2):1):0;
     const hard=hardOf(st);
     if(R.rpm>=hard){T=0;R.rpm=hard;R.limT+=dt;} else R.limT=0;
     engineWear(R,dt,false);
     if(R.nitroT>0){R.nitroT-=dt;T*=1.45;}
     F=T*g[R.gear]*st.fd*EFF/WR;
-    const tr=st.grip*st.trac*st.mass*9.81;
+    const tr=st.grip*st.trac*st.mass*9.81*(CL?Math.min(1,CL.grip*(1+.055*st.arena)):1);
     if(F>tr){F=tr*.82;R.spin=true;}
   }
   // sin acelerador (o con el motor fundido) baja la velocidad un 20% más rápido: freno motor
-  const drag=(.5*1.2*.72*R.v*R.v+.015*st.mass*9.81*(R.v>.1?1:0))*(thr&&!R.blown?1:SUELTA);
-  R.v=Math.max(0,R.v+(F-drag)/st.mass*dt);
+  const CL2=TRACK.lvl===2?CLIMAS[TRACK.clima]:null,roll=CL2?CL2.roll*(1-.07*st.arena-.05*st.susp):.015;
+  const drag=(.5*1.2*.72*R.v*R.v*(CL2?CL2.drag:1)+roll*st.mass*9.81*(R.v>.1?1:0))*(thr&&!R.blown?1:SUELTA)+(CL2?st.mass*9.81*slopeAt(R.x)*(R.v>.1||slopeAt(R.x)<0?1:0):0);
+  R.v=Math.max(0,R.v+(F-drag)/st.mass*dt);if(CL2&&R.v<.1&&slopeAt(R.x)>0&&F<=0)R.v=0;
   R.x+=R.v*dt;R.top=Math.max(R.top,R.v);
   if(R.fin===null&&R.x>=DIST)R.fin=t;
 }
@@ -589,7 +641,7 @@ function ghostTick(O,G,k){
   while(G.zi<r.z.length&&r.z[G.zi]<k){if(O.nitroN>0){O.nitroN--;O.nitroT=2;}G.zi++;}
   stepRacer(O,H,!!G.gas,k*H);
 }
-function simGhost(g){const O=makeRacer(stats(g.car));const G={rec:g.rec};for(let k=1;k<45/H;k++){ghostTick(O,G,k);if(O.fin!==null)return O.fin;}return null;}
+function simGhost(g){const O=makeRacer(stats(g.car));const G={rec:g.rec};for(let k=1;k<(TRACK.lvl===2?160:45)/H;k++){ghostTick(O,G,k);if(O.fin!==null)return O.fin;}return null;}
 
 /* ================= DIBUJO DE AUTOS ================= */
 function pathPoly(ctx,pts,r){
@@ -786,7 +838,9 @@ function carObj(o,opt={}){
   const meshes=[],wheels=[];body.traverse(q=>{if(q.isMesh)meshes.push(q);if(q.name==="rueda")wheels.push(q);});
   const col=(o.color||CAR[o.id].col).toLowerCase();
   if(col!==CAR[o.id].col.toLowerCase()||opt.ghost){const m=M.mat.clone();if(col!==CAR[o.id].col.toLowerCase())m.map=paintTex(o.id,col);
-    if(opt.ghost){m.transparent=true;m.opacity=.55;m.color=new TH.Color(0xa8d4ff);m.depthWrite=false;}meshes.forEach(q=>q.material=m);}
+    if(opt.ghost){m.transparent=true;m.opacity=.55;m.color=new TH.Color(0xa8d4ff);m.depthWrite=false;}
+    // solo la carrocería lleva la pintura: las ruedas armadas conservan su goma y su tasa
+    meshes.forEach(q=>{if(q.material===M.mat)q.material=m;else if(opt.ghost){q.material=q.material.clone();q.material.transparent=true;q.material.opacity=.55;q.material.depthWrite=false;}});}
   const W=M.sz*s,Hh=M.sy*s;
   if(o.filete&&!opt.ghost){const mat=new TH.MeshStandardMaterial({map:fileteTexture(),transparent:true,roughness:.4,metalness:.3,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});
     for(const side of[1,-1]){const d=new TH.Mesh(new TH.PlaneGeometry(L*.34,L*.106),mat);d.position.set(-L*.04,Hh*.36,side*(W/2+.012));if(side<0)d.rotation.y=Math.PI;outer.add(d);}}
@@ -1025,6 +1079,133 @@ function render3D(R,w,h,dt,ctx){
   ren.setClearColor(0x000000,1);ren.render(E.sc,E.cam);
   return ren.domElement;
 }
+
+/* ================= EL CRACK DE LAS DUNAS: playa desierta en 3D ================= */
+const DUNAS={env:null};
+const DCL={ // cómo se ve cada clima
+  seco:{top:"#3f8fd8",hor:"#f3e2bf",fog:0xe9d9b6,fogN:120,fogF:620,sun:1.25,hemi:.75,sand:0xe6c98f,sea:0x2f7fa3,par:"arena"},
+  mojada:{top:"#2f78c4",hor:"#d9e7ef",fog:0xcfdde4,fogN:140,fogF:700,sun:1.1,hemi:.8,sand:0xb99a69,sea:0x2a6f93,par:null},
+  lluvia:{top:"#4b5563",hor:"#9aa3ab",fog:0x8b949c,fogN:40,fogF:260,sun:.35,hemi:.75,sand:0x8f7a58,sea:0x3a5560,par:"lluvia"},
+  viento:{top:"#7aa6c9",hor:"#e6d3ac",fog:0xd8c49c,fogN:60,fogF:330,sun:.95,hemi:.7,sand:0xdcbd84,sea:0x3b7b92,par:"arena"}};
+function dTex(w,h,fn,rep){const c=document.createElement("canvas");c.width=w;c.height=h;fn(c.getContext("2d"),w,h);const t=new T3.TH.CanvasTexture(c);t.encoding=T3.TH.sRGBEncoding;
+  if(rep){t.wrapS=t.wrapT=T3.TH.RepeatWrapping;t.repeat.set(rep[0],rep[1]);}t.anisotropy=8;return t;}
+function dunaLado(x,z){ // médanos alrededor de la pista: fuera del carril crecen, del lado del mar bajan a la orilla
+  const near=Math.max(0,Math.min(1,(Math.abs(z)-7)/18)),k=near*near*(3-2*near);
+  let h=elevAt(Math.max(0,Math.min(1000,x)));
+  const dn=2.6*Math.sin(x*.021+z*.05)+1.7*Math.sin(x*.047-z*.09+1.1)+1.1*Math.sin(x*.11+z*.13+2.3);
+  if(z>0)h+=k*(dn+3.5+Math.min(9,(z-25)*.18*(z>25?1:0)));
+  else{const sea=Math.max(0,Math.min(1,(-z-22)/26));h=h*(1-sea)+(-2.2)*sea+k*(1-sea)*(dn*.6+1.2);}
+  return h;}
+function buildDunas(){
+  const TH=T3.TH,sc=new TH.Scene(),E={sc};
+  E.cam=new TH.PerspectiveCamera(46,1,.1,1400);E.cam.layers.enable(2);
+  E.hemi=new TH.HemisphereLight(0xdfefff,0xb59a6a,.8);sc.add(E.hemi);
+  E.sun=new TH.DirectionalLight(0xfff1d6,1.1);E.sun.position.set(-60,90,70);sc.add(E.sun);
+  E.sky=new TH.Mesh(new TH.SphereGeometry(900,32,16),new TH.MeshBasicMaterial({side:TH.BackSide,fog:false,depthWrite:false}));sc.add(E.sky);
+  // arena con ondas del viento
+  const sandT=dTex(512,512,(x,w,h)=>{x.fillStyle="#d8bd8a";x.fillRect(0,0,w,h);
+    for(let i=0;i<9000;i++){const v=180+((i*73)%60);x.fillStyle=`rgba(${v},${v-18},${v-55},.35)`;x.fillRect((i*397)%w,(i*181)%h,2,2);}
+    x.strokeStyle="rgba(120,92,52,.18)";x.lineWidth=3;for(let y=8;y<h;y+=17){x.beginPath();for(let xx=0;xx<=w;xx+=8)x.lineTo(xx,y+Math.sin(xx/37+y)*4);x.stroke();}},[90,12]);
+  const X0=-180,X1=1260,Z0=-140,Z1=110,NX=300,NZ=64;
+  const g=new TH.PlaneGeometry(X1-X0,Z1-Z0,NX,NZ);g.rotateX(-Math.PI/2);const pos=g.attributes.position;
+  for(let i=0;i<pos.count;i++){const x=pos.getX(i)+(X0+X1)/2,z=pos.getZ(i)+(Z0+Z1)/2;pos.setX(i,x);pos.setZ(i,z);pos.setY(i,dunaLado(x,z));}
+  g.computeVertexNormals();E.sandM=new TH.MeshStandardMaterial({map:sandT,color:0xffffff,roughness:.95,metalness:0});
+  E.ground=new TH.Mesh(g,E.sandM);sc.add(E.ground);
+  // huella compactada de la picada con marcas de cubiertas
+  const trT=dTex(256,256,(x,w,h)=>{x.fillStyle="#b89c6c";x.fillRect(0,0,w,h);for(let i=0;i<3000;i++){const v=150+((i*31)%50);x.fillStyle=`rgba(${v},${v-20},${v-60},.4)`;x.fillRect((i*211)%w,(i*97)%h,2,2);}
+    x.fillStyle="rgba(90,70,40,.32)";for(const y of [28,64,170,206])x.fillRect(0,y,w,20);},[220,1]);
+  const tg=new TH.PlaneGeometry(1300,13,650,1);tg.rotateX(-Math.PI/2);const tp=tg.attributes.position;
+  for(let i=0;i<tp.count;i++){const x=tp.getX(i)+500;tp.setX(i,x);tp.setY(i,elevAt(Math.max(0,Math.min(1000,x)))+.03);}
+  tg.computeVertexNormals();E.trackM=new TH.MeshStandardMaterial({map:trT,roughness:.9,transparent:true,opacity:.85,polygonOffset:true,polygonOffsetFactor:-2});
+  sc.add(new TH.Mesh(tg,E.trackM));
+  // mar y espuma de la orilla
+  const seaT=dTex(256,256,(x,w,h)=>{x.fillStyle="#2a6f93";x.fillRect(0,0,w,h);for(let i=0;i<500;i++){x.fillStyle=`rgba(255,255,255,${.05+((i*13)%10)/120})`;x.fillRect((i*157)%w,(i*71)%h,18,2);}},[60,12]);
+  E.seaM=new TH.MeshStandardMaterial({map:seaT,color:0xffffff,roughness:.25,metalness:.2,transparent:true,opacity:.95});E.seaT=seaT;
+  const sea=new TH.Mesh(new TH.PlaneGeometry(2600,700),E.seaM);sea.rotation.x=-Math.PI/2;sea.position.set(500,-1.55,-400);sc.add(sea);
+  const foamT=dTex(256,32,(x,w,h)=>{const gr=x.createLinearGradient(0,0,0,h);gr.addColorStop(0,"rgba(255,255,255,0)");gr.addColorStop(.5,"rgba(255,255,255,.85)");gr.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=gr;x.fillRect(0,0,w,h);},[80,1]);
+  E.foam=new TH.Mesh(new TH.PlaneGeometry(2600,6),new TH.MeshBasicMaterial({map:foamT,transparent:true,depthWrite:false}));E.foam.rotation.x=-Math.PI/2;E.foam.position.set(500,-1.5,-46);sc.add(E.foam);
+  // estacas con banderines cada 25 m a los dos lados
+  const poleG=new TH.CylinderGeometry(.05,.06,1.6,6),poleM=new TH.MeshStandardMaterial({color:0x6b4a2b,roughness:.9});
+  const flagG=new TH.PlaneGeometry(.55,.32);const flagMs=[0xf07c1c,0x1f6fd1].map(c=>new TH.MeshStandardMaterial({color:c,side:TH.DoubleSide,roughness:.7}));
+  E.flags=[];for(let x=0;x<=1050;x+=25)for(const z of [-6.8,6.8]){const y=elevAt(Math.min(1000,x));const p=new TH.Mesh(poleG,poleM);p.position.set(x,y+.8,z);sc.add(p);
+    const f=new TH.Mesh(flagG,flagMs[(x/25)%2|0]);f.position.set(x+.28,y+1.4,z);sc.add(f);E.flags.push(f);}
+  // carteles de distancia, largada y llegada
+  const cartel=(txt,col,w)=>dTex(512,128,(x,W,H)=>{x.fillStyle=col;x.fillRect(0,0,W,H);x.strokeStyle="#fff";x.lineWidth=8;x.strokeRect(6,6,W-12,H-12);x.fillStyle="#fff";x.font="bold 64px 'Barlow Condensed',Arial Narrow,sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText(txt,W/2,H/2+3);});
+  const arco=(x,txt,col)=>{const y=elevAt(Math.min(1000,Math.max(0,x)));const pm=new TH.MeshStandardMaterial({color:0xf2efe6,roughness:.6});
+    for(const z of [-6.4,6.4]){const p=new TH.Mesh(new TH.CylinderGeometry(.12,.12,5.2,8),pm);p.position.set(x,y+2.6,z);sc.add(p);}
+    const b=new TH.Mesh(new TH.PlaneGeometry(13,1.6),new TH.MeshStandardMaterial({map:cartel(txt,col),side:TH.DoubleSide,roughness:.6}));b.position.set(x,y+4.6,0);b.rotation.y=-Math.PI/2;sc.add(b);};
+  arco(-2,"LARGADA · EL CRACK DE LAS DUNAS","#1d6f8a");arco(1000,"LLEGADA · 1000 m","#a3261b");
+  for(const d of [250,500,750]){const y=elevAt(d);const c=new TH.Mesh(new TH.PlaneGeometry(2.2,.55),new TH.MeshStandardMaterial({map:cartel(d+" m","#c58a1b"),side:TH.DoubleSide}));c.position.set(d,y+1.3,8.2);c.rotation.y=-Math.PI/2+.5;sc.add(c);}
+  // semáforo de largada en una torre de caños
+  E.sem=[[]];const tower=new TH.Mesh(new TH.BoxGeometry(.5,1.7,.5),new TH.MeshStandardMaterial({color:0x222222,roughness:.6}));tower.position.set(3,3.2,-8.2);sc.add(tower);
+  const leg=new TH.Mesh(new TH.CylinderGeometry(.07,.07,2.4,6),poleM);leg.position.set(3,1.2,-8.2);sc.add(leg);
+  [0xff2020,0xffb020,0x20ff70].forEach((c,i)=>{const m=new TH.Mesh(new TH.SphereGeometry(.17,12,8),new TH.MeshBasicMaterial({color:0x222222}));m.position.set(3.26,3.75-i*.52,-8.2);sc.add(m);
+    const gl=new TH.Sprite(new TH.SpriteMaterial({map:dTex(64,64,(x)=>{const gr=x.createRadialGradient(32,32,2,32,32,30);gr.addColorStop(0,"rgba(255,255,255,1)");gr.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=gr;x.fillRect(0,0,64,64);}),color:c,transparent:true,depthWrite:false}));
+    gl.scale.set(1.3,1.3,1);gl.position.copy(m.position);gl.visible=false;sc.add(gl);E.sem[0].push({m,g:gl,c});});
+  // utilería: casilla de guardavidas, troncos, pastos y un bote viejo
+  const wood=new TH.MeshStandardMaterial({color:0x8a6a45,roughness:.85}),red=new TH.MeshStandardMaterial({color:0xc0281d,roughness:.7});
+  const casilla=(x,z)=>{const y=dunaLado(x,z);for(const [a,b] of [[-.8,-.8],[.8,-.8],[-.8,.8],[.8,.8]]){const l=new TH.Mesh(new TH.CylinderGeometry(.08,.08,3,6),wood);l.position.set(x+a,y+1.5,z+b);sc.add(l);}
+    const box=new TH.Mesh(new TH.BoxGeometry(2.2,1.6,2.2),new TH.MeshStandardMaterial({color:0xe9e2d0,roughness:.8}));box.position.set(x,y+3.8,z);sc.add(box);
+    const roof=new TH.Mesh(new TH.ConeGeometry(1.9,1,4),red);roof.position.set(x,y+5.1,z);roof.rotation.y=Math.PI/4;sc.add(roof);
+    const fl=new TH.Mesh(new TH.PlaneGeometry(.8,.5),red);fl.position.set(x+.45,y+6.1,z);fl.material.side=TH.DoubleSide;sc.add(fl);E.flags.push(fl);};
+  [[120,-16],[540,-17],[930,-15]].forEach(([x,z])=>casilla(x,z));
+  for(let i=0;i<26;i++){const x=(i*157)%1150-60,z=(i%2?1:-1)*(10+(i*37)%18);const t=new TH.Mesh(new TH.CylinderGeometry(.18,.24,2.6+(i%3),7),wood);t.rotation.z=Math.PI/2;t.rotation.y=i;t.position.set(x,dunaLado(x,z)+.15,z);sc.add(t);}
+  const pastoT=dTex(128,128,(x,w,h)=>{x.clearRect(0,0,w,h);x.strokeStyle="#7f8a3a";x.lineWidth=3;for(let i=0;i<26;i++){const bx=20+(i*37)%90;x.beginPath();x.moveTo(bx,h);x.quadraticCurveTo(bx+((i*11)%30-15),h*.5,bx+((i*17)%50-25),8+(i*7)%40);x.stroke();}});
+  const pm=new TH.SpriteMaterial({map:pastoT,transparent:true,alphaTest:.3});
+  for(let i=0;i<220;i++){const x=(i*61)%1250-120,z=(i%3===0?-1:1)*(9+(i*29)%55);const sp=new TH.Sprite(pm);const s=1.2+(i%4)*.4;sp.scale.set(s,s,1);sp.center.set(.5,0);sp.position.set(x,dunaLado(x,z)-.05,z);sc.add(sp);}
+  const bote=new TH.Mesh(new TH.CylinderGeometry(1.2,1.2,5,12,1,true,0,Math.PI),new TH.MeshStandardMaterial({color:0x2f6e8f,side:TH.DoubleSide,roughness:.8}));bote.rotation.set(Math.PI,0,Math.PI/2.2);bote.position.set(330,dunaLado(330,-30)+.6,-30);sc.add(bote);
+  // partículas: arena volando, lluvia y la arena que levantan las ruedas
+  const dot=dTex(32,32,(x)=>{const gr=x.createRadialGradient(16,16,1,16,16,15);gr.addColorStop(0,"rgba(255,255,255,1)");gr.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=gr;x.fillRect(0,0,32,32);});
+  const NP=900,pg=new TH.BufferGeometry(),pa=new Float32Array(NP*3);for(let i=0;i<NP;i++){pa[i*3]=Math.random()*80-30;pa[i*3+1]=Math.random()*12;pa[i*3+2]=Math.random()*40-25;}
+  pg.setAttribute("position",new TH.BufferAttribute(pa,3));E.wx=new TH.Points(pg,new TH.PointsMaterial({map:dot,size:.18,transparent:true,depthWrite:false,color:0xe8d3a8,opacity:.75}));sc.add(E.wx);
+  E.rain=new TH.LineSegments(new TH.BufferGeometry(),new TH.LineBasicMaterial({color:0xcfd8e3,transparent:true,opacity:.45}));
+  {const NR=700,ra=new Float32Array(NR*6);for(let i=0;i<NR;i++){const x=Math.random()*70-25,y=Math.random()*14,z=Math.random()*40-25;ra.set([x,y,z,x-.15,y-.9,z],i*6);}E.rain.geometry.setAttribute("position",new TH.BufferAttribute(ra,3));}sc.add(E.rain);
+  E.parts=[];const smM=()=>new TH.SpriteMaterial({map:dot,transparent:true,depthWrite:false,color:0xd9c08f,opacity:.6});
+  for(let i=0;i<70;i++){const sp=new TH.Sprite(smM());sp.visible=false;sc.add(sp);E.parts.push({s:sp,life:0});}
+  E.flames=[0,1].map(()=>{const f=new TH.Sprite(new TH.SpriteMaterial({map:dot,color:0x66aaff,transparent:true,depthWrite:false,blending:TH.AdditiveBlending}));f.visible=false;sc.add(f);return f;});
+  E.cars=[];return E;}
+function dunasClima(E,k){const c=DCL[k]||DCL.mojada,TH=T3.TH;E.k=k;
+  E.sky.material.map=dTex(16,256,(x,w,h)=>{const gr=x.createLinearGradient(0,0,0,h);gr.addColorStop(0,c.top);gr.addColorStop(.55,c.hor);gr.addColorStop(1,c.hor);x.fillStyle=gr;x.fillRect(0,0,w,h);});E.sky.material.needsUpdate=true;
+  E.sc.fog=new TH.Fog(c.fog,c.fogN,c.fogF);E.sun.intensity=c.sun;E.hemi.intensity=c.hemi;E.sandM.color.setHex(0xffffff).lerp(new TH.Color(c.sand).multiplyScalar(1/0.85),.0);
+  E.sandM.color.set(c.sand).multiplyScalar(1.15);E.sandM.roughness=k==="lluvia"||k==="mojada"?.6:.95;E.trackM.color.set(k==="lluvia"||k==="mojada"?0x8f7a5a:0xffffff);
+  E.seaM.color.set(c.sea).multiplyScalar(2.2);E.wx.visible=c.par==="arena";E.rain.visible=c.par==="lluvia";}
+function setupDunas(R){
+  if(!ready3D()||!T3.models[R.me.id]||!T3.models[R.cfg.opCar.id])return false;
+  const E=DUNAS.env||(DUNAS.env=buildDunas());E.cars.forEach(c=>E.sc.remove(c));dunasClima(E,TRACK.clima);
+  const me=carObj(R.me,{noLights:true}),op=carObj(R.cfg.opCar,{ghost:R.cfg.kind==="ghost",noLights:true});if(!me||!op)return false;
+  me.position.z=2.1;op.position.z=-2.2;[me,op].forEach(c=>c.traverse(o=>o.layers.enable(2)));
+  E.sc.add(me,op);E.cars=[me,op];E.parts.forEach(p=>{p.life=0;p.s.visible=false;});E.camX=null;E.fov=46;R.g3={me,op};R.dunas=true;R.starter=false;return true;}
+function dunasPart(E,x,y,z,big){const p=E.parts.find(q=>q.life<=0);if(!p)return;p.life=1;p.s.visible=true;p.s.position.set(x,y,z);p.vx=-2-Math.random()*3;p.vy=.8+Math.random()*1.2;p.sz=big?1.4:.8;p.s.scale.set(p.sz,p.sz,1);}
+function renderDunas(R,w,h,dt){
+  const E=DUNAS.env,TH=T3.TH,ren=T3.ren,P=R.P,O=R.O,{me,op}=R.g3,t=performance.now()/1000;
+  const place=(c,X)=>{const cx=X.x-c.userData.L/2,y=elevAt(Math.max(0,Math.min(1000,cx))),sl=slopeAt(Math.max(0,Math.min(1000,cx)));c.position.x=cx;c.position.y=y;c.rotation.z=Math.atan(sl);};
+  place(me,P);place(op,O);op.visible=R.cfg.kind!=="solo";
+  for(const [c,X] of [[me,P],[op,O]]){const u=c.userData;u.spin-=(X.v/Math.max(.1,u.wr))*dt*(X.spin?1.9:1);u.wheels.forEach(w=>w.rotation.z=u.spin);
+    u.body.position.y=X.v>.5?Math.sin(t*23+c.position.z)*.012*Math.min(1,X.v/20):0;}
+  const inside=!!R.inside;me.userData.body.visible=!inside;me.userData.shadow.visible=!inside;
+  // la cámara acompaña a TU auto: si le sacás ventaja, el rival queda fuera de cuadro
+  const target=P.x-me.userData.L/2;E.camX=E.camX===null?target:E.camX+(target-E.camX)*Math.min(1,dt*5);
+  const asp=w/h,port=asp<1.3,sp=Math.min(1,P.v/40),base=port?54:44;E.fov+=((base+sp*8)-E.fov)*Math.min(1,dt*3);E.cam.fov=E.fov;E.cam.aspect=asp;E.cam.updateProjectionMatrix();
+  const cx=E.camX,ey=elevAt(Math.max(0,Math.min(1000,cx))),shake=P.v>5?(Math.random()-.5)*.04*sp:0;
+  if(inside&&!R.finishedView){const ex=P.x-me.userData.L*.52,eyY=me.position.y+me.userData.H*.86,ez=me.position.z-me.userData.W*.2;E.cam.fov=58;E.cam.updateProjectionMatrix();
+    const pitch=(1-2*(R.horizon??.17))*Math.tan(58*Math.PI/360),sl=Math.atan(slopeAt(Math.max(0,Math.min(1000,ex))));
+    E.cam.position.set(ex,eyY+shake*.3,ez);E.cam.lookAt(ex+10,eyY-10*pitch+10*Math.tan(sl),ez);}
+  else{const back=port?12:10;E.cam.position.set(cx-5+shake,ey+3.4+sp*.4,back-sp*1.2);E.cam.lookAt(cx+3,elevAt(Math.max(0,Math.min(1000,cx+3)))+.8,-1);}
+  setSemaforo(E,R.phase);
+  // banderines y partículas
+  E.flags.forEach((f,i)=>{f.rotation.y=Math.sin(t*(E.k==="viento"?7:3)+i)*.35;});
+  E.seaT.offset.x=(t*.004)%1;E.foam.position.z=-46+Math.sin(t*.6)*1.2;
+  E.wx.position.set(cx,0,0);if(E.wx.visible){const a=E.wx.geometry.attributes.position;for(let i=0;i<a.count;i++){let x=a.getX(i)-dt*(E.k==="viento"?14:5);if(x<-30)x+=80;a.setX(i,x);a.setY(i,elevAt(Math.max(0,Math.min(1000,cx+x)))+((i*7)%30)/10);}a.needsUpdate=true;}
+  if(E.rain.visible){E.rain.position.set(cx,(E.rain.position.y-dt*16)%3,0);}
+  const sandy=TRACK.clima!=="lluvia";
+  const kick=(c,X)=>{if(X.v>3&&Math.random()<(X.spin?.95:sandy?.5:.25))dunasPart(E,c.position.x-c.userData.L*.15,c.position.y+.25,c.position.z+(Math.random()-.5)*1.2,X.spin);};
+  kick(me,P);if(op.visible)kick(op,O);
+  for(const p of E.parts){if(p.life<=0)continue;p.life-=dt*1.1;if(p.life<=0){p.s.visible=false;continue;}p.s.position.x+=p.vx*dt;p.s.position.y+=p.vy*dt;p.vy-=dt*1.5;const z=p.sz*(1+(1-p.life)*1.8);p.s.scale.set(z,z,1);p.s.material.opacity=Math.max(0,p.life)*.55;}
+  const fl=(f,c,on)=>{f.visible=on;if(on){f.position.set(c.position.x-.25,c.position.y+.38,c.position.z+.35);const s=1.1+Math.random()*.5;f.scale.set(s,s*.35,1);}};
+  fl(E.flames[0],me,P.nitroT>0);fl(E.flames[1],op,O.nitroT>0&&op.visible);
+  const pr=Math.min(1.5,devicePixelRatio||1),W=Math.round(w*pr),Hh=Math.round(h*pr);
+  if(ren.domElement.width!==W||ren.domElement.height!==Hh)ren.setSize(W,Hh,false);
+  ren.setClearColor(0x000000,1);ren.render(E.sc,E.cam);return ren.domElement;}
 
 /* ---------- tomas fijas tipo transmisión, con las fotos reales de fondo ---------- */
 // Cada toma: la foto y una cámara 3D calibrada con la misma posición, ángulo y lente (coordenadas de la pista).
@@ -1413,7 +1594,7 @@ function startGarage(cv,ui){
     let halfV=8; // medio ancho visible a la altura de la calle interna (se recalcula en cada cuadro)
     const clampX=x=>Math.max(-lim,Math.min(lim,x));
     const offL=cx=>cx-halfV-3.2; // completamente fuera de pantalla por la izquierda (el auto entero)
-    function choose(uid){if(anim||uid===S.cur||!objs[uid])return;
+    function choose(uid){if(anim||uid===S.cur||!objs[uid]||copaTraba())return;
       const A=objs[S.cur],B=objs[uid];
       S.cur=uid;save();pubPilot();lobbyPresence();ui&&ui(uid);hud();
       const steps=[];
@@ -1452,7 +1633,7 @@ function vGarage(m){
   if(T3.err){const n=el(`<p class="nota" style="border-color:var(--rojo);margin:8px 0 12px"></p>`);n.textContent="El 3D no cargó: "+T3.err;m.append(n);}
   const mc=el(`<div class="mycars" style="margin-top:12px"></div>`);
   const paint=uid=>{mc.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.u===String(uid)));const o=S.cars.find(x=>String(x.uid)===String(uid));const nn=hero.querySelector("#garNom");if(o&&nn)nn.textContent=CAR[o.id].name;};
-  garOrden().forEach(o=>{const b=el(`<button aria-pressed="${o.uid===S.cur}" data-u="${o.uid}">${CAR[o.id].name}</button>`);b.onclick=()=>{if(G0&&G0.choose)G0.choose(o.uid);else{S.cur=o.uid;save();pubPilot();lobbyPresence();paint(o.uid);hud();}};mc.append(b);});
+  garOrden().forEach(o=>{const b=el(`<button aria-pressed="${o.uid===S.cur}" data-u="${o.uid}">${CAR[o.id].name}</button>`);b.onclick=()=>{if(o.uid!==S.cur&&copaTraba())return;if(G0&&G0.choose)G0.choose(o.uid);else{S.cur=o.uid;save();pubPilot();lobbyPresence();paint(o.uid);hud();}};mc.append(b);});
   m.append(mc);
   if(S.cars.length<2)m.append(el(`<p class="nota">Tenés un solo fierro y anda con vos. Comprá otro en los Clasificados y lo vas a ver estacionado acá.</p>`));
   let G0=null;requestAnimationFrame(()=>{G0=startGarage(hero.querySelector("canvas"),paint);});
@@ -1554,8 +1735,12 @@ function closeModal(){$("#modal").hidden=true;}
 let modalLock=false;
 $("#modal").addEventListener("click",e=>{if(e.target.id==="modal"&&!modalLock)closeModal();});
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{view=b.dataset.v;render();});
+// mientras corre una copa (del barrio o de la banda) no se toca el auto: hay que terminarla
+function enCopa(){if(S.copa)return "copa";const t=BANDA.t;if(t&&t.info&&t.info.estado==="juego"&&t.jug&&t.jug[NET.uid]){try{const L=bandaLlave(t);if(L.camp==null&&bandaMiCruce(t))return "banda";}catch(e){}}return "";}
+function copaTraba(){const k=enCopa();if(!k)return false;toast(k==="banda"?"Estás en el torneo de la banda: terminalo antes de tocar el auto":"Estás jugando una copa: terminala antes de tocar el auto");return true;}
 function render(){
-  stopShow();hud();
+  if(view==="taller"&&enCopa()&&!(curCar()&&curCar().fundido)){copaTraba();view=enCopa()==="banda"?"banda":"barrio";}
+  stopShow();hud();document.body.classList.toggle("dunas",S.lvl===2);{const nb=document.querySelector('nav button[data-v="barrio"]');if(nb&&nb.lastChild&&nb.lastChild.nodeType===3)nb.lastChild.textContent=S.lvl===2?"Dunas":"La Lleca";}
   if(!S.cars.length&&view!=="kiosco")view="clasif";
   document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.v===view?"page":"false"));
   const m=$("#main"),st=m.scrollTop,same=m.dataset.v===view;m.innerHTML="";m.dataset.v=view;
@@ -1583,7 +1768,10 @@ function askApodo(force){
 /* ---------- BARRIO ---------- */
 function vBarrio(m){
   const c=curCar();const st=stats(c);
-  m.append(el(`<div><h2>La Lleca</h2><p class="sub">La avenida de noche. Escalá el ranking hasta llegar al Rey y jugá la copa de tu categoría. Se corre un cuarto de milla: 400 metros de semáforo a semáforo.</p></div>`));
+  if(S.dunasOk){const sw=el(`<div class="pistas"><button data-l="1" aria-pressed="${S.lvl===1}">🌃 La Costanera</button><button data-l="2" aria-pressed="${S.lvl===2}">🏖️ Las Dunas</button></div>`);
+    sw.querySelectorAll("button").forEach(b=>b.onclick=()=>{const n=+b.dataset.l;if(n===S.lvl)return;setLvl(n);pubPilot();lobbyPresence();toast(n===2?"Bienvenido a El Crack de las Dunas":"De vuelta en la Costanera");render();});m.append(sw);}
+  if(S.dunasAviso){S.dunasAviso=false;save();m.append(el(`<div class="pack dest"><div class="big">🏖️</div><div><div class="t">¡Se abrió El Crack de las Dunas!</div><div class="s">Como Rey de la Costanera te invitaron a la playa: 1000 metros de médanos, clima que cambia y un ranking nuevo donde arrancás último. Elegí la pista arriba.</div></div></div>`));}
+  m.append(el(S.lvl===2?`<div><h2>El Crack de las Dunas</h2><p class="sub">Una playa desierta, médanos que suben y bajan y un clima que cambia el piso en cada carrera. Se corren 1000 metros: el que domine la arena es el Crack de las Dunas.</p></div>`:`<div><h2>La Lleca</h2><p class="sub">La avenida de noche. Escalá el ranking hasta llegar al Rey y jugá la copa de tu categoría. Se corre un cuarto de milla: 400 metros de semáforo a semáforo.</p></div>`));
   const hero=el(`<div class="hero"><canvas></canvas><div class="cap"><div><div class="nom">${CAR[c.id].name}</div><div class="ins">Inspirado en ${CAR[c.id].ins} · ${CAR[c.id].year}</div></div><span class="chip ${c.fundido?"rojo":"oro"}">${c.fundido?"Motor fundido":perf(st)+" RND"}</span></div></div>`);
   m.append(hero);
   requestAnimationFrame(()=>{const cv=hero.querySelector("canvas");const dpr=Math.min(2,devicePixelRatio||1);cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -1596,7 +1784,7 @@ function vBarrio(m){
   if(NET.peers.length){const on=el(`<button class="btn verde full" style="margin-top:12px">${NET.peers.length} piloto${NET.peers.length>1?"s":""} en la avenida ahora · desafiar</button>`);on.onclick=()=>{view="banda";render();};m.append(on);}
   copaSection(m);
   const {rows,myI}=ranking();
-  m.append(el(`<div class="sec-t">Ranking de La Lleca <span>${rows.length} pilotos · vas ${myI+1}º · ${catName(catOf(myI))}</span></div>`));
+  m.append(el(`<div class="sec-t">Ranking de ${S.lvl===2?"las Dunas":"La Lleca"} <span>${rows.length} pilotos · vas ${myI+1}º · ${catName(catOf(myI))}</span></div>`));
   m.append(el(`<p class="nota" style="margin-top:0">Ganale a alguien de arriba y te quedás con su puesto (los que pasás bajan uno); si perdés con alguien de abajo, bajás. Los que están a 5 puestos o menos se juegan los papeles: si pierden el auto se compran uno más barato y se reacomodan por tiempo. Por plata corren al precio fijo hasta 10 puestos de distancia y, más lejos, contraofertan. Categorías de 16: Primera, La B, Tercera, Reserva y Promoción; del 81º para abajo, Desafiliados. Los 3 de arriba largan perfecto: para ganarles hay que exigir el motor.</p>`));
   const all=!!S.verTodo,lo=all?0:Math.max(0,myI-8),hi=all?rows.length:Math.min(rows.length,myI+9);
   const list=el(`<div class="stack"></div>`);
@@ -1689,7 +1877,7 @@ function copaResultado(win,cfg){const C=S.copa;if(!C)return "";const r=C.rondas.
   let line=win?(r<3?`¡Pasaste a ${RONDA_N[r+1]}!`:""):`Quedaste afuera en ${RONDA_N[r]}.`;
   copaAvanza(C);
   if(C.fin){const K=copaCierre(C);const camp=C.rondas[C.rondas.length-1][0];
-    if(K.yoCamp){const p=CAT_PREMIO[C.cat];S.pesos+=p;line=`¡Campeón de ${CATS[C.cat].n}! Cobraste ${fmt(p)}.`;CER_PEND.push("copa"+(C.cat+1));}
+    if(K.yoCamp){const p=CAT_PREMIO[C.cat];S.pesos+=p;line=S.lvl===2?`¡Campeón de la ${copaNom(C.cat)}! Te llevás la tabla de oro y ${fmt(p)}.`:`¡Campeón de ${CATS[C.cat].n}! Cobraste ${fmt(p)}.`;CER_PEND.push("copa"+(C.cat+1));}
     else{const fin=C.rondas[3]&&C.rondas[3].includes("yo");if(fin&&!K.yoCamp){const p=Math.round(CAT_PREMIO[C.cat]*.3);S.pesos+=p;line=`Subcampeón: cobraste ${fmt(p)}. Ganó la copa ${nomId(camp)}.`;}
       else line=(line||"")+` Campeón: ${nomId(camp)}.`;}
     if(K.yoUlt){CER_PEND.push("descenso");line+=" Saliste último de la copa.";}
@@ -1698,7 +1886,7 @@ function copaResultado(win,cfg){const C=S.copa;if(!C)return "";const r=C.rondas.
   return line;}
 let RACE_LAST=null;
 function copaJugar(){const C=S.copa;if(!C||!canRace())return;const op=copaRival(C);if(!op)return;const r=BOT[op],me=curCar(),opc=rivalCar(r),pos=S.ord.indexOf(op)+1;
-  modal(`<h3>${RONDA_N[C.rondas.length-1]} · Copa ${CATS[C.cat].n}</h3><p>Contra ${esc(r.n)} (${pos}º). Mata-mata: el que pierde se va a casa.</p><div id="vsz"></div><div class="opts" id="opts"></div>`);
+  modal(`<h3>${RONDA_N[C.rondas.length-1]} · ${copaNom(C.cat)}</h3><p>Contra ${esc(r.n)} (${pos}º). Mata-mata: el que pierde se va a casa.</p><div id="vsz"></div><div class="opts" id="opts"></div>`);
   $("#vsz").append(vsBlock(me,opc,"Vos",r.n));exigBlock(pos);
   const o=$("#opts"),y=el(`<button class="btn oro">¡A correr!</button>`),n=el(`<button class="btn sec">Después</button>`);
   y.onclick=()=>{const exig=getExig(pos);closeModal();startRace({kind:"ai",rival:r,opName:r.n,opCar:opc,mode:"copa",bet:0,exig});};n.onclick=closeModal;o.append(y,n);}
@@ -1706,17 +1894,17 @@ function copaSection(m){const R=ranking(),cat=catOf(R.myI);
   m.append(el(`<div class="sec-t">Modo copa <span>${cat<5?"Categoría "+catName(cat):"Desafiliados"}</span></div>`));
   if(cat>=5){m.append(el(`<div class="vacio">Estás en Desafiliados: no jugás copas. Ganale a alguien de Promoción (del 65º al 80º) para afiliarte, o esperá: el mejor desafiliado sube cuando termina cada copa.</div>`));return;}
   const C=S.copa;
-  if(!C){const b=el(`<div class="pack dest"><div class="big">🏆</div><div><div class="t">Copa ${CATS[cat].n}</div><div class="s">Mata-mata de 16 de tu categoría. El campeón cobra ${fmt(CAT_PREMIO[cat])} y asciende; el peor de octavos desciende.</div></div><button class="btn oro">Jugar</button></div>`);
+  if(!C){const b=el(`<div class="pack dest"><div class="big">🏆</div><div><div class="t">${copaNom(cat)}</div><div class="s">Mata-mata de 16 de tu categoría. El campeón cobra ${fmt(CAT_PREMIO[cat])} y asciende; el peor de octavos desciende.</div></div><button class="btn oro">Jugar</button></div>`);
     b.querySelector("button").onclick=()=>{S.copa=copaNueva(cat);save();render();};m.append(b);}
   else{const r=C.rondas.length-1,op=copaRival(C);
-    const box=el(`<div class="pack dest" style="display:block"><div class="t">Copa ${CATS[C.cat].n} · ${RONDA_N[r]}</div><div class="s" style="margin:4px 0 10px">Te toca contra <b>${esc(nomId(op))}</b>.</div><div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn oro">Correr</button><button class="btn sec">Ver la llave</button><button class="btn sec">Abandonar</button></div></div>`);
+    const box=el(`<div class="pack dest" style="display:block"><div class="t">${copaNom(C.cat)} · ${RONDA_N[r]}</div><div class="s" style="margin:4px 0 10px">Te toca contra <b>${esc(nomId(op))}</b>.</div><div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn oro">Correr</button><button class="btn sec">Ver la llave</button><button class="btn sec">Abandonar</button></div></div>`);
     const [b1,b2,b3]=box.querySelectorAll("button");b1.onclick=copaJugar;b2.onclick=()=>llaveModal(C);
     b3.onclick=()=>{modal(`<h3>¿Abandonás la copa?</h3><p>Perdés la llave como si hubieras perdido la picada.</p><div class="opts"><button class="btn" id="ys">Abandonar</button><button class="btn sec" id="ns">Seguir</button></div>`);
       $("#ys").onclick=()=>{RACE_LAST={pt:99,ot:20};const line=copaResultado(false,{});RACE_LAST=null;save();closeModal();toast(line);render();if(CER_PEND.length)playCer(CER_PEND.splice(0),()=>{});};$("#ns").onclick=closeModal;};
     m.append(box);}
   if((S.copas||[]).length)m.append(el(`<p class="nota">Tus copas: ${S.copas.map(x=>"🏆 "+CATS[x.cat].n).join(" · ")}</p>`));
 }
-function llaveModal(C,names){const nm=names||nomId;let h=`<h3>${C.titulo||"Copa "+CATS[C.cat].n}</h3><div class="llave">`;
+function llaveModal(C,names){const nm=names||nomId;let h=`<h3>${C.titulo||copaNom(C.cat)}</h3><div class="llave">`;
   C.rondas.forEach((R,r)=>{h+=`<div class="lr"><b>${R.length===1?"Campeón":RONDA_N[RONDA_N.length-Math.log2(R.length)]||"Ronda"}</b>`;
     if(R.length===1){h+=`<div class="lm win">🏆 ${esc(nm(R[0]))}</div>`;}
     else for(let i=0;i<R.length;i+=2){const a=R[i],b=R[i+1],T=C.t[r]||{};const ta=T[a],tb=T[b],w=ta!=null&&tb!=null?(ta<=tb?a:b):null;
@@ -1748,7 +1936,7 @@ function miJug(){const c=curCar();return {ap:S.apodo,car:cleanCar(c),et:+myET(c)
 function bandaEscuchar(code){if(BANDA.ref)BANDA.ref.off();BANDA.code=code;BANDA.t=null;BANDA.ref=NET.fb.ref("torneos/"+code);
   BANDA.ref.on("value",s=>{BANDA.t=s.val();bandaTick();if(view==="banda"&&$("#modal").hidden&&!RACE)render();},()=>{});}
 async function bandaCrear(){if(!bandaOk())return;const code=newCode6();
-  try{await NET.fb.ref("torneos/"+code+"/info").set({host:NET.uid,hostAp:S.apodo,at:firebase.database.ServerValue.TIMESTAMP,estado:"lobby"});
+  try{await NET.fb.ref("torneos/"+code+"/info").set({host:NET.uid,hostAp:S.apodo,at:firebase.database.ServerValue.TIMESTAMP,estado:"lobby",lvl:S.lvl});
     await NET.fb.ref("torneos/"+code+"/jug/"+NET.uid).set(miJug());}catch(e){toast("No se pudo crear el torneo");return;}
   S.banda={code};save();bandaEscuchar(code);bandaInvitar(code);render();}
 function bandaInvitar(code){wa(`🏆 ${S.apodo} armó un torneo de picadas en El Rey de la Costanera. Sumate desde el celu con este link: ${PUB}?torneo=${code} (código ${code})`);}
@@ -1764,14 +1952,26 @@ function bandaSalir(){if(BANDA.ref)BANDA.ref.off();const t=BANDA.t;
   BANDA.ref=null;BANDA.t=null;BANDA.code=null;S.banda=null;save();render();}
 async function bandaArrancar(){const t=BANDA.t;if(!t||!t.jug)return;const js=Object.entries(t.jug).map(([u,v])=>({u,et:+v.et||99})).sort((a,b)=>a.et-b.et);
   if(js.length<2){toast("Hacen falta al menos 2 pilotos");return;}
-  let n=2;while(n<js.length)n*=2;const r0=seedOrder(n).map(k=>js[k-1]?js[k-1].u:"");
-  try{await tRef("info").update({estado:"juego",r0,n:js.length,arranco:firebase.database.ServerValue.TIMESTAMP});}catch(e){toast("No se pudo arrancar");}}
+  // se completa la llave con pilotos del barrio de tiempos parecidos a los de la banda
+  let n=16;while(n<js.length)n*=2;const lv=t.info.lvl===2?2:1,T0={l:TRACK.lvl,c:TRACK.clima};setTrack(lv,"mojada");
+  const med=js[js.length>>1].et,bots={};
+  const cand=BOTS.map(b=>({b,et:botET(b,true)})).sort((a,b)=>Math.abs(a.et-med)-Math.abs(b.et-med)).slice(0,n-js.length);
+  cand.forEach(({b,et})=>{const u="bot:"+b.id;bots[u]={ap:b.n,car:{id:b.car,color:CAR[b.car].col,up:Object.assign({},b.up)},et:+et.toFixed(3),sk:b.sk};js.push({u,et});});
+  setTrack(T0.l,T0.c);js.sort((a,b)=>a.et-b.et);
+  const r0=seedOrder(n).map(k=>js[k-1]?js[k-1].u:"");
+  try{await tRef("info").update({estado:"juego",r0,n:js.length,bots,arranco:firebase.database.ServerValue.TIMESTAMP});}catch(e){toast("No se pudo arrancar");}}
+const esBot=u=>typeof u==="string"&&u.startsWith("bot:");
+// cruce entre dos pilotos del barrio: lo define el tiempo estimado con un poco de suerte, igual en todos los celulares
+function botVsBot(t,a,b,mk){const B=(t.info&&t.info.bots)||{},h=s2=>{let x=0;for(const ch of s2)x=(x*31+ch.charCodeAt(0))>>>0;return (x%1000)/1000;};
+  const ta=(B[a]?B[a].et:99)*(1+(h(a+mk)-.5)*.04),tb=(B[b]?B[b].et:99)*(1+(h(b+mk)-.5)*.04);return [+ta.toFixed(3),+tb.toFixed(3)];}
 // llave derivada de los resultados: nadie tiene que "procesar" nada
 const toArr=x=>Array.isArray(x)?x:x&&typeof x==="object"?Object.keys(x).sort((a,b)=>a-b).map(k=>x[k]):[];
 function bandaLlave(t){const r0=toArr(t.info&&t.info.r0);const res=t.res||{};const rondas=[r0.slice()],T=[];
   for(let r=0;;r++){const R=rondas[r],Tr={};T.push(Tr);if(R.length<=1)break;const N=[];
     for(let i=0;i<R.length;i+=2){const a=R[i],b=R[i+1],mk=`r${r}m${i/2}`,rs=res[mk]||{};
-      const tt=u=>rs[u]?(rs[u].fu?99:+rs[u].t||99):null;if(a)Tr[a]=tt(a);if(b)Tr[b]=tt(b);
+      const tt=u=>{if(!esBot(u))return rs[u]?(rs[u].fu?99:+rs[u].t||99):null;const o=u===a?b:a;
+        if(esBot(o)){const v=botVsBot(t,a,b,mk);return u===a?v[0]:v[1];}return rs[o]&&Number.isFinite(+rs[o].bt)?+rs[o].bt:(rs[o]&&rs[o].wo?99:null);};
+      if(a)Tr[a]=tt(a);if(b)Tr[b]=tt(b);
       if(a==null||b==null){N.push(null);continue;}
       if(!a&&!b){N.push("");continue;}
       if(!a||!b){const x=a||b,v=tt(x);N.push(v==null?null:v<99?x:"");continue;}
@@ -1788,13 +1988,16 @@ function bandaTick(){const t=BANDA.t;if(!t||!t.info)return;const L=t.info.estado
   if(L&&L.camp!=null&&L.camp!==undefined&&!(S.bandaVistos||[]).includes(BANDA.code)){
     S.bandaVistos=[...(S.bandaVistos||[]),BANDA.code].slice(-30);S.amigos=S.amigos||{};
     if(L.camp){if(L.camp===NET.uid){S.bandaCopas=(S.bandaCopas|0)+1;if(RACE)CER_PEND.push("banda");else setTimeout(()=>playCer(["banda"],()=>{toast("¡Campeón del torneo!");render();}),300);}
-      else{const j=t.jug&&t.jug[L.camp];const a=S.amigos[L.camp]=S.amigos[L.camp]||{ap:j?j.ap:"?",g:0,p:0,copas:0};a.copas=(a.copas|0)+1;if(j)a.ap=j.ap;}}
+      else if(!esBot(L.camp)){const j=t.jug&&t.jug[L.camp];const a=S.amigos[L.camp]=S.amigos[L.camp]||{ap:j?j.ap:"?",g:0,p:0,copas:0};a.copas=(a.copas|0)+1;if(j)a.ap=j.ap;}}
     if(t.info.host===NET.uid&&t.info.estado!=="fin")tRef("info/estado").set("fin").catch(()=>{});save();}}
-function bandaNombre(u){const t=BANDA.t;if(!u)return "(libre)";if(u===NET.uid)return S.apodo||"Vos";const j=t&&t.jug&&t.jug[u];return j?j.ap:"?";}
+function bandaNombre(u){const t=BANDA.t;if(!u)return "(libre)";if(esBot(u)){const B=t&&t.info&&t.info.bots&&t.info.bots[u];return B?B.ap+" (barrio)":"Piloto del barrio";}if(u===NET.uid)return S.apodo||"Vos";const j=t&&t.jug&&t.jug[u];return j?j.ap:"?";}
 function bandaCorrer(){const t=BANDA.t;if(!t||!canRace())return;const M=bandaMiCruce(t);if(!M||M.espera)return;const me=curCar();
   if(!M.op){ // llave libre: corre solo y pasa si no funde
     modal(`<h3>Llave libre</h3><p>No tenés rival en esta ronda: corrés solo. Si llegás sin fundir el motor, pasás.</p><div class="opts"><button class="btn oro" id="go">Correr</button><button class="btn sec" id="no">Después</button></div>`);
-    $("#go").onclick=()=>{closeModal();startRace({kind:"solo",opName:"Llave libre",opCar:cleanCar(me),mode:"solo",copaB:{code:BANDA.code,mk:M.mk}});};$("#no").onclick=closeModal;return;}
+    $("#go").onclick=()=>{closeModal();startRace({kind:"solo",opName:"Llave libre",opCar:cleanCar(me),mode:"solo",copaB:{code:BANDA.code,mk:M.mk},lvl:raceLvl({code:BANDA.code})});};$("#no").onclick=closeModal;return;}
+  if(esBot(M.op)){const B=t.info.bots&&t.info.bots[M.op],b=BOT[M.op.slice(4)];const opCar=B&&cleanCar(B.car);if(!opCar||!b){toast("Datos del rival inválidos");return;}
+    modal(`<h3>${esc(bandaRonda(M.r,t))}</h3><p>Te toca contra <b>${esc(B.ap)}</b>, piloto del barrio que completó la llave (${CAR[opCar.id].name}).</p><div class="opts"><button class="btn oro" id="go">Correr</button><button class="btn sec" id="no">Después</button></div>`);
+    $("#go").onclick=()=>{closeModal();startRace({kind:"ai",rival:Object.assign({},b,{sk:B.sk||b.sk}),opName:B.ap,opCar,mode:"bandabot",bet:0,copaB:{code:BANDA.code,mk:M.mk,bot:M.op},lvl:raceLvl({code:BANDA.code})});};$("#no").onclick=closeModal;return;}
   const j=t.jug[M.op];const opCar=cleanCar(j&&j.car);if(!opCar){toast("Datos del rival inválidos");return;}
   const sala=`copa-${BANDA.code}-${M.mk}`;
   LIVE={peer:null,sala,opName:String(j.ap).slice(0,16),opId:M.op,modo:"copa",bet:0,role:NET.uid<M.op?"a":"b",opCar,myCar:cleanCar(me),copaB:{code:BANDA.code,mk:M.mk}};
@@ -1806,11 +2009,11 @@ function bandaCorrer(){const t=BANDA.t;if(!t||!canRace())return;const M=bandaMiC
     L.room.presence({uid:NET.uid,listo:1}).catch(()=>{});
     L.room.on("largada",m=>{if(LIVE!==L||RACE)return;const p=(L.room.peers()||[]).find(x=>!x.sameTab&&x.by===L.opId);if(p)L.peer=p.peer;modalLock=false;closeModal();beginLive(m.data);},()=>{});
     L.room.onPeers(ch=>{if(LIVE!==L||RACE||L.go)return;const p=ch.peers.find(x=>!x.sameTab&&x.by===L.opId);if(!p)return;L.peer=p.peer;
-      if(L.role==="a"){L.go=1;setTimeout(()=>{if(LIVE===L&&!RACE)L.room.emit("largada",{t0:(NET.now?NET.now():Date.now())+1800,st:Math.random()<.5?"rubia":"morocha"}).catch(()=>{});},800);}},()=>{});})();}
+      if(L.role==="a"){L.go=1;setTimeout(()=>{if(LIVE===L&&!RACE)L.room.emit("largada",largadaData()).catch(()=>{});},800);}},()=>{});})();}
 function bandaRonda(r,t){const n=toArr(t.info&&t.info.r0).length,left=n>>r;return left<=2?"Final":left===4?"Semifinal":left===8?"Cuartos":left===16?"Octavos":"Ronda "+(r+1);}
-function bandaSacar(u){const t=BANDA.t,L=bandaLlave(t);for(let r=0;r<L.rondas.length-1;r++){const i=L.rondas[r].indexOf(u);if(i<0)continue;const mk=`r${r}m${i>>1}`;
+function bandaSacar(u){if(esBot(u))return;const t=BANDA.t,L=bandaLlave(t);for(let r=0;r<L.rondas.length-1;r++){const i=L.rondas[r].indexOf(u);if(i<0)continue;const mk=`r${r}m${i>>1}`;
     if(!(t.res&&t.res[mk]&&t.res[mk][u])){tRef(`res/${mk}/${u}`).set({t:99,fu:true,wo:true}).catch(()=>{});toast(bandaNombre(u)+" quedó afuera");return;}}}
-function bandaResultado(cfg,pt,dnf){if(!cfg.copaB||!NET.fb)return;NET.fb.ref(`torneos/${cfg.copaB.code}/res/${cfg.copaB.mk}/${NET.uid}`).set({t:dnf?99:+(+pt).toFixed(3),fu:!!dnf}).catch(()=>{});}
+function bandaResultado(cfg,pt,dnf,ot){if(!cfg.copaB||!NET.fb)return;const r={t:dnf?99:+(+pt).toFixed(3),fu:!!dnf};if(cfg.copaB.bot)r.bt=+Math.min(99,+ot||99).toFixed(3);NET.fb.ref(`torneos/${cfg.copaB.code}/res/${cfg.copaB.mk}/${NET.uid}`).set(r).catch(()=>{});}
 function amigoSuma(uid,ap,win){if(!uid||uid===NET.uid)return;S.amigos=S.amigos||{};const a=S.amigos[uid]=S.amigos[uid]||{ap,g:0,p:0,copas:0};a.ap=ap||a.ap;if(win)a.g++;else a.p++;}
 function vBanda(m){
   m.append(el(`<div><h2>La Banda</h2><p class="sub">Jugá con tus amigos de verdad, cada uno en su celular: picadas mano a mano y torneos mata-mata.</p></div>`));
@@ -1925,6 +2128,7 @@ function vPilotos(m){
 }
 function ghostChallenge(p){if(!canRace())return;
   const g=pilotGhost(p);if(!g){toast("Ese piloto no tiene una pasada válida");return;}
+  if((g.d===1000?2:1)!==S.lvl){toast(g.d===1000?"Su mejor pasada es en las Dunas: cambiá de pista para correrle":"Su mejor pasada es en la Costanera: cambiá de pista para correrle");return;}
   const me=curCar();
   modal(`<h3>Fantasma de <span id="gN"></span></h3><p>Corrés contra su mejor pasada: ${g.t.toFixed(2)} s con su ${CAR[g.car.id].name}. Si le ganás, se entera.</p><div id="vsz"></div><div class="opts" id="opts"></div>`);
   $("#gN").textContent=p.apodo;$("#vsz").append(vsBlock(me,g.car,S.apodo||"Vos",p.apodo));
@@ -2060,8 +2264,11 @@ async function onRespuesta(msg){
   await preload([curCar().id,car.id],6000);if(!LIVE)return;
   try{LIVE.room=await NET.room.join(LIVE.sala);}catch(e){LIVE=null;toast("No se pudo conectar la picada");return;}
   LIVE.room.on("largada",m=>{if(LIVE&&!RACE)beginLive(m.data);},()=>{});
-  LIVE.room.emit("largada",{t0:(NET.now?NET.now():Date.now())+1800,st:Math.random()<.5?"rubia":"morocha"}).catch(()=>{});
+  LIVE.room.emit("largada",largadaData()).catch(()=>{});
 }
+// datos de largada compartidos: misma largadora, misma pista y mismo clima en los dos celulares
+function raceLvl(copaB){const t=copaB&&BANDA.t&&BANDA.t.info;return t&&t.lvl===2?2:(copaB?1:S.lvl);}
+function largadaData(){const lv=raceLvl(LIVE&&LIVE.copaB);return {t0:(NET.now?NET.now():Date.now())+1800,st:Math.random()<.5?"rubia":"morocha",lv,cl:lv===2?climaAzar():null};}
 function beginLive(d){
   const L=LIVE;if(!L||L.begun)return;L.begun=true;d=d||{};const op={id:L.opCar.id,color:L.opCar.color,filete:L.opCar.filete,up:L.opCar.up};
   L.room.onPeers(ch=>{if(!RACE||RACE.cfg.kind!=="live")return;const p=ch.peers.find(x=>x.peer===L.peer);
@@ -2071,7 +2278,7 @@ function beginLive(d){
   // los dos celulares largan en el mismo instante (hora del servidor) y con la misma largadora
   const wait=NET.now&&Number.isFinite(d.t0)?Math.max(0,Math.min(3000,d.t0-NET.now())):300;
   const stK=d.st==="morocha"||d.st==="rubia"?d.st:"rubia";
-  setTimeout(()=>{if(LIVE!==L||RACE)return;startRace({kind:"live",opName:L.opName,opId:L.opId,opCar:op,mode:"vivo",modo:L.modo,bet:L.bet,copaB:L.copaB,stK});},wait);
+  setTimeout(()=>{if(LIVE!==L||RACE)return;startRace({kind:"live",opName:L.opName,opId:L.opId,opCar:op,mode:"vivo",modo:L.modo,bet:L.bet,copaB:L.copaB,stK,lvl:d.lv===2?2:1,clima:CLIMAS[d.cl]?d.cl:null});},wait);
 }
 function endLive(){if(LIVE&&LIVE.room){try{LIVE.room.leave();}catch(e){}}LIVE=null;lobbyPresence();}
 
@@ -2080,7 +2287,7 @@ function partCost(o,k,lv){const base=CAR[o.id].price*.06+12000;return Math.round
 function vTaller(m){
   const c=curCar(),st=stats(c),cd=CAR[c.id];
   m.append(el(`<div><h2>El taller de Beto</h2><p class="sub">Acá se prepara el fierro que tenés en uso. El último nivel de cada parte se paga con fichas.</p></div>`));
-  if(S.cars.length>1){const gb=el(`<button class="btn sec sm" style="margin-bottom:10px">Cambiar de auto en el Garage</button>`);gb.onclick=()=>{view="garage";render();};m.append(gb);}
+  const eC=enCopa();if(S.cars.length>1&&!eC){const gb=el(`<button class="btn sec sm" style="margin-bottom:10px">Cambiar de auto en el Garage</button>`);gb.onclick=()=>{view="garage";render();};m.append(gb);}
   const hero=el(`<div class="hero"><canvas style="height:190px"></canvas><div class="cap"><div><div class="nom">${cd.name}</div><div class="ins">Inspirado en ${cd.ins} · ${cd.year}</div></div><span class="chip ${T3.err?"rojo":"cel"}">${T3.err?"Vista 2D":"En el taller"}</span></div></div>`);m.append(hero);
   if(T3.err){const n=el(`<p class="nota" style="border-color:var(--rojo);margin:8px 0 12px"></p>`);n.textContent="El 3D no cargó: "+T3.err;m.append(n);}
   requestAnimationFrame(()=>{const cv=hero.querySelector("canvas");const dpr=Math.min(2,devicePixelRatio||1);cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -2095,9 +2302,10 @@ function vTaller(m){
     const b2=el(`<button class="btn oro sm"><i class="ficha"></i> ${fxF} ya</button>`);b2.disabled=S.fichas<fxF;b2.onclick=()=>{S.fichas-=fxF;c.wear=0;c.fundido=false;save();blip(990);toast("Motor nuevo en el acto");render();};dr.append(b1,b2);}
   else if(wr>=1){const b=el(`<button class="btn sec sm">Service · ${fmt(svc)}</button>`);b.disabled=S.pesos<svc;b.onclick=()=>{S.pesos-=svc;c.wear=0;save();blip(660);toast("Service hecho");render();};dr.append(b);}
   m.append(ds);
+  if(eC){m.append(el(`<p class="nota">Estás en plena copa: acá solo se rectifica el motor. Mejoras, nitro y pintura, cuando la termines.</p>`));return;}
   m.append(el(`<div class="stats"><div class="stat"><b>${Math.round(st.hp)}</b><span>CV</span></div><div class="stat"><b>${Math.round(st.mass)}</b><span>kg</span></div><div class="stat"><b>${st.grip.toFixed(2)}</b><span>Agarre</span></div><div class="stat"><b>${perf(st)}</b><span>RND</span></div></div>`));
   const ps=el(`<div class="parts"></div>`);
-  PARTS.forEach(p=>{const lv=c.up[p.k],next=lv+1,max=next>5;const prem=next===PREMIUM_LV,cost=prem?40+10*cd.req:partCost(c,p.k,next);
+  partsList().forEach(p=>{const lv=c.up[p.k]|0,next=lv+1,max=next>5;const prem=next===PREMIUM_LV,cost=prem?40+10*cd.req:partCost(c,p.k,next);
     const can=max?false:prem?S.fichas>=cost:S.pesos>=cost;
     const row=el(`<div class="part"><div><div class="t">${p.t}</div><div class="s">${p.lv[lv]}${max?"":" → "+p.lv[next]} · ${p.s}</div></div>
       <button class="btn ${prem?"oro":""}" ${can?"":"disabled"}>${max?"Al máximo":prem?`<i class="ficha"></i> ${cost}`:fmt(cost)}</button>
@@ -2114,9 +2322,7 @@ function vTaller(m){
     const b=el(`<button class="sw" style="background:${k.c}" aria-label="${k.n}" aria-pressed="${c.color===k.c}">${own?"":`<span class="lk">${k.f}</span>`}</button>`);
     b.onclick=()=>{if(!own){if(S.fichas<k.f){toast("Te faltan fichas: pasá por el Quisco");return;}S.fichas-=k.f;S.colors=[...(S.colors||[]),k.c];}c.color=k.c;save();render();};sw.append(b);});
   m.append(sw);
-  const fb=el(`<button class="btn ${c.filete?"sec":"oro"} full" style="margin-top:12px">${c.filete?"Sacar fileteado":`Fileteado porteño en la puerta · <i class="ficha"></i> 40`}</button>`);
-  if(!c.filete&&!S.fileteOk&&S.fichas<40)fb.disabled=true;
-  fb.onclick=()=>{if(!c.filete&&!S.fileteOk){S.fichas-=40;S.fileteOk=true;}c.filete=!c.filete;save();render();};m.append(fb);
+  // (el fileteado porteño se sacó del juego)
   {const val=Math.round(sellValue(c)),ult=S.cars.length===1;const sb=el(`<button class="btn sec full" style="margin-top:10px">Vender este auto · ${fmt(val)}</button>`);
     sb.onclick=()=>{modal(`<h3>¿Vendés el ${cd.name}?</h3><p>Te dan ${fmt(val)} con las mejoras incluidas. No hay vuelta atrás.${ult?" Es tu único auto: te quedás a pie hasta que compres otro en los Clasificados.":""}</p><div class="opts"><button class="btn" id="ys">Vender</button><button class="btn sec" id="ns">Me lo quedo</button></div>`);
       $("#ys").onclick=()=>{S.pesos+=val;S.cars=S.cars.filter(x=>x.uid!==c.uid);S.cur=S.cars.length?S.cars[0].uid:null;save();pubPilot();lobbyPresence();closeModal();toast(S.cars.length?"Vendido":"Vendido: a elegir otro fierro");if(!S.cars.length)view="clasif";render();};$("#ns").onclick=closeModal;};m.append(sb);}
@@ -2144,6 +2350,8 @@ function vClasif(m){
 }
 
 /* ---------- KIOSCO ---------- */
+// en las Dunas el quisco sale 10% más caro
+function kp(str){if(S.lvl!==2)return str;return str.replace(/\d[\d.]*/,n=>Math.round(+n.replace(/\./g,"")*1.1).toLocaleString("es-AR"));}
 function vKiosco(m){
   m.append(el(`<div><h2>El quisco</h2><p class="sub">Las fichas compran el último nivel de cada parte, el nitro, la pintura especial y los autos antes de tiempo.</p></div>`));
   const st=el(`<div class="stack"></div>`);
@@ -2153,12 +2361,12 @@ function vKiosco(m){
   const shN=S.shDay===hoy()?S.shN:0,quedan=Math.max(0,REF_ENVIO_MAX-shN);
   const sh=el(`<div class="pack dest wa"><div class="big">✆</div><div><div class="t">Invitá amigos por WhatsApp</div><div class="s">${quedan?`${fmt(REF_ENVIO)} por cada envío (te quedan ${quedan} hoy).`:"Hoy ya cobraste los envíos."} Y ${fmt(REF_INSTALA)} + ${REF_INSTALA_F} fichas por cada amigo que se instale con tu link.${NET.refN?` Ya se sumaron ${NET.refN}.`:""}</div></div><button class="btn verde">Compartir</button></div>`);
   sh.querySelector("button").onclick=shareApp;st.append(sh);
-  PESOS.forEach(p=>{const r=el(`<div class="pack"><div class="big">$</div><div><div class="t">${p.t}</div><div class="s">${fmt(p.v)} de plata para el juego</div></div><button class="btn oro">${p.p}</button></div>`);
-    r.querySelector("button").onclick=()=>buy(p.t+` (${fmt(p.v)})`,p.p,()=>{S.pesos+=p.v;});st.append(r);});
-  PACKS.forEach(p=>{const r=el(`<div class="pack ${p.dest?"dest":""}"><div class="big">${p.f}</div><div><div class="t">${p.t}</div><div class="s">${p.b||"Fichas para el garage"}</div></div><button class="btn oro">${p.p}</button></div>`);
-    r.querySelector("button").onclick=()=>buy(p.t+` (${p.f} fichas)`,p.p,()=>{S.fichas+=p.f;});st.append(r);});
-  const pase=el(`<div class="pack dest"><div class="big">★</div><div><div class="t">Pase Fierrero · mensual</div><div class="s">20 fichas extra con el mate diario y premios ×1,5 en cada picada ganada.</div></div><button class="btn oro" ${S.pase?"disabled":""}>${S.pase?"Activo":"$ 4.999"}</button></div>`);
-  pase.querySelector("button").onclick=()=>buy("Pase Fierrero","$ 4.999 por mes",()=>{S.pase=true;});st.append(pase);
+  PESOS.forEach(p=>{const r=el(`<div class="pack"><div class="big">$</div><div><div class="t">${p.t}</div><div class="s">${fmt(p.v)} de plata para el juego</div></div><button class="btn oro">${kp(p.p)}</button></div>`);
+    r.querySelector("button").onclick=()=>buy(p.t+` (${fmt(p.v)})`,kp(p.p),()=>{S.pesos+=p.v;});st.append(r);});
+  PACKS.forEach(p=>{const r=el(`<div class="pack ${p.dest?"dest":""}"><div class="big">${p.f}</div><div><div class="t">${p.t}</div><div class="s">${p.b||"Fichas para el garage"}</div></div><button class="btn oro">${kp(p.p)}</button></div>`);
+    r.querySelector("button").onclick=()=>buy(p.t+` (${p.f} fichas)`,kp(p.p),()=>{S.fichas+=p.f;});st.append(r);});
+  const pase=el(`<div class="pack dest"><div class="big">★</div><div><div class="t">Pase Fierrero · mensual</div><div class="s">20 fichas extra con el mate diario y premios ×1,5 en cada picada ganada.</div></div><button class="btn oro" ${S.pase?"disabled":""}>${S.pase?"Activo":kp("$ 4.999")}</button></div>`);
+  pase.querySelector("button").onclick=()=>buy("Pase Fierrero",kp("$ 4.999")+" por mes",()=>{S.pase=true;});st.append(pase);
   const na=el(`<div class="pack"><div class="big">⌀</div><div><div class="t">Sin publicidad</div><div class="s">Saca los avisos entre picadas. Los avisos con premio siguen disponibles.</div></div><button class="btn oro" ${S.noAds?"disabled":""}>${S.noAds?"Listo":"$ 2.999"}</button></div>`);
   na.querySelector("button").onclick=()=>buy("Sin publicidad","$ 2.999",()=>{S.noAds=true;});st.append(na);
   m.append(st);
@@ -2178,6 +2386,8 @@ let RACE=null;
 const sec=s=>Math.round(s/H);
 function startRace(cfg){
   audioInit();
+  {const lv=cfg.lvl||(cfg.kind==="ghost"&&cfg.ghost&&cfg.ghost.d===1000?2:S.lvl);cfg.lvl=lv;
+   cfg.clima=lv===2?(cfg.clima||(cfg.kind==="ghost"&&cfg.ghost&&cfg.ghost.cl)||climaAzar()):null;setTrack(lv,cfg.clima);}
   const me=curCar(),ms=stats(cfg.exig?Object.assign({},me,{pf:cfg.exig.pf}):me),os=stats(cfg.opCar);
   const P=makeRacer(ms,me.wear||0),O=makeRacer(os);
   const lb=optLaunch(ms),sk=cfg.rival?(BOT[cfg.rival.id]===cfg.rival?botSk(cfg.rival):cfg.rival.sk):.8;
@@ -2188,11 +2398,11 @@ function startRace(cfg){
     G:cfg.kind==="ghost"?{rec:cfg.ghost.rec}:null,
     rec:{l:null,r:null,s:[],z:[],g:[],w:0},quit:false,presAt:0,warn:0};
   if(cfg.kind==="live"){O.nitroN=0;}if(cfg.kind==="solo"){O.nitroN=0;$("#pOp").style.visibility="hidden";}else $("#pOp").style.visibility="";bgm();
-  $("#race").hidden=false;$("#rMsg").textContent="Levantá vueltas";$("#rMsg").style.color="";
+  $("#race").hidden=false;$("#rMsg").textContent=TRACK.lvl===2?CLIMAS[TRACK.clima].ico+" "+CLIMAS[TRACK.clima].n+": levantá vueltas":"Levantá vueltas";$("#rMsg").style.color="";
   $("#bNitro").textContent=`NITRO ×${P.nitroN}`;$("#bNitro").disabled=!P.nitroN;
   sizeScene();engineStart(me.id,cfg.opCar.id);RACE.last=performance.now();lobbyPresence();
-  const RR=RACE;const go=()=>{if(RACE!==RR)return;RR.loading=false;setupRace3D(RR);RR.last=performance.now();vistaBtn();};
-  if(S.vista==="adentro")loadCabina(me.id);vistaBtn();preloadShots();starterArm(RACE);unlockVid(flagVid());unlockVid(resVid());
+  const RR=RACE;const go=()=>{if(RACE!==RR)return;RR.loading=false;if(TRACK.lvl===2)setupDunas(RR);else setupRace3D(RR);RR.last=performance.now();vistaBtn();};
+  if(S.vista==="adentro")loadCabina(me.id);vistaBtn();if(TRACK.lvl!==2){preloadShots();starterArm(RACE);}unlockVid(flagVid());unlockVid(resVid());
   if(T3.st==="off"||cfg.kind==="live")go();else{RR.loading=true;preload([me.id,cfg.opCar.id]).then(go);}
   requestAnimationFrame(loop);
 }
@@ -2241,6 +2451,14 @@ function tick(R){
   dmgAlerts(R);
   if(R.cfg.kind==="solo"){R.O.x=P.x;R.O.v=P.v;}else if(R.O.fin===null)oppTick(R,k);
 }
+// relato de la playa: médanos, bajadas y el clima mientras corrés
+const DUNA_CL={seco:["La arena seca te frena: no aflojes","¡Se te hunden las cubiertas!"],mojada:["Arena firme: ¡a fondo!","La orilla mojada agarra lindo"],lluvia:["¡Cuidado, patina con la lluvia!","Se te empaña todo: mirá la bandera"],viento:["¡El viento en contra te come velocidad!","Sudestada: agachá la cabeza y a fondo"]};
+function dunaRelato(R){const P=R.P,x=P.x,sl=slopeAt(x),M=R.dm=R.dm||{};
+  if(sl>.045&&!M.sube){M.sube=1;say("¡Médano! Mantené las vueltas","var(--oro)");return;}
+  if(sl<-.045&&M.sube&&!M.baja){M.baja=1;say("¡Bajada! Aprovechá el envión","var(--celeste)");return;}
+  if(x>300&&!M.cl){M.cl=1;const f=DUNA_CL[TRACK.clima]||DUNA_CL.mojada;say(f[Math.random()<.5?0:1],"var(--crema)");return;}
+  if(x>500&&!M.mi){M.mi=1;say(R.O.x<x?"Mitad de carrera: ¡vas adelante!":"Mitad de carrera: ¡apretá que se escapa!","var(--crema)");return;}
+  if(x>850&&!M.fin){M.fin=1;say("¡Se ve la llegada!","var(--verde)");}}
 function loop(now){
   if(!RACE)return;const R=RACE;const dt=Math.min(.1,(now-R.last)/1000);R.last=now;R.dt=dt;
   if(R.loading){draw();requestAnimationFrame(loop);return;}
@@ -2248,6 +2466,7 @@ function loop(now){
   while(R.acc>=H){R.acc-=H;
     if(!R.done){tick(R);if(R.P.fin!==null){R.done=true;R.doneAt=now;}}
     else{R.n++;const k=kNow();coast(R.P);if(R.cfg.kind!=="live"){if(R.O.fin===null&&!R.O.blown)oppTick(R,k);else coast(R.O);}}}
+  if(R.dunas&&!R.done&&R.P.launched&&!(R.msgT>0))dunaRelato(R);
   if(R.P.blown&&!R.done){R.blownAt=R.blownAt||now;if(now-R.blownAt>1800){R.done=true;R.doneAt=now;R.P.fin=99;R.dnf=true;}}
   steerAnim(R,dt);
   if(R.done&&!R.finishing){R.finishing=true;if(!R.dnf)say(R.O.fin===null?"¡Llegaste primero!":"Llegada","var(--oro)");}
@@ -2272,7 +2491,7 @@ function draw(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   if(R.cut){drawCut(ctx,w,h);return;}
   if(R.loading){ctx.fillStyle="#0b1020";ctx.fillRect(0,0,w,h);ctx.fillStyle="#cdbfa1";ctx.font=`700 ${Math.round(h*.07)}px "Barlow Condensed",sans-serif`;ctx.textAlign="center";ctx.fillText("Cargando los autos…",w/2,h/2);ctx.textAlign="left";}
-  else if(R.g3){R.inside=S.vista==="adentro"&&CAB[R.me.id]&&CAB[R.me.id].ok;const img=render3D(R,w,h,R.dt||.016,ctx);if(img){ctx.clearRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);}if(R.inside)drawCabina(ctx,w,h,R);}
+  else if(R.g3){R.inside=S.vista==="adentro"&&CAB[R.me.id]&&CAB[R.me.id].ok;const img=R.dunas?renderDunas(R,w,h,R.dt||.016):render3D(R,w,h,R.dt||.016,ctx);if(img){ctx.clearRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);}if(R.inside)drawCabina(ctx,w,h,R);}
   else{
   const s=Math.max(14,w/12),cam=Math.min(R.P.x,DIST+4)-3;
   const {road}=drawBackdrop(ctx,w,h,cam,s);
@@ -2310,16 +2529,19 @@ $("#bQuit").onclick=()=>{if(!RACE)return;starterStop();flagVidStop();const cfg=R
   if(cfg.kind==="live"&&LIVE&&LIVE.room)LIVE.room.presence({ab:1}).catch(()=>{});
   endRace();if(cfg.kind==="live")endLive();
   if(cfg.mode!=="practica"&&(cfg.bet||cfg.mode==="papeles"||cfg.modo==="papeles")){toast("Abandonaste: la apuesta se pierde igual");settle(false,cfg);}render();};
-function endRace(){setTimeout(bgm,0);if(RACE){const me=RACE.me,P=RACE.P;if(S.cars.includes(me)){me.wear=Math.round(Math.min(P.blown?100:99,P.dmg)*10)/10;me.fundido=!!P.blown;
+function endRace(){setTimeout(bgm,0);setTimeout(()=>{if(!RACE)setTrack(S.lvl,"mojada");},0);if(RACE){const me=RACE.me,P=RACE.P;if(S.cars.includes(me)){me.wear=Math.round(Math.min(P.blown?100:99,P.dmg)*10)/10;me.fundido=!!P.blown;
   const ex=RACE.cfg.exig;if(ex&&RACE.P.launched){me.wear=Math.min(100,me.wear+ex.w);if(me.wear>=100){me.wear=100;me.fundido=true;}}}}RACE=null;engineStop();$("#race").hidden=true;$("#bGas").classList.remove("on");lobbyPresence();}
 function loseCar(winnerName){const me=curCar();S.cars=S.cars.filter(x=>x.uid!==me.uid);let line;
   if(!S.cars.length){S.cur=null;line=`${winnerName} se llevó tu ${CAR[me.id].name}. Te quedaste a pie: comprá otro fierro en los Clasificados.`;}else{line=`${winnerName} se llevó tu ${CAR[me.id].name}.`;S.cur=S.cars[0].uid;}return line;}
 function winCar(o,fromName){const c=cleanCar(o);if(!c)return "";const nc=newCar(c.id,c.color);nc.up=c.up;nc.filete=c.filete;S.cars.push(nc);return `¡Te quedaste con el ${CAR[c.id].name} de ${fromName}!`;}
+function R_DUNA(cfg,win,dnf){if(!(cfg.lvl===2||cfg._dunas)||dnf)return "";const c=cfg.clima||"mojada";
+  const F={seco:win?"Le ganaste a la arena blanda y al rival. ":"La arena seca no perdona: ",mojada:win?"La orilla firme fue tuya. ":"En la orilla firme no hay excusas: ",lluvia:win?"Bajo la lluvia, el que no patina gana. ":"La lluvia te hizo patinar: ",viento:win?"Ni la sudestada te paró. ":"El viento te comió las décimas: "};return esc(F[c]||"");}
 function settle(win,cfg,tie){
   const r=cfg.rival;let line="";const mult=S.pase?1.5:1;
+  if(cfg.kind==="ai"&&cfg.copaB){S.races++;save();return win?"Pasaste de ronda en el torneo de la banda.":"Quedaste afuera del torneo de la banda.";}
   if(cfg.kind==="ai"){
     if(cfg.mode==="copa"){line=copaResultado(win,cfg);S.races++;save();return line;}
-    if(cfg.mode==="practica"){if(win){S.pesos+=15000;line=`Propina del barrio: ${fmt(15000)}`;}else line="Sin apuesta, sin drama.";}
+    if(cfg.mode==="practica"){if(win){S.pesos+=15000;line=S.lvl===2?`Propina de los guardavidas: ${fmt(15000)}`:`Propina del barrio: ${fmt(15000)}`;}else line="Sin apuesta, sin drama.";}
     else if(cfg.mode==="plata"){if(win){const p=Math.round(cfg.bet*mult);S.pesos+=p;line=`Cobraste ${fmt(p)}${S.pase?" (Pase ×1,5)":""}`;}else{S.pesos=Math.max(0,S.pesos-cfg.bet);line=`Perdiste ${fmt(cfg.bet)}`;}}
     else{line=win?winCar(cfg.opCar,r.n):loseCar(r.n);}
     if(r.id!=="practica"&&BOT[r.id])line+=rankMove(r,win);
@@ -2375,10 +2597,10 @@ function finish(){starterStop();flagVidStop();
   const pt=R.P.fin??99,ot=R.O.fin??99,top=Math.round(R.P.top*3.6),react=R.P.react??0;
   const opQuit=cfg.kind==="live"&&R.O.fin===null&&!R.dnf,dnf=!!R.dnf,opFundio=!!R.opFundio;
   const solo=cfg.kind==="solo";const tie=!solo&&!opQuit&&!dnf&&Math.abs(pt-ot)<.0005;const win=!dnf&&(solo||opQuit||(!tie&&pt<ot));
-  bandaResultado(cfg,pt,dnf);
+  bandaResultado(cfg,pt,dnf,ot);
   // grabar mejor pasada (fantasma) si es válida
   let nuevoRecord=false;
-  if(pt<45&&R.rec.r!==null&&!cfg.exig&&cfg.kind!=="solo"){const g={d:GHOST_V,car:cleanCar(R.me),rec:{l:R.rec.l,r:R.rec.r,s:R.rec.s,z:R.rec.z,g:R.rec.g,w:R.rec.w}};const t=simGhost(g);
+  if(pt<(TRACK.lvl===2?150:45)&&R.rec.r!==null&&!cfg.exig&&cfg.kind!=="solo"&&cfg.lvl===S.lvl){const g={d:ghostV(),cl:TRACK.clima,car:cleanCar(R.me),rec:{l:R.rec.l,r:R.rec.r,s:R.rec.s,z:R.rec.z,g:R.rec.g,w:R.rec.w}};const t=simGhost(g);
     if(t!==null&&Math.abs(t-pt)<.02&&(!S.best||t<S.best)){S.best=t;S.ghost=g;nuevoRecord=true;}}
   endRace();RACE_LAST={pt,ot};
   const line=settle(win,cfg,tie);RACE_LAST=null;
@@ -2390,12 +2612,12 @@ function finish(){starterStop();flagVidStop();
   const rey=cfg.kind==="ai"&&win&&cfg.mode!=="copa"&&cfg.mode!=="practica"&&S.rank===1;const opn=esc(cfg.opName);
   const fmtT=x=>x<99?x.toFixed(2)+" s":"—",dif=(pt<99&&ot<99)?(pt<=ot?"-":"+")+Math.abs(pt-ot).toFixed(2)+" s":dnf?"MOTOR FUNDIDO":"—";
   const info={win,practica:!cfg.copaB&&cfg.mode!=="copa"&&cfg.kind!=="solo"&&(cfg.mode==="practica"||(!cfg.bet&&cfg.mode!=="papeles"&&cfg.modo!=="papeles")),papeles:cfg.mode==="papeles"||cfg.modo==="papeles",nombre:S.apodo||"Piloto",puesto:win?"P1":"P2",tiempo:fmtT(pt),dif};
-  if(S.coronar){S.coronar=false;save();CER_PEND.push("trono");}
+  if(S.coronar){S.coronar=false;if(S.lvl===1&&!S.dunasOk){S.dunasOk=true;S.dunasAviso=true;}save();CER_PEND.push("trono");}
   const cer=CER_PEND.splice(0);
   if(tie)playCer(cer,showPlate);else playResult(info,()=>playCer(cer,showPlate));
   function showPlate(){
-  modal(fileteSVG()+`<h3 class="gan" style="color:${win?"var(--oro)":tie?"var(--celeste)":"#ff8f9c"}">${dnf?"¡Fundiste el motor!":rey?"¡Sos el nuevo Rey de la Costanera!":opQuit?opn+(opFundio?" fundió el motor: ganaste":" abandonó: ganaste"):win?"¡Ganaste la picada!":tie?"¡Empate!":"Perdiste por "+(pt-ot).toFixed(2)+" s"}</h3>
-    <p>${esc(line)}${nuevoRecord?" Nuevo récord personal: tu fantasma se actualizó.":""}${dnf?" Te pasaste de vueltas demasiado tiempo. Llevalo al taller a rectificar.":""}</p>
+  modal(fileteSVG()+`<h3 class="gan" style="color:${win?"var(--oro)":tie?"var(--celeste)":"#ff8f9c"}">${dnf?"¡Fundiste el motor!":rey?(S.lvl===2?"¡Sos el nuevo Crack de las Dunas!":"¡Sos el nuevo Rey de la Costanera!"):opQuit?opn+(opFundio?" fundió el motor: ganaste":" abandonó: ganaste"):win?"¡Ganaste la picada!":tie?"¡Empate!":"Perdiste por "+(pt-ot).toFixed(2)+" s"}</h3>
+    <p>${R_DUNA(cfg,win,dnf)}${esc(line)}${nuevoRecord?" Nuevo récord personal: tu fantasma se actualizó.":""}${dnf?" Te pasaste de vueltas demasiado tiempo. Llevalo al taller a rectificar.":""}</p>
     <div class="stats"><div class="stat"><b>${pt<99?pt.toFixed(2):"—"}</b><span>Tu tiempo</span></div><div class="stat"><b>${ot<99?ot.toFixed(2):"—"}</b><span>${cfg.kind==="ai"?"Rival":opn}</span></div><div class="stat"><b>${top}</b><span>km/h</span></div><div class="stat"><b>${react.toFixed(2)}</b><span>Reacción</span></div></div>
     <div class="opts" id="ropts"></div>${S.noAds?"":`<div class="banner-ad">Espacio publicitario (simulado) · se saca en el Quisco</div>`}`,"resplaca");
   const o=$("#ropts");
@@ -2418,6 +2640,6 @@ function diag(extra){try{if(!NET.db||!NET.uid)return;let gl="?";try{const c=docu
   NET.db.doc("data/users/"+NET.uid+"/diag").set({v:BUILD,st:T3.st,err:String(T3.err||""),three:!!window.THREE,gltf:!!(window.THREE&&window.THREE.GLTFLoader),models:Object.keys(T3.models),gl,ua:navigator.userAgent.slice(0,160),at:Date.now(),...(extra||{})}).catch(()=>{});}catch(e){}}
 setTimeout(()=>diag(),12000);
 init3D().then(ok=>{if(ok&&curCar())loadModel(curCar().id).then(()=>{if(!RACE)render();},()=>{});});
-window.__test={loadModel,NET,cer:(l)=>playCer(l,()=>{}),go:v=>{view=v;render();},inv:()=>INV,BOTS,botET,myET,ranking,T3,race:()=>RACE,live:()=>LIVE,stats,makeRacer,stepRacer,doShift,optLaunch,CARS,RIVALS,rivalCar,newCar,simGhost,cleanGhost,S:()=>S};
+window.__test={banda:()=>BANDA,bandaArrancar,bandaLlave,bandaNombre,bandaMiCruce,enCopa,dunaRelato,startRace,setLvl,setTrack,TRACK,simET,CLIMAS,loadModel,NET,cer:(l)=>playCer(l,()=>{}),go:v=>{view=v;render();},inv:()=>INV,BOTS,botET,myET,ranking,T3,race:()=>RACE,live:()=>LIVE,stats,makeRacer,stepRacer,doShift,optLaunch,CARS,RIVALS,rivalCar,newCar,simGhost,cleanGhost,S:()=>S};
 })();
 </script>
