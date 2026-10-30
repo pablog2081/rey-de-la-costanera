@@ -43,8 +43,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--oro);outline-of
 .mute{width:38px;height:38px;border-radius:50%;border:2px solid var(--linea);font-size:16px;display:grid;place-items:center}
 
 main{flex:1;overflow-y:auto;overflow-x:hidden;padding-block:14px 20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-nav{display:grid;grid-template-columns:repeat(5,1fr);border-top:2px solid var(--linea);background:var(--asfalto);padding-bottom:env(safe-area-inset-bottom,0px)}
-nav button{padding:10px 2px 9px;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--crema-2);display:flex;flex-direction:column;align-items:center;gap:3px;position:relative}
+nav{display:grid;grid-template-columns:repeat(6,1fr);border-top:2px solid var(--linea);background:var(--asfalto);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{padding:9px 1px 8px;font-weight:700;font-size:clamp(8.5px,2.5vw,12px);letter-spacing:0;line-height:1.05;text-transform:uppercase;color:var(--crema-2);display:flex;flex-direction:column;align-items:center;gap:3px;position:relative}
 nav button svg{width:24px;height:24px}
 nav button[aria-current="page"]{color:var(--oro);background:linear-gradient(to top,rgba(242,182,50,.12),transparent)}
 nav .dot{position:absolute;top:6px;right:calc(50% - 20px);min-width:16px;height:16px;border-radius:8px;background:var(--verde);color:#062514;font-size:11px;line-height:16px;padding:0 4px}
@@ -109,6 +109,14 @@ h2{font-family:var(--f-display);font-weight:400;font-size:24px;margin:0 0 4px;co
 .sw .lk{position:absolute;right:-4px;bottom:-4px;font-size:10px;background:var(--oro);color:#2a1d02;border-radius:8px;padding:0 4px;font-weight:800}
 .sec-t{font-weight:800;letter-spacing:2px;text-transform:uppercase;font-size:13px;color:var(--celeste);margin:18px 0 8px;display:flex;justify-content:space-between;gap:8px}
 .sec-t span{color:var(--crema-2);letter-spacing:1px}
+.lm-row{background:var(--noche);border:1px solid var(--linea);border-radius:8px;padding:7px 10px;font-size:15px}
+.cat-h{font:400 15px 'Alfa Slab One',serif;color:var(--oro);letter-spacing:1px;margin:10px 2px 0;padding-bottom:4px;border-bottom:1px dashed rgba(242,182,50,.4)}
+.llave{display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow:auto;margin:6px 0}
+.llave .lr b{display:block;color:var(--celeste);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.llave .lm{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px}
+.llave .lm span{background:var(--asfalto);border:1px solid var(--linea);border-radius:8px;padding:6px 8px;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.llave .lm span.g{border-color:var(--verde);color:#c9f5da}.llave .lm span.p{opacity:.55}.llave .lm span.yo{font-weight:800;color:var(--celeste)}
+.llave .lm.win{display:block;font:400 18px 'Alfa Slab One',serif;color:var(--oro)}
 
 .diario{background:var(--papel);color:var(--tinta);border-radius:6px;padding:12px 12px 16px;font-family:var(--f-diario);box-shadow:0 6px 18px rgba(0,0,0,.4)}
 .diario .cab{text-align:center;border-bottom:3px double var(--tinta);padding-bottom:6px;margin-bottom:10px}
@@ -213,11 +221,12 @@ h2{font-family:var(--f-display);font-weight:400;font-size:24px;margin:0 0 4px;co
   </header>
   <main id="main"></main>
   <nav id="nav">
-    <button data-v="barrio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V10l5-4 5 4v11M13 21v-7h8v7M3 21h18"/></svg>Barrio</button>
-    <button data-v="pilotos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18.5 14.8c1.7.8 2.7 2.5 3 5.2"/></svg>Pilotos<span class="dot" id="dotOn" hidden></span></button>
-    <button data-v="taller"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L3 17.8 6.2 21l6.3-6.3a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>Taller</button>
-    <button data-v="clasif"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h13v16H6a2 2 0 0 1-2-2zM17 8h3v10a2 2 0 0 1-2 2M7 8h7M7 12h7M7 16h4"/></svg>Diario</button>
-    <button data-v="kiosco"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M8 12h8"/></svg>Kiosco</button>
+    <button data-v="barrio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V10l5-4 5 4v11M13 21v-7h8v7M3 21h18"/></svg>La Lleca</button>
+    <button data-v="banda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 21V4M6 4h11l-2.5 3.5L17 11H6"/><circle cx="18" cy="17" r="2.5"/><circle cx="11" cy="18" r="2.5"/></svg>La Banda<span class="dot" id="dotOn" hidden></span></button>
+    <button data-v="pilotos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 0 1 0 6.4M18.5 14.8c1.7.8 2.7 2.5 3 5.2"/></svg>Ranking</button>
+    <button data-v="taller"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L3 17.8 6.2 21l6.3-6.3a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>Garage</button>
+    <button data-v="clasif"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h13v16H6a2 2 0 0 1-2-2zM17 8h3v10a2 2 0 0 1-2 2M7 8h7M7 12h7M7 16h4"/></svg>Clasificados</button>
+    <button data-v="kiosco"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M8 12h8"/></svg>Quisco</button>
   </nav>
 </div>
 
@@ -313,18 +322,47 @@ function simET(st,sk){const R=makeRacer(st);R.launched=true;R.clutch=true;R.rpm=
     if(R.shiftT<=0&&!R.clutch&&R.rpm>=st.red*shX)doShift(R);
     if(R.nitroN>0&&R.gear>=1&&R.nitroT<=0&&R.shiftT<=0){R.nitroN--;R.nitroT=2;}
     if(R.fin!==null)return R.fin+react;}return 99;}
-function botET(b){return ETC[b.id]||(ETC[b.id]=simET(stats({id:b.car,up:b.up}),b.sk));}
+// Dificultad: todos los del barrio corren un poco más fuerte; los 3 de arriba están calibrados aparte.
+const PF_BOTS=1.04, TOP_T={1:12.50,2:12.60,3:12.70}, EXIG={1:{pf:1.09,w:100},2:{pf:1.07,w:50},3:{pf:1.05,w:25}};
+const CATS=[{k:"primera",n:"Primera"},{k:"b",n:"La B"},{k:"tercera",n:"Tercera"},{k:"reserva",n:"Reserva"},{k:"promo",n:"Promoción"}];
+const CAT_PREMIO=[1000000,600000,350000,200000,120000];
+const catOf=i=>i<80?Math.floor(i/16):5; // i = índice 0-based en el ranking; 5 = desafiliados
+const catName=c=>c<5?CATS[c].n:"Desafiliados";
+function botPos(id){return S.ord?S.ord.indexOf(id)+1:0;}
+const pfCache={};
+function botPF(b){const pos=botPos(b.id);if(!(pos>=1&&pos<=3))return PF_BOTS;
+  const key=b.id+"|"+b.car+"|"+UPK.map(k=>b.up[k]).join("")+b.up.nitro+"|"+pos;if(pfCache[key])return pfCache[key];
+  const sk=Math.max(b.sk,.95),et=pf=>simET(stats({id:b.car,up:b.up,pf}),sk);let lo=.7,hi=1.8;
+  for(let i=0;i<16;i++){const mid=(lo+hi)/2;if(et(mid)>TOP_T[pos])lo=mid;else hi=mid;}
+  return pfCache[key]=hi;}
+function botSk(b){const pos=botPos(b.id);return pos>=1&&pos<=3?Math.max(b.sk,.95):b.sk;}
+function botET(b,basePF){const pf=basePF?PF_BOTS:botPF(b),k=b.id+"|"+b.car+"|"+UPK.map(x=>b.up[x]).join("")+b.up.nitro+"|"+pf.toFixed(4)+"|"+botSk(b);
+  return ETC[k]||(ETC[k]=simET(stats({id:b.car,up:b.up,pf}),basePF?b.sk:botSk(b)));}
 function myET(c){c=c||curCar();const k="me:"+c.id+":"+UPK.map(x=>c.up[x]).join("")+(c.up.nitro|0);return ETC[k]||(ETC[k]=simET(stats(c),.85));}
 function avatarHTML(id,name,extra){return `<div class="avatar" ${extra||""}>${initial(name)}${id?`<img loading="lazy" alt="" src="perfiles/${id}.webp" onerror="this.remove()">`:""}</div>`;}
-function ranking(){const c=curCar();const bots=BOTS.map(b=>({b,et:botET(b)})).sort((a,b)=>a.et-b.et),N=bots.length+1;
-  if(S.rank==null){ // partidas viejas: el puesto sale del tiempo estimado; las nuevas arrancan últimas
-    if(c&&(S.races||S.ganadas)){const et=myET(c);S.rank=bots.filter(x=>x.et<et).length+1;}else S.rank=N;}
-  const pos=Math.max(1,Math.min(N,S.rank|0)),me={yo:1,et:c?myET(c):99},rows=bots.slice();rows.splice(pos-1,0,me);return {rows,me,myI:pos-1,N};}
-function rankMove(r,win){const R=ranking(),bi=R.rows.findIndex(x=>x.b&&x.b.id===r.id);if(bi<0)return "";
-  if(win&&bi<R.myI){S.rank=bi+1;return ` Subiste al puesto ${S.rank}º.`;}
-  if(!win&&bi>R.myI){S.rank=bi+1;return ` Bajaste al puesto ${S.rank}º.`;}return "";}
+// El orden del ranking se guarda: S.ord = ids de los bots + "yo"
+function ordInit(){if(S.ord&&S.ord.length===BOTS.length+1&&S.ord.includes("yo")&&S.ord.every(x=>x==="yo"||BOT[x]))return;
+  const c=curCar();const bots=BOTS.map(b=>({id:b.id,et:botET(b,true)})).sort((a,b)=>a.et-b.et),N=bots.length+1;
+  if(S.rank==null){if(c&&(S.races||S.ganadas)){const et=myET(c);S.rank=bots.filter(x=>x.et<et).length+1;}else S.rank=N;}
+  const pos=Math.max(1,Math.min(N,S.rank|0));const ord=bots.map(x=>x.id);ord.splice(pos-1,0,"yo");S.ord=ord;}
+function ranking(){ordInit();const c=curCar(),N=S.ord.length;
+  const rows=S.ord.map(id=>id==="yo"?{yo:1,et:c?myET(c):99}:{b:BOT[id],et:botET(BOT[id])});
+  const myI=S.ord.indexOf("yo");S.rank=myI+1;return {rows,me:rows[myI],myI,N};}
+function moveYo(to){const o=S.ord,i=o.indexOf("yo");o.splice(i,1);o.splice(Math.max(0,Math.min(o.length,to)),0,"yo");S.rank=o.indexOf("yo")+1;}
+function rankMove(r,win){const R=ranking(),bi=S.ord.indexOf(r.id);if(bi<0)return "";
+  if(win&&bi<R.myI){moveYo(bi);S.coronar=S.rank===1;return ` Subiste al puesto ${S.rank}º (${catName(catOf(S.rank-1))}).`;}
+  if(!win&&bi>R.myI){moveYo(bi);return ` Bajaste al puesto ${S.rank}º (${catName(catOf(S.rank-1))}).`;}return "";}
+// Un piloto del barrio que pierde el auto a los papeles se compra otro de ~30% del valor y se reclasifica por tiempo estimado
+function botPierdeAuto(id){const b=BOT[id];if(!b)return "";const old=CAR[b.car],tope=old.price*.3;
+  const cand=CARS.filter(c=>c.price<=tope).sort((a,c)=>c.price-a.price);const nc=cand[0]||[...CARS].sort((a,c)=>a.price-c.price)[0];
+  const u=b.u.map(x=>Math.floor(x*.3)),nx=0;S.botMod=S.botMod||{};S.botMod[id]={car:nc.id,u,nx};applyBotMod(id);
+  const myIdx=S.ord.indexOf("yo");const o=S.ord.filter(x=>x!==id&&x!=="yo");const et=botET(b,true);
+  let k=o.findIndex(x=>botET(BOT[x],true)>et);if(k<0)k=o.length;o.splice(k,0,id);o.splice(myIdx,0,"yo");S.ord=o;
+  return ` ${b.n} se compró un ${nc.name} y quedó ${S.ord.indexOf(id)+1}º.`;}
+function applyBotMod(id){const m=S.botMod&&S.botMod[id],b=BOT[id];if(!m||!b||!CAR[m.car])return;b.car=m.car;b.u=m.u.slice(0,6);b.nx=m.nx|0;
+  b.up=Object.fromEntries(UPK.map((k,i)=>[k,b.u[i]|0]));b.up.nitro=b.nx;}
 // respuesta del bot a un desafío según la distancia en el ranking
-function botTerms(r){const R=ranking(),bi=R.rows.findIndex(x=>x.b&&x.b.id===r.id),d=bi-R.myI,ad=Math.abs(d);
+function botTerms(r){const R=ranking(),bi=S.ord.indexOf(r.id),d=bi-R.myI,ad=Math.abs(d);
   const papeles=!r.rey&&ad<=5;let bet=r.bet,contra=false;
   if(ad>10){bet=Math.max(5000,Math.round(r.bet*(1+(d<0?1:-1)*ad/R.N)/5000)*5000);contra=true;}
   return {d,ad,papeles,bet,contra,pos:bi+1};}
@@ -337,7 +375,7 @@ const PACKS = [
  {f:1200,p:"$ 13.999",t:"Lata de fichas",b:"+20% de regalo",dest:true},
  {f:3000,p:"$ 29.999",t:"Cajón del kiosquero",b:"+50% de regalo"},
 ];
-const BUILD="v24";
+const BUILD="v25";
 const DIST = 402; // cuarto de milla
 const GHOST_V = 402;
 const H = 1/240;            // paso fijo de física: así una pasada grabada se reproduce igual en cualquier celular
@@ -354,6 +392,7 @@ const QS=new URLSearchParams(location.search);
 const PUB="https://pablog2081.github.io/rey-de-la-costanera/";
 if(NUEVO&&/^[A-Za-z0-9]{10,40}$/.test(QS.get("ref")||""))S.refBy=QS.get("ref");
 migrate();
+if(S.botMod)for(const id in S.botMod)applyBotMod(id);
 if(S.ghost&&S.ghost.d!==GHOST_V){S.best=null;S.ghost=null;} // los récords de 200 m no valen para 400 m
 const newCar=(id,color)=>({uid:S.uid++,id,color:color||CAR[id].col,filete:false,up:{motor:0,carbu:0,escape:0,caja:0,cubiertas:0,peso:0,nitro:0}});
 const curCar=()=>S.cars.find(c=>c.uid===S.cur)||null;
@@ -463,13 +502,13 @@ async function netInit(){
   }
   if(NET.room){
     NET.room.onPeers(ch=>{NET.peers=ch.peers.filter(p=>!p.sameTab&&p.presence&&p.presence.apodo&&p.kind==="viewer");
-      const d=$("#dotOn");d.hidden=!NET.peers.length;d.textContent=NET.peers.length;if((view==="pilotos"||view==="barrio")&&$("#modal").hidden&&!RACE&&S.cars.length)render();},()=>{});
+      const d=$("#dotOn");d.hidden=!NET.peers.length;d.textContent=NET.peers.length;if((view==="pilotos"||view==="barrio"||view==="banda")&&$("#modal").hidden&&!RACE&&S.cars.length)render();},()=>{});
     NET.room.on("reto",onReto,()=>{});NET.room.on("respuesta",onRespuesta,()=>{});NET.room.on("unirme",onUnirme,()=>{});
     lobbyPresence();
   }
   NET.ready=true;
   if(S.apodo)pubPilot();
-  refInit();
+  refInit();bandaInit();
   render();
   if(!S.apodo&&S.cars.length&&$("#modal").hidden)askApodo();
 }
@@ -482,11 +521,15 @@ function stats(o){
   const c=CAR[o.id],u=o.up;
   const hp=c.hp*(1+.12*u.motor+.05*u.carbu+.03*u.escape);
   const mass=c.kg*(1-.04*u.peso)+75;
-  return {hp,mass,grip:.95+.08*u.cubiertas,shift:.42-.055*u.caja,nitro:u.nitro||0,red:c.red,gears:c.gears,fd:c.fd,trac:c.trac};
+  const pf=o.pf>0?o.pf:1;
+  return {hp:hp*pf,mass:mass/Math.sqrt(pf),grip:(.95+.08*u.cubiertas)*pf,shift:.42-.055*u.caja,nitro:u.nitro||0,red:c.red,gears:c.gears,fd:c.fd,trac:c.trac};
 }
 const RATIOS={4:[3.3,2.05,1.42,1.0],5:[3.4,2.2,1.55,1.18,.95]};
 const WR=.3, EFF=.85;
-function powerAt(st,rpm){const x=Math.min(rpm/st.red,1.02);const sh=Math.max(.12,1-((x-.85)/.78)**2);return st.hp*745.7*sh;}
+// Arriba del rojo el motor entrega un poco más ("estirar los cambios"), pero se gasta rápido.
+const ESTIRA=.12;
+function powerAt(st,rpm){const x=Math.min(rpm/st.red,1);const sh=Math.max(.12,1-((x-.85)/.78)**2);let p=st.hp*745.7*sh;
+  if(rpm>st.red){const f=Math.min(1,(rpm-st.red)/(st.red*.15));p*=1+ESTIRA*f;}return p;}
 function torqueAt(st,rpm){return powerAt(st,Math.max(rpm,1100))/(Math.max(rpm,1100)*Math.PI/30);}
 function optLaunch(st){
   const r=RATIOS[st.gears][0]*st.fd*EFF/WR,tr=st.grip*st.trac*st.mass*9.81;
@@ -527,10 +570,10 @@ function stepRacer(R,dt,thr,t,rng){
   R.x+=R.v*dt;R.top=Math.max(R.top,R.v);
   if(R.fin===null&&R.x>=DIST)R.fin=t;
 }
-function shiftQuality(R){const x=R.rpm/R.st.red;if(R.limT>.25||x>1.0)return "TARDE";if(x>=.86)return "PERFECTO";if(x>=.74)return "BIEN";return "TEMPRANO";}
+function shiftQuality(R){const x=R.rpm/R.st.red;if(R.limT>.25)return "TARDE";if(x>1.0)return "ESTIRADO";if(x>=.86)return "PERFECTO";if(x>=.74)return "BIEN";return "TEMPRANO";}
 function doShift(R){
   if(!R.launched||R.shiftT>0||R.gear>=RATIOS[R.st.gears].length-1)return null;
-  const q=shiftQuality(R);R.shiftT=R.st.shift*(q==="PERFECTO"?.55:q==="TARDE"?1.3:1);R.limT=0;return q;
+  const q=shiftQuality(R);R.shiftT=R.st.shift*(q==="PERFECTO"||q==="ESTIRADO"?.55:q==="TARDE"?1.3:1);R.limT=0;return q;
 }
 function perf(st){return Math.round(st.hp/st.mass*1000*Math.min(1.2,st.grip)*1.4);}
 // Fantasma: reproduce exactamente una pasada grabada (largada, cambios, nitro, acelerador) tick a tick.
@@ -897,7 +940,7 @@ function emitSmoke(E,x,y,z,dark,size){const p=E.parts.find(q=>q.life<=0);if(!p)r
 function render3D(R,w,h,dt,ctx){
   const E=T3.env,TH=T3.TH,ren=T3.ren,P=R.P,O=R.O,{me,op}=R.g3;
   const t=performance.now()/1000;
-  me.position.x=P.x-me.userData.L/2;op.position.x=O.x-op.userData.L/2;
+  me.position.x=P.x-me.userData.L/2;op.position.x=O.x-op.userData.L/2;op.visible=R.cfg.kind!=="solo";
   for(const [c,X] of [[me,P],[op,O]]){const u=c.userData;u.spin-=(X.v/Math.max(.1,u.wr))*dt*(X.spin?1.7:1);u.wheels.forEach(w=>w.rotation.z=u.spin);}
   const inside=!!R.inside;me.userData.body.visible=!inside;me.userData.shadow.visible=!inside;
   const vib=v=>v>.3?Math.sin(t*38)*.006:0;
@@ -1095,7 +1138,7 @@ function starterStop(){for(const k in STS){const o=STS[k];if(o.v&&!o.v.paused)o.
 function cabGeom(w,h,id){const m=CABINA[id];const s=Math.max(w/1280,h/720*.8),iw=1280*s,ih=720*s;let ox=w/2-(m.cx+150)*s;ox=Math.min(0,Math.max(w-iw,ox));return {s,ox,oy:h-ih,m};}
 function renderVideo(R,w,h,dt,ctx,inside){
   const E=T3.env,TH=T3.TH,ren=T3.ren,P=R.P,O=R.O,{me,op}=R.g3,v=DRV,t=performance.now()/1000;
-  me.position.z=VSH.laneMe;op.position.z=VSH.laneOp;E.envLines.forEach(l=>l.visible=false);E.vLines.forEach(l=>l.visible=true); // carriles del video: yo en el de la cámara, el rival a la derecha
+  me.position.z=VSH.laneMe;op.position.z=VSH.laneOp;op.visible=R.cfg.kind!=="solo";E.envLines.forEach(l=>l.visible=false);E.vLines.forEach(l=>l.visible=true); // carriles del video: yo en el de la cámara, el rival a la derecha
   let camX;
   if(inside)camX=P.x-me.userData.L*.52;
   else{const lo=Math.min(P.x,O.x),hi=Math.max(P.x,O.x),tgt0=Math.max(lo-7,hi-35),tgt=R.done?Math.min(tgt0,DIST-15):tgt0;
@@ -1278,7 +1321,7 @@ function render(){
   if(!S.cars.length&&view!=="kiosco")view="clasif";
   document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.v===view?"page":"false"));
   const m=$("#main"),st=m.scrollTop,same=m.dataset.v===view;m.innerHTML="";m.dataset.v=view;
-  ({barrio:vBarrio,pilotos:vPilotos,taller:vTaller,clasif:vClasif,kiosco:vKiosco})[view](m);
+  ({barrio:vBarrio,banda:vBanda,pilotos:vPilotos,taller:vTaller,clasif:vClasif,kiosco:vKiosco})[view](m);
   m.scrollTop=same?st:0;
 }
 function respeto(){const st=RIVALS.map(r=>r.id);const a=S.beaten.filter(x=>st.includes(x)).length,b=S.beaten.length-a;return a+Math.floor(b/4);}
@@ -1302,7 +1345,7 @@ function askApodo(force){
 /* ---------- BARRIO ---------- */
 function vBarrio(m){
   const c=curCar();const st=stats(c);
-  m.append(el(`<div><h2>La avenida de noche</h2><p class="sub">Escalá el ranking del barrio hasta llegar al Rey. Se corre un cuarto de milla: 400 metros de semáforo a semáforo.</p></div>`));
+  m.append(el(`<div><h2>La Lleca</h2><p class="sub">La avenida de noche. Escalá el ranking hasta llegar al Rey y jugá la copa de tu categoría. Se corre un cuarto de milla: 400 metros de semáforo a semáforo.</p></div>`));
   const hero=el(`<div class="hero"><canvas></canvas><div class="cap"><div><div class="nom">${CAR[c.id].name}</div><div class="ins">Inspirado en ${CAR[c.id].ins} · ${CAR[c.id].year}</div></div><span class="chip ${c.fundido?"rojo":"oro"}">${c.fundido?"Motor fundido":perf(st)+" RND"}</span></div></div>`);
   m.append(hero);
   requestAnimationFrame(()=>{const cv=hero.querySelector("canvas");const dpr=Math.min(2,devicePixelRatio||1);cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -1312,14 +1355,16 @@ function vBarrio(m){
   const today=new Date().toISOString().slice(0,10);
   if(S.lastMate!==today){const b=el(`<div class="pack dest"><div class="big">☕</div><div><div class="t">Mate diario</div><div class="s">Pasá por la esquina todos los días: ${fmt(20000)} y 5 fichas${S.pase?" (+20 por el Pase Fierrero)":""}.</div></div><button class="btn oro">Tomar</button></div>`);
     b.querySelector("button").onclick=()=>{S.lastMate=today;S.pesos+=20000;S.fichas+=5+(S.pase?20:0);save();toast("¡Buen mate! Premio cobrado");render();};m.append(b);}
-  if(NET.peers.length){const on=el(`<button class="btn verde full" style="margin-top:12px">${NET.peers.length} piloto${NET.peers.length>1?"s":""} en la avenida ahora · desafiar</button>`);on.onclick=()=>{view="pilotos";render();};m.append(on);}
+  if(NET.peers.length){const on=el(`<button class="btn verde full" style="margin-top:12px">${NET.peers.length} piloto${NET.peers.length>1?"s":""} en la avenida ahora · desafiar</button>`);on.onclick=()=>{view="banda";render();};m.append(on);}
+  copaSection(m);
   const {rows,myI}=ranking();
-  m.append(el(`<div class="sec-t">Ranking del barrio <span>${rows.length} pilotos · vas ${myI+1}º</span></div>`));
-  m.append(el(`<p class="nota" style="margin-top:0">Ganale a alguien de arriba y te quedás con su puesto; si perdés con alguien de abajo, bajás. Los que están a 5 puestos o menos se juegan los papeles; por plata corren al precio fijo hasta 10 puestos de distancia y, más lejos, te hacen una contraoferta.</p>`));
+  m.append(el(`<div class="sec-t">Ranking de La Lleca <span>${rows.length} pilotos · vas ${myI+1}º · ${catName(catOf(myI))}</span></div>`));
+  m.append(el(`<p class="nota" style="margin-top:0">Ganale a alguien de arriba y te quedás con su puesto (los que pasás bajan uno); si perdés con alguien de abajo, bajás. Los que están a 5 puestos o menos se juegan los papeles: si pierden el auto se compran uno más barato y se reacomodan por tiempo. Por plata corren al precio fijo hasta 10 puestos de distancia y, más lejos, contraofertan. Categorías de 16: Primera, La B, Tercera, Reserva y Promoción; del 81º para abajo, Desafiliados. Los 3 de arriba largan perfecto: para ganarles hay que exigir el motor.</p>`));
   const all=!!S.verTodo,lo=all?0:Math.max(0,myI-8),hi=all?rows.length:Math.min(rows.length,myI+9);
   const list=el(`<div class="stack"></div>`);
   if(!all&&lo>0){const top=el(`<button class="btn sec full">Ver del 1º al ${lo}º (arriba tuyo)</button>`);top.onclick=()=>{S.verTodo=true;render();};list.append(top);}
   rows.slice(lo,hi).forEach((x,k)=>{const i=lo+k;
+    if(i%16===0&&i<=80||i===lo&&!all)list.append(el(`<div class="cat-h">${catName(catOf(i))}${i===lo&&i%16!==0&&i<80?" (sigue)":""}</div>`));
     if(x.yo){const c2=curCar();list.append(el(`<div class="rival yo"><div class="avatar" style="background:var(--celeste)">${initial(S.apodo||"Vos")}</div><div style="min-width:0"><div class="n">${i+1}º · ${esc(S.apodo||"Vos")}</div><div class="d">${CAR[c2.id].name} · ${x.et.toFixed(2)} s estimado</div></div><span class="chip cel">Vos</span></div>`));return;}
     const r=x.b,beaten=S.beaten.includes(r.id),open=true,mej=UPK.reduce((a,k)=>a+r.up[k],0);
     const row=el(`<div class="rival ${open?"":"lock"} ${r.rey?"rey":""}">${avatarHTML(r.id,r.n,r.rey?'style="background:var(--oro)"':"")}
@@ -1332,16 +1377,16 @@ function vBarrio(m){
   m.append(list);
   const pr=el(`<button class="btn sec full" style="margin-top:12px">Picada de práctica (sin apuesta)</button>`);pr.onclick=()=>practice();m.append(pr);
 }
-function rivalCar(r){const o=newCar(r.car);S.uid--;if(r.up){o.up=Object.assign({},r.up);o.color=CAR[r.car].col;return o;}const L=r.lv;o.up={motor:L,carbu:Math.max(0,L-1),escape:L,caja:Math.max(0,L-1),cubiertas:L,peso:Math.max(0,L-2),nitro:r.nitro||0};o.color=CAR[r.car].col;return o;}
+function rivalCar(r){const o=newCar(r.car);S.uid--;if(r.up){o.up=Object.assign({},r.up);o.color=CAR[r.car].col;if(BOT[r.id]===r)o.pf=botPF(r);return o;}const L=r.lv;o.up={motor:L,carbu:Math.max(0,L-1),escape:L,caja:Math.max(0,L-1),cubiertas:L,peso:Math.max(0,L-2),nitro:r.nitro||0};o.color=CAR[r.car].col;return o;}
 function vsBlock(a,b,an,bn){const sa=stats(a),sb=stats(b);
   const blk=el(`<div class="vs"><div><canvas></canvas><div class="nm">${esc(an)}</div><div class="mt">${CAR[a.id].name}<br>${Math.round(sa.hp)} CV · ${perf(sa)} RND</div></div><div class="x">VS</div><div><canvas></canvas><div class="nm">${esc(bn)}</div><div class="mt">${CAR[b.id].name}<br>${Math.round(sb.hp)} CV · ${perf(sb)} RND</div></div></div>`);
   requestAnimationFrame(()=>{const cs=blk.querySelectorAll("canvas");carThumb(cs[0],a);carThumb(cs[1],b);});return blk;}
-function canRace(){const c=curCar();if(c&&c.fundido){toast("Tenés el motor fundido: llevalo al taller");view="taller";closeModal();render();return false;}return true;}
+function canRace(){const c=curCar();if(c&&c.fundido){toast("Tenés el motor fundido: llevalo al garage");view="taller";closeModal();render();return false;}return true;}
 function challenge(r){if(!canRace())return;
   const me=curCar(),op=rivalCar(r),T=botTerms(r);
   modal(`<h3>${esc(r.n)} · ${T.pos}º</h3><p>${esc(r.d)}</p><div id="vsz"></div><div class="opts" id="opts"></div>`);
-  $("#vsz").append(vsBlock(me,op,"Vos",r.n));
-  const o=$("#opts"),go=(mode,bet)=>{closeModal();startRace({kind:"ai",rival:r,opName:r.n,opCar:op,mode,bet});};
+  $("#vsz").append(vsBlock(me,op,"Vos",r.n));exigBlock(T.pos);
+  const o=$("#opts"),go=(mode,bet)=>{const exig=getExig(T.pos);closeModal();startRace({kind:"ai",rival:r,opName:r.n,opCar:op,mode,bet,exig});};
   if(!T.contra){const b1=el(`<button class="btn">Por la plata · ${fmt(T.bet)}</button>`);
     if(S.pesos<T.bet){b1.disabled=true;b1.textContent=`Te falta plata (${fmt(T.bet)})`;}b1.onclick=()=>go("plata",T.bet);o.append(b1);}
   else{const mas=T.d<0;
@@ -1354,28 +1399,227 @@ function challenge(r){if(!canRace())return;
     else o.append(el(`<button class="btn sec" disabled>Los papeles no: estás a ${T.ad} puestos (máx. 5)</button>`));}
   const c=el(`<button class="btn sec">${T.contra?"Cancelar":"Volver"}</button>`);c.onclick=closeModal;o.append(c);
 }
+// Los 3 de arriba: hay que largar bien y exigir el motor (o tener todas las mejoras finales)
+const fullFinal=c=>UPK.every(k=>c.up[k]>=5);
+function exigBlock(pos){if(!(pos>=1&&pos<=3))return;const c=curCar(),E=EXIG[pos],full=fullFinal(c);
+  const txt=pos===1?"Es el número 1: sin todas las mejoras finales no se le gana. O exigís el motor hasta fundirlo (cruza la meta y se funde: después hay que rectificar), o le ponés las mejoras finales con fichas en el Garage.":
+    `Está ${pos}º: larga perfecto y no perdona. Para ganarle tenés que largar bien y exigir el motor: se gasta un ${E.w}% por picada.`;
+  const b=el(`<div class="pack ${full?"":"dest"}" style="display:block;margin:10px 0"><div class="t">${pos===1?"♛ ":""}Picada de los ${pos===1?"grandes":"de arriba"}</div><div class="s" style="margin:4px 0 8px">${txt}</div>
+    <label style="display:flex;gap:10px;align-items:center;font-weight:700"><input type="checkbox" id="exig" ${full?"":"checked"} style="width:24px;height:24px;accent-color:var(--oro)">Exigir el motor (+${Math.round((E.pf-1)*100)}% de rendimiento${pos===1?", se funde":", gasta "+E.w+"%"})</label>
+    ${full?`<div class="s" style="margin-top:6px;color:var(--verde)">Tenés todas las mejoras finales: podés correr sin exigirlo.</div>`:""}</div>`);
+  $("#vsz").after(b);}
+function getExig(pos){const i=$("#exig");return pos>=1&&pos<=3&&i&&i.checked?EXIG[pos]:null;}
 function practice(){if(!canRace())return;const {rows,myI}=ranking();const near=rows.filter((x,i)=>!x.yo&&Math.abs(i-myI)<=4);const b=near[Math.floor(Math.random()*near.length)].b;
   const r=Object.assign({},b,{id:"practica",bet:0});
   startRace({kind:"ai",rival:r,opName:b.n,opCar:rivalCar(b),mode:"practica"});}
 
-/* ---------- PILOTOS (multijugador) ---------- */
-function initial(s){return esc((String(s).replace(/^(El|La) /i,"").trim()[0]||"?").toUpperCase());}
-function vPilotos(m){
-  m.append(el(`<div><h2>Pilotos del barrio</h2><p class="sub">Corré contra gente de verdad: en vivo si están conectados, o contra su mejor pasada grabada cuando no están.</p></div>`));
+
+/* ---------- COPA (mata-mata por categoría) ---------- */
+const SEED16=[1,16,8,9,5,12,4,13,6,11,3,14,7,10,2,15];
+const RONDA_N=["Octavos","Cuartos","Semifinal","Final"];
+let CER_PEND=[]; // ceremonias a mostrar después de la placa
+const nomId=id=>id==="yo"?(S.apodo||"Vos"):BOT[id]?BOT[id].n:"?";
+function catIds(c){ordInit();return S.ord.slice(c*16,c*16+16);}
+function simTime(id){const b=BOT[id];const g=(Math.random()+Math.random()+Math.random()-1.5)*.08;return botET(b)+g+(1-botSk(b))*Math.random()*.25;}
+function copaNueva(c){const ids=catIds(c);return {cat:c,rondas:[SEED16.map(k=>ids[k-1])],t:[{}],fin:false,at:Date.now()};}
+function copaRival(C){const R=C.rondas[C.rondas.length-1],i=R.indexOf("yo");if(i<0)return null;return R[i^1];}
+// simula todos los cruces de la ronda actual que no son del jugador; si el jugador ya no está, simula hasta el final
+function copaAvanza(C){
+  while(!C.fin){const r=C.rondas.length-1,R=C.rondas[r],T=C.t[r];if(R.length===1){C.fin=true;break;}
+    for(let i=0;i<R.length;i+=2){const a=R[i],b=R[i+1];if(a==="yo"||b==="yo")continue;if(T[a]==null)T[a]=simTime(a);if(T[b]==null)T[b]=simTime(b);}
+    if(R.includes("yo")&&T.yo==null)return; // espera la picada del jugador
+    const N=[];for(let i=0;i<R.length;i+=2){const a=R[i],b=R[i+1];N.push(T[a]<=T[b]?a:b);}C.rondas.push(N);C.t.push({});}
+}
+function copaUltimo(C){const R=C.rondas[0],T=C.t[0];let w=null,wt=-1;for(let i=0;i<R.length;i+=2){const a=R[i],b=R[i+1],l=T[a]<=T[b]?b:a;if(T[l]>wt){wt=T[l];w=l;}}return w;}
+function copaSimCompleta(c){const C=copaNueva(c);copaAvanza(C);return C;}
+function swapOrd(a,b){const o=S.ord,i=o.indexOf(a),j=o.indexOf(b);if(i<0||j<0)return;o[i]=b;o[j]=a;S.rank=o.indexOf("yo")+1;}
+// cierre: ascensos y descensos en todas las categorías
+function copaCierre(C){
+  const res=[];for(let c=0;c<5;c++){const X=c===C.cat?C:copaSimCompleta(c);res[c]={camp:X.rondas[X.rondas.length-1][0],ult:copaUltimo(X)};}
+  const desaf=S.ord.slice(80);const mejorDesaf=desaf[0];
+  const msgs=[];
+  for(let c=0;c<4;c++){const up=res[c+1].camp,down=res[c].ult;swapOrd(up,down);
+    if(up==="yo")msgs.push(`Ascendiste a ${CATS[c].n}.`);if(down==="yo")msgs.push(`Descendiste a ${CATS[c+1].n}.`);}
+  if(mejorDesaf){swapOrd(mejorDesaf,res[4].ult);if(mejorDesaf==="yo")msgs.push("Te afiliaste: subiste a Promoción.");if(res[4].ult==="yo")msgs.push("Te desafiliaron: bajaste a Desafiliados.");}
+  const yoCamp=res[C.cat].camp==="yo",yoUlt=res[C.cat].ult==="yo";
+  S.copas=S.copas||[];if(yoCamp)S.copas.push({cat:C.cat,at:Date.now()});
+  S.copaHist=[{cat:C.cat,camp:res[C.cat].camp,ult:res[C.cat].ult,at:Date.now()},...(S.copaHist||[])].slice(0,10);
+  return {res,msgs,yoCamp,yoUlt};}
+function copaResultado(win,cfg){const C=S.copa;if(!C)return "";const r=C.rondas.length-1,T=C.t[r],op=copaRival(C);
+  const R=RACE_LAST||{};T.yo=win?Math.min(R.pt??99,(R.ot??99)-.001):Math.max(R.pt??99,(R.ot??0)+.001);T[op]=R.ot??99;
+  if(T.yo>=99&&T[op]>=99)T[op]=98;
+  let line=win?(r<3?`¡Pasaste a ${RONDA_N[r+1]}!`:""):`Quedaste afuera en ${RONDA_N[r]}.`;
+  copaAvanza(C);
+  if(C.fin){const K=copaCierre(C);const camp=C.rondas[C.rondas.length-1][0];
+    if(K.yoCamp){const p=CAT_PREMIO[C.cat];S.pesos+=p;line=`¡Campeón de ${CATS[C.cat].n}! Cobraste ${fmt(p)}.`;CER_PEND.push("copa"+(C.cat+1));}
+    else{const fin=C.rondas[3]&&C.rondas[3].includes("yo");if(fin&&!K.yoCamp){const p=Math.round(CAT_PREMIO[C.cat]*.3);S.pesos+=p;line=`Subcampeón: cobraste ${fmt(p)}. Ganó la copa ${nomId(camp)}.`;}
+      else line=(line||"")+` Campeón: ${nomId(camp)}.`;}
+    if(K.yoUlt){CER_PEND.push("descenso");line+=" Saliste último de la copa.";}
+    if(K.msgs.length)line+=" "+K.msgs.join(" ");
+    S.copa=null;}
+  return line;}
+let RACE_LAST=null;
+function copaJugar(){const C=S.copa;if(!C||!canRace())return;const op=copaRival(C);if(!op)return;const r=BOT[op],me=curCar(),opc=rivalCar(r),pos=S.ord.indexOf(op)+1;
+  modal(`<h3>${RONDA_N[C.rondas.length-1]} · Copa ${CATS[C.cat].n}</h3><p>Contra ${esc(r.n)} (${pos}º). Mata-mata: el que pierde se va a casa.</p><div id="vsz"></div><div class="opts" id="opts"></div>`);
+  $("#vsz").append(vsBlock(me,opc,"Vos",r.n));exigBlock(pos);
+  const o=$("#opts"),y=el(`<button class="btn oro">¡A correr!</button>`),n=el(`<button class="btn sec">Después</button>`);
+  y.onclick=()=>{const exig=getExig(pos);closeModal();startRace({kind:"ai",rival:r,opName:r.n,opCar:opc,mode:"copa",bet:0,exig});};n.onclick=closeModal;o.append(y,n);}
+function copaSection(m){const R=ranking(),cat=catOf(R.myI);
+  m.append(el(`<div class="sec-t">Modo copa <span>${cat<5?"Categoría "+catName(cat):"Desafiliados"}</span></div>`));
+  if(cat>=5){m.append(el(`<div class="vacio">Estás en Desafiliados: no jugás copas. Ganale a alguien de Promoción (del 65º al 80º) para afiliarte, o esperá: el mejor desafiliado sube cuando termina cada copa.</div>`));return;}
+  const C=S.copa;
+  if(!C){const b=el(`<div class="pack dest"><div class="big">🏆</div><div><div class="t">Copa ${CATS[cat].n}</div><div class="s">Mata-mata de 16 de tu categoría. El campeón cobra ${fmt(CAT_PREMIO[cat])} y asciende; el peor de octavos desciende.</div></div><button class="btn oro">Jugar</button></div>`);
+    b.querySelector("button").onclick=()=>{S.copa=copaNueva(cat);save();render();};m.append(b);}
+  else{const r=C.rondas.length-1,op=copaRival(C);
+    const box=el(`<div class="pack dest" style="display:block"><div class="t">Copa ${CATS[C.cat].n} · ${RONDA_N[r]}</div><div class="s" style="margin:4px 0 10px">Te toca contra <b>${esc(nomId(op))}</b>.</div><div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn oro">Correr</button><button class="btn sec">Ver la llave</button><button class="btn sec">Abandonar</button></div></div>`);
+    const [b1,b2,b3]=box.querySelectorAll("button");b1.onclick=copaJugar;b2.onclick=()=>llaveModal(C);
+    b3.onclick=()=>{modal(`<h3>¿Abandonás la copa?</h3><p>Perdés la llave como si hubieras perdido la picada.</p><div class="opts"><button class="btn" id="ys">Abandonar</button><button class="btn sec" id="ns">Seguir</button></div>`);
+      $("#ys").onclick=()=>{RACE_LAST={pt:99,ot:20};const line=copaResultado(false,{});RACE_LAST=null;save();closeModal();toast(line);render();if(CER_PEND.length)playCer(CER_PEND.splice(0),()=>{});};$("#ns").onclick=closeModal;};
+    m.append(box);}
+  if((S.copas||[]).length)m.append(el(`<p class="nota">Tus copas: ${S.copas.map(x=>"🏆 "+CATS[x.cat].n).join(" · ")}</p>`));
+}
+function llaveModal(C,names){const nm=names||nomId;let h=`<h3>${C.titulo||"Copa "+CATS[C.cat].n}</h3><div class="llave">`;
+  C.rondas.forEach((R,r)=>{h+=`<div class="lr"><b>${R.length===1?"Campeón":RONDA_N[RONDA_N.length-Math.log2(R.length)]||"Ronda"}</b>`;
+    if(R.length===1){h+=`<div class="lm win">🏆 ${esc(nm(R[0]))}</div>`;}
+    else for(let i=0;i<R.length;i+=2){const a=R[i],b=R[i+1],T=C.t[r]||{};const ta=T[a],tb=T[b],w=ta!=null&&tb!=null?(ta<=tb?a:b):null;
+      const f=(x,t)=>`<span class="${w===x?"g":w?"p":""} ${x==="yo"||x===(NET.uid||"-")?"yo":""}">${esc(x?nm(x):"(libre)")}${t!=null&&t<99?" · "+t.toFixed(2):t>=99?" · ✕":""}</span>`;
+      h+=`<div class="lm">${f(a,ta)}${f(b,tb)}</div>`;}
+    h+=`</div>`;});
+  h+=`</div><div class="opts"><button class="btn sec" id="lk">Cerrar</button></div>`;modal(h);$("#lk").onclick=closeModal;}
+
+/* ---------- CEREMONIAS ---------- */
+const CER_TXT={copa1:"¡Campeón de Primera!",copa2:"¡Campeón de La B!",copa3:"¡Campeón de Tercera!",copa4:"¡Campeón de la Reserva!",copa5:"¡Campeón de Promoción!",descenso:"Descenso",banda:"¡Campeón de La Banda!",trono:"¡Sos el Rey de la Costanera!"};
+function playCer(list,done){if(!list.length){done();return;}const k=list.shift(),v=resVid();let fin=false;
+  const ov=el(`<div id="clipov" style="position:fixed;inset:0;z-index:60;background:#000;display:flex;align-items:center;justify-content:center"><video playsinline style="width:100%;height:100%;object-fit:contain"></video>
+    <div style="position:absolute;left:0;right:0;top:14px;text-align:center;font:400 clamp(22px,6vw,40px) 'Alfa Slab One',serif;color:${k==="descenso"?"#ff8f9c":"var(--oro)"};text-shadow:0 2px 8px #000">${CER_TXT[k]||""}</div>
+    <button class="btn sec sm" style="position:absolute;right:12px;bottom:14px;z-index:2">Saltar ▸</button></div>`);
+  bgmLow=true;bgm();document.body.append(ov);const vv=ov.querySelector("video");
+  const end=()=>{if(fin)return;fin=true;bgmLow=false;bgm();try{vv.pause();}catch(e){}ov.remove();playCer(list,done);};
+  ov.querySelector("button").onclick=end;vv.onended=end;vv.onerror=end;vv.src="escenario/cer_"+k+".mp4";vv.muted=muted||noVoz;
+  const p=vv.play();if(p&&p.catch)p.catch(()=>{vv.muted=true;vv.play().catch(end);});setTimeout(()=>{if(!fin&&vv.readyState<2)end();},7000);}
+
+
+/* ---------- LA BANDA: torneos con amigos (Firebase) ---------- */
+const BANDA={t:null,code:null,ref:null,vistos:{}};
+let TJOIN=/^[A-Z0-9]{6}$/i.test(QS.get("torneo")||"")?QS.get("torneo").toUpperCase():null;
+const newCode6=()=>{let c="";for(let i=0;i<6;i++)c+="ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random()*32)];return c;};
+function seedOrder(n){let o=[1];while(o.length<n){const m=o.length*2+1,x=[];o.forEach(k=>{x.push(k,m-k);});o=x;}return o;}
+const tRef=p=>NET.fb.ref("torneos/"+BANDA.code+(p?"/"+p:""));
+function bandaOk(){if(!NET.fb){toast("Los torneos con amigos funcionan en el link público del juego");return false;}if(!S.apodo){askApodo(true);return false;}if(!curCar()){toast("Necesitás un auto");return false;}return true;}
+function miJug(){const c=curCar();return {ap:S.apodo,car:cleanCar(c),et:+myET(c).toFixed(3),pid:NET.pid||"",at:firebase.database.ServerValue.TIMESTAMP};}
+function bandaEscuchar(code){if(BANDA.ref)BANDA.ref.off();BANDA.code=code;BANDA.t=null;BANDA.ref=NET.fb.ref("torneos/"+code);
+  BANDA.ref.on("value",s=>{BANDA.t=s.val();bandaTick();if(view==="banda"&&$("#modal").hidden&&!RACE)render();},()=>{});}
+async function bandaCrear(){if(!bandaOk())return;const code=newCode6();
+  try{await NET.fb.ref("torneos/"+code+"/info").set({host:NET.uid,hostAp:S.apodo,at:firebase.database.ServerValue.TIMESTAMP,estado:"lobby"});
+    await NET.fb.ref("torneos/"+code+"/jug/"+NET.uid).set(miJug());}catch(e){toast("No se pudo crear el torneo");return;}
+  S.banda={code};save();bandaEscuchar(code);bandaInvitar(code);render();}
+function bandaInvitar(code){wa(`🏆 ${S.apodo} armó un torneo de picadas en El Rey de la Costanera. Sumate desde el celu con este link: ${PUB}?torneo=${code} (código ${code})`);}
+async function bandaUnirse(code){if(!bandaOk())return;code=String(code).toUpperCase();
+  let info=null;try{info=(await NET.fb.ref("torneos/"+code+"/info").once("value")).val();}catch(e){}
+  if(!info){toast("No existe un torneo con ese código");return;}
+  let ya=null;try{ya=(await NET.fb.ref("torneos/"+code+"/jug/"+NET.uid).once("value")).val();}catch(e){}
+  if(info.estado!=="lobby"&&!ya){toast("Ese torneo ya arrancó");return;}
+  try{await NET.fb.ref("torneos/"+code+"/jug/"+NET.uid).set(miJug());}catch(e){toast("No se pudo entrar");return;}
+  S.banda={code};save();bandaEscuchar(code);toast("Entraste al torneo de "+(info.hostAp||"tu amigo"));view="banda";render();}
+function bandaSalir(){if(BANDA.ref)BANDA.ref.off();const t=BANDA.t;
+  if(t&&t.info&&t.info.estado==="lobby"&&NET.fb)NET.fb.ref(`torneos/${BANDA.code}/jug/${NET.uid}`).remove().catch(()=>{});
+  BANDA.ref=null;BANDA.t=null;BANDA.code=null;S.banda=null;save();render();}
+async function bandaArrancar(){const t=BANDA.t;if(!t||!t.jug)return;const js=Object.entries(t.jug).map(([u,v])=>({u,et:+v.et||99})).sort((a,b)=>a.et-b.et);
+  if(js.length<2){toast("Hacen falta al menos 2 pilotos");return;}
+  let n=2;while(n<js.length)n*=2;const r0=seedOrder(n).map(k=>js[k-1]?js[k-1].u:"");
+  try{await tRef("info").update({estado:"juego",r0,n:js.length,arranco:firebase.database.ServerValue.TIMESTAMP});}catch(e){toast("No se pudo arrancar");}}
+// llave derivada de los resultados: nadie tiene que "procesar" nada
+const toArr=x=>Array.isArray(x)?x:x&&typeof x==="object"?Object.keys(x).sort((a,b)=>a-b).map(k=>x[k]):[];
+function bandaLlave(t){const r0=toArr(t.info&&t.info.r0);const res=t.res||{};const rondas=[r0.slice()],T=[];
+  for(let r=0;;r++){const R=rondas[r],Tr={};T.push(Tr);if(R.length<=1)break;const N=[];
+    for(let i=0;i<R.length;i+=2){const a=R[i],b=R[i+1],mk=`r${r}m${i/2}`,rs=res[mk]||{};
+      const tt=u=>rs[u]?(rs[u].fu?99:+rs[u].t||99):null;if(a)Tr[a]=tt(a);if(b)Tr[b]=tt(b);
+      if(a==null||b==null){N.push(null);continue;}
+      if(!a&&!b){N.push("");continue;}
+      if(!a||!b){const x=a||b,v=tt(x);N.push(v==null?null:v<99?x:"");continue;}
+      const ta=tt(a),tb=tt(b);if(ta==null||tb==null){N.push(null);continue;}N.push(ta<=tb?a:b);}
+    rondas.push(N);}
+  const camp=rondas[rondas.length-1][0];return {rondas,T,camp:camp===undefined?null:camp};}
+function bandaMiCruce(t){const L=bandaLlave(t),u=NET.uid;
+  for(let r=0;r<L.rondas.length-1;r++){const R=L.rondas[r];const i=R.indexOf(u);if(i<0)continue;const j=i^1,op=R[j];
+    if(op==null)return {r,i,mk:`r${r}m${i>>1}`,op:null,espera:true};
+    const mine=t.res&&t.res[`r${r}m${i>>1}`]&&t.res[`r${r}m${i>>1}`][u];
+    if(!mine)return {r,i,mk:`r${r}m${i>>1}`,op,espera:false};}
+  return null;}
+function bandaTick(){const t=BANDA.t;if(!t||!t.info)return;const L=t.info.estado!=="lobby"?bandaLlave(t):null;
+  if(L&&L.camp!=null&&L.camp!==undefined&&!(S.bandaVistos||[]).includes(BANDA.code)){
+    S.bandaVistos=[...(S.bandaVistos||[]),BANDA.code].slice(-30);S.amigos=S.amigos||{};
+    if(L.camp){if(L.camp===NET.uid){S.bandaCopas=(S.bandaCopas|0)+1;if(RACE)CER_PEND.push("banda");else setTimeout(()=>playCer(["banda"],()=>{toast("¡Campeón del torneo!");render();}),300);}
+      else{const j=t.jug&&t.jug[L.camp];const a=S.amigos[L.camp]=S.amigos[L.camp]||{ap:j?j.ap:"?",g:0,p:0,copas:0};a.copas=(a.copas|0)+1;if(j)a.ap=j.ap;}}
+    if(t.info.host===NET.uid&&t.info.estado!=="fin")tRef("info/estado").set("fin").catch(()=>{});save();}}
+function bandaNombre(u){const t=BANDA.t;if(!u)return "(libre)";if(u===NET.uid)return S.apodo||"Vos";const j=t&&t.jug&&t.jug[u];return j?j.ap:"?";}
+function bandaCorrer(){const t=BANDA.t;if(!t||!canRace())return;const M=bandaMiCruce(t);if(!M||M.espera)return;const me=curCar();
+  if(!M.op){ // llave libre: corre solo y pasa si no funde
+    modal(`<h3>Llave libre</h3><p>No tenés rival en esta ronda: corrés solo. Si llegás sin fundir el motor, pasás.</p><div class="opts"><button class="btn oro" id="go">Correr</button><button class="btn sec" id="no">Después</button></div>`);
+    $("#go").onclick=()=>{closeModal();startRace({kind:"solo",opName:"Llave libre",opCar:cleanCar(me),mode:"solo",copaB:{code:BANDA.code,mk:M.mk}});};$("#no").onclick=closeModal;return;}
+  const j=t.jug[M.op];const opCar=cleanCar(j&&j.car);if(!opCar){toast("Datos del rival inválidos");return;}
+  const sala=`copa-${BANDA.code}-${M.mk}`;
+  LIVE={peer:null,sala,opName:String(j.ap).slice(0,16),opId:M.op,modo:"copa",bet:0,role:NET.uid<M.op?"a":"b",opCar,myCar:cleanCar(me),copaB:{code:BANDA.code,mk:M.mk}};
+  const L=LIVE;modalLock=true;
+  modal(`<h3>${esc(bandaRonda(M.r,t))}</h3><p>Esperando a <b>${esc(L.opName)}</b> en la largada. Cuando entre, arrancan solos.</p><div class="opts"><button class="btn sec" id="lc">Cancelar</button></div>`);
+  $("#lc").onclick=()=>{if(LIVE===L){try{L.room&&L.room.leave();}catch(e){}LIVE=null;}modalLock=false;closeModal();};
+  (async()=>{await preload([me.id,opCar.id],6000);if(LIVE!==L)return;
+    try{L.room=await NET.room.join(sala);}catch(e){LIVE=null;modalLock=false;closeModal();toast("No se pudo conectar");return;}
+    L.room.presence({uid:NET.uid,listo:1}).catch(()=>{});
+    L.room.on("largada",()=>{if(LIVE!==L||RACE)return;const p=(L.room.peers()||[]).find(x=>!x.sameTab&&x.by===L.opId);if(p)L.peer=p.peer;modalLock=false;closeModal();beginLive();},()=>{});
+    L.room.onPeers(ch=>{if(LIVE!==L||RACE||L.go)return;const p=ch.peers.find(x=>!x.sameTab&&x.by===L.opId);if(!p)return;L.peer=p.peer;
+      if(L.role==="a"){L.go=1;setTimeout(()=>{if(LIVE===L&&!RACE)L.room.emit("largada",{}).catch(()=>{});},800);}},()=>{});})();}
+function bandaRonda(r,t){const n=toArr(t.info&&t.info.r0).length,left=n>>r;return left<=2?"Final":left===4?"Semifinal":left===8?"Cuartos":left===16?"Octavos":"Ronda "+(r+1);}
+function bandaSacar(u){const t=BANDA.t,L=bandaLlave(t);for(let r=0;r<L.rondas.length-1;r++){const i=L.rondas[r].indexOf(u);if(i<0)continue;const mk=`r${r}m${i>>1}`;
+    if(!(t.res&&t.res[mk]&&t.res[mk][u])){tRef(`res/${mk}/${u}`).set({t:99,fu:true,wo:true}).catch(()=>{});toast(bandaNombre(u)+" quedó afuera");return;}}}
+function bandaResultado(cfg,pt,dnf){if(!cfg.copaB||!NET.fb)return;NET.fb.ref(`torneos/${cfg.copaB.code}/res/${cfg.copaB.mk}/${NET.uid}`).set({t:dnf?99:+(+pt).toFixed(3),fu:!!dnf}).catch(()=>{});}
+function amigoSuma(uid,ap,win){if(!uid||uid===NET.uid)return;S.amigos=S.amigos||{};const a=S.amigos[uid]=S.amigos[uid]||{ap,g:0,p:0,copas:0};a.ap=ap||a.ap;if(win)a.g++;else a.p++;}
+function vBanda(m){
+  m.append(el(`<div><h2>La Banda</h2><p class="sub">Jugá con tus amigos de verdad, cada uno en su celular: picadas mano a mano y torneos mata-mata.</p></div>`));
   if(!S.apodo){const b=el(`<button class="btn oro full">Elegí tu apodo para empezar</button>`);b.onclick=()=>askApodo(true);m.append(b);return;}
-  const c=curCar();
-  const placa=el(`<div class="placa"><div class="avatar" style="background:var(--celeste)">${initial(S.apodo)}</div><div style="min-width:0"><div class="ap"></div><div class="rec">${S.ganadas} ganadas · ${S.perdidas} perdidas · mejor pasada ${S.best?S.best.toFixed(2)+" s":"—"}</div></div><button class="btn sec sm">Cambiar</button></div>`);
-  placa.querySelector(".ap").textContent=S.apodo;placa.querySelector("button").onclick=()=>askApodo(true);m.append(placa);
-  if(!NET.db){
-    m.append(el(`<div class="vacio" style="margin-top:14px">No hay conexión con el servidor de pilotos. Revisá que tengas internet y volvé a abrir el juego. Mientras tanto podés jugar solo en el Barrio.</div>`));return;}
-  // jugar con un amigo
-  m.append(el(`<div class="sec-t">Jugá con un amigo</div>`));
-  const am=el(`<div class="pack dest"><div class="big">⚑</div><div><div class="t">Picada con un amigo</div><div class="s">Le mandás un link por WhatsApp y corren en vivo, cada uno en su celular.</div></div><button class="btn verde">Invitar</button></div>`);
+  // torneo
+  m.append(el(`<div class="sec-t">Copa de La Banda</div>`));
+  const t=BANDA.t;
+  if(!NET.fb){m.append(el(`<div class="vacio">Los torneos con amigos se juegan desde el link público del juego (el que compartís por WhatsApp).</div>`));}
+  else if(!S.banda||!t||!t.info){
+    const b=el(`<div class="pack dest"><div class="big">🏆</div><div><div class="t">Armá un torneo</div><div class="s">Creás la copa, invitás a la banda por WhatsApp y cuando estén todos tocás ARRANCAR COPA. Se ordenan por tiempo estimado; si queda una llave libre, ese corre solo y pasa si no funde.</div></div><button class="btn oro">Crear</button></div>`);
+    b.querySelector("button").onclick=bandaCrear;m.append(b);
+    const c=el(`<button class="btn sec full" style="margin-top:8px">Tengo un código de torneo</button>`);c.onclick=()=>askTorneo();m.append(c);}
+  else{const I=t.info,host=I.host===NET.uid,js=Object.entries(t.jug||{}).sort((a,b)=>(+a[1].et||99)-(+b[1].et||99));
+    const box=el(`<div class="pack dest" style="display:block"></div>`);
+    box.append(el(`<div class="t">Torneo de ${esc(I.hostAp||"la banda")} · código <span style="letter-spacing:.15em">${esc(BANDA.code)}</span></div>`));
+    if(I.estado==="lobby"){
+      box.append(el(`<div class="s" style="margin:4px 0 8px">${js.length} piloto${js.length===1?"":"s"} anotado${js.length===1?"":"s"}. ${host?"Cuando estén todos, arrancá la copa.":"Esperando que "+esc(I.hostAp||"el organizador")+" arranque la copa."}</div>`));
+      const ul=el(`<div class="stack" style="margin-bottom:10px"></div>`);js.forEach(([u,j],k)=>ul.append(el(`<div class="lm-row">${k+1}. ${esc(j.ap)} · ${CAR[j.car&&j.car.id]?CAR[j.car.id].name:"?"} · ${(+j.et||0).toFixed(2)} s</div>`)));box.append(ul);
+      const row=el(`<div class="row" style="gap:8px;flex-wrap:wrap"></div>`);
+      const inv=el(`<button class="btn verde">Invitar por WhatsApp</button>`);inv.onclick=()=>bandaInvitar(BANDA.code);row.append(inv);
+      if(host){const ar=el(`<button class="btn oro">ARRANCAR COPA</button>`);ar.disabled=js.length<2;ar.onclick=bandaArrancar;row.append(ar);}
+      const sa=el(`<button class="btn sec">${host?"Cancelar":"Salir"}</button>`);sa.onclick=bandaSalir;row.append(sa);box.append(row);}
+    else{const L=bandaLlave(t),M=bandaMiCruce(t);
+      let estado;
+      if(L.camp)estado=`🏆 Campeón: <b>${esc(bandaNombre(L.camp))}</b>`;
+      else if(L.camp==="")estado="Terminó sin campeón (todos fundieron).";
+      else if(!M){let lr=0;L.rondas.forEach((R,r)=>{if(R.includes(NET.uid))lr=r;});const nx=L.rondas[lr+1],i=L.rondas[lr].indexOf(NET.uid)>>1;
+        estado=nx&&nx[i]!=null&&nx[i]!==NET.uid?"Quedaste afuera. Mirá cómo sigue la llave.":"Ya corriste: esperando el resultado de tu rival…";}
+      else if(M.espera)estado=`${bandaRonda(M.r,t)}: esperando que se defina tu rival…`;
+      else estado=`${bandaRonda(M.r,t)}: te toca contra <b>${esc(bandaNombre(M.op))}</b>`;
+      box.append(el(`<div class="s" style="margin:4px 0 10px">${estado}</div>`));
+      const row=el(`<div class="row" style="gap:8px;flex-wrap:wrap"></div>`);
+      if(M&&!M.espera&&!L.camp){const go=el(`<button class="btn oro">${M.op?"Correr":"Correr solo"}</button>`);go.onclick=bandaCorrer;row.append(go);}
+      const ll=el(`<button class="btn sec">Ver la llave</button>`);ll.onclick=()=>llaveModal({titulo:"Copa de La Banda",rondas:L.rondas,t:L.T},bandaNombre);row.append(ll);
+      if(host&&!L.camp){const sc=el(`<button class="btn sec">Sacar a alguien</button>`);sc.onclick=()=>{const vivos=[...new Set(L.rondas.flat().filter(u=>u&&u!==NET.uid))];
+          modal(`<h3>Sacar del torneo</h3><p>Si alguien no aparece, lo das por perdido en su cruce actual.</p><div class="opts" id="so"></div>`);vivos.forEach(u=>{const b=el(`<button class="btn sec"></button>`);b.textContent=bandaNombre(u);b.onclick=()=>{closeModal();bandaSacar(u);};$("#so").append(b);});
+          const c=el(`<button class="btn sec">Cancelar</button>`);c.onclick=closeModal;$("#so").append(c);};row.append(sc);}
+      const sa=el(`<button class="btn sec">${L.camp!=null?"Nuevo torneo":"Salir"}</button>`);sa.onclick=bandaSalir;row.append(sa);box.append(row);}
+    m.append(box);}
+  // mano a mano
+  m.append(el(`<div class="sec-t">Mano a mano</div>`));
+  const am=el(`<div class="pack wa"><div class="big">⚑</div><div><div class="t">Picada con un amigo</div><div class="s">Le mandás un link por WhatsApp y corren en vivo, cada uno en su celular.</div></div><button class="btn verde">Invitar</button></div>`);
   am.querySelector("button").onclick=inviteFriend;m.append(am);
   const cd=el(`<button class="btn sec full" style="margin-top:8px">Tengo un código</button>`);cd.onclick=askCode;m.append(cd);
   // en vivo
   m.append(el(`<div class="sec-t">En la avenida ahora <span>${NET.peers.length?NET.peers.length+" conectado"+(NET.peers.length>1?"s":""):""}</span></div>`));
-  if(!NET.room)m.append(el(`<div class="vacio">Las picadas en vivo no están disponibles en esta pantalla. Podés correr contra los fantasmas de abajo.</div>`));
+  if(!NET.room)m.append(el(`<div class="vacio">Sin conexión: las picadas en vivo no están disponibles ahora.</div>`));
   else if(!NET.peers.length)m.append(el(`<div class="vacio">No hay nadie más conectado. Cuando otro piloto abra el juego, aparece acá para correr en vivo.</div>`));
   else{const st=el(`<div class="stack"></div>`);
     NET.peers.forEach(p=>{const pr=p.presence;const car=CAR[pr.auto]?pr.auto:null;
@@ -1383,6 +1627,36 @@ function vPilotos(m){
         <button class="btn verde sm" ${pr.libre&&car?"":"disabled"}>${pr.libre?"En vivo":"Corriendo"}</button></div>`);
       row.querySelector(".n").textContent=String(pr.apodo).slice(0,16);
       row.querySelector("button").onclick=()=>liveChallenge(p);st.append(row);});m.append(st);}
+  // ranking con amigos
+  const A=Object.entries(S.amigos||{}).map(([u,a])=>({ap:a.ap,g:a.p|0,p:a.g|0,copas:a.copas|0,vs:`${a.g|0}-${a.p|0}`}));
+  m.append(el(`<div class="sec-t">Ranking con amigos <span>${A.length?A.length+" amigo"+(A.length>1?"s":""):""}</span></div>`));
+  if(!A.length)m.append(el(`<div class="vacio">Todavía no corriste con amigos. Cada picada y cada torneo de La Banda suma acá.</div>`));
+  else{const yo={ap:S.apodo,copas:S.bandaCopas|0,g:Object.values(S.amigos).reduce((s,a)=>s+(a.g|0),0),p:Object.values(S.amigos).reduce((s,a)=>s+(a.p|0),0),yo:1};
+    const L=[yo,...A].sort((a,b)=>b.copas-a.copas||(b.g-b.p)-(a.g-a.p));const st=el(`<div class="stack"></div>`);
+    L.forEach((x,i)=>{const r=el(`<div class="rival ${x.yo?"yo":""}"><div class="pos">${i+1}</div><div style="min-width:0"><div class="n"></div><div class="d">${x.copas?"🏆×"+x.copas+" · ":""}${x.g} ganadas · ${x.p} perdidas${x.yo?"":" · vos "+x.vs}</div></div>${x.yo?`<span class="chip cel">Vos</span>`:""}</div>`);
+      r.querySelector(".n").textContent=x.ap;st.append(r);});m.append(st);
+    m.append(el(`<p class="nota">Tu ranking personal: cuenta las copas de La Banda y las picadas mano a mano contra cada amigo.</p>`));}
+}
+function askTorneo(){modal(`<h3>Código de torneo</h3><p>Poné el código de 6 letras que te pasaron.</p>
+    <div class="campo"><label for="inT">Código</label><input id="inT" maxlength="6" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:.2em"><span class="err" id="tErr"></span></div>
+    <div class="opts"><button class="btn verde" id="tOk">Entrar</button><button class="btn sec" id="tNo">Cancelar</button></div>`);
+  const inp=$("#inT");setTimeout(()=>inp.focus(),50);
+  const ok=()=>{const v=inp.value.trim().toUpperCase();if(!/^[A-Z0-9]{6}$/.test(v)){$("#tErr").textContent="Son 6 letras o números.";return;}closeModal();bandaUnirse(v);};
+  $("#tOk").onclick=ok;inp.addEventListener("keydown",e=>{if(e.key==="Enter")ok();});$("#tNo").onclick=closeModal;}
+function bandaInit(){if(!NET.fb)return;
+  if(S.banda&&S.banda.code){bandaEscuchar(S.banda.code);NET.fb.ref(`torneos/${S.banda.code}/jug/${NET.uid}`).once("value").then(s=>{if(s.exists())s.ref.update({pid:NET.pid||""}).catch(()=>{});}).catch(()=>{});}
+  const tj=()=>{if(!TJOIN)return;if(!S.apodo||!curCar()){setTimeout(tj,2000);return;}const c=TJOIN;TJOIN=null;bandaUnirse(c);};tj();}
+
+/* ---------- PILOTOS (multijugador) ---------- */
+function initial(s){return esc((String(s).replace(/^(El|La) /i,"").trim()[0]||"?").toUpperCase());}
+function vPilotos(m){
+  m.append(el(`<div><h2>Ranking</h2><p class="sub">Los pilotos de verdad con su mejor pasada grabada y los de La Lleca, todos juntos. Desafiá el fantasma de cualquiera. Para correr en vivo con amigos, andá a La Banda.</p></div>`));
+  if(!S.apodo){const b=el(`<button class="btn oro full">Elegí tu apodo para empezar</button>`);b.onclick=()=>askApodo(true);m.append(b);return;}
+  const c=curCar();
+  const placa=el(`<div class="placa"><div class="avatar" style="background:var(--celeste)">${initial(S.apodo)}</div><div style="min-width:0"><div class="ap"></div><div class="rec">${S.ganadas} ganadas · ${S.perdidas} perdidas · mejor pasada ${S.best?S.best.toFixed(2)+" s":"—"}</div></div><button class="btn sec sm">Cambiar</button></div>`);
+  placa.querySelector(".ap").textContent=S.apodo;placa.querySelector("button").onclick=()=>askApodo(true);m.append(placa);
+  if(!NET.db){
+    m.append(el(`<div class="vacio" style="margin-top:14px">No hay conexión con el servidor de pilotos. Revisá que tengas internet y volvé a abrir el juego. Mientras tanto podés jugar solo en La Lleca.</div>`));return;}
   // retos recibidos
   if(NET.retos.length){m.append(el(`<div class="sec-t">Te desafiaron</div>`));const st=el(`<div class="stack"></div>`);
     NET.retos.forEach(r=>{const from=NET.pilots[r.de];const nm=from?from.apodo:"Alguien";const gano=r.gano===r.de;
@@ -1461,7 +1735,7 @@ function waitFriend(send){if(!INV)return;const link=PUB+"?sala="+INV.code;
   const txt=`🏁 ${S.apodo} te desafía a una picada ${INV.modo==="papeles"?"a los papeles":INV.modo==="plata"?"por "+fmt(INV.bet):"amistosa"} en El Rey de la Costanera. Abrí el link en el celu y largamos juntos: ${link}`;
   if(send)wa(txt);
   modalLock=true;modal(`<h3>Esperando a tu amigo…</h3><p>Cuando abra el link, el juego los conecta solo. Dejá esta pantalla abierta.</p>
-    <div class="codigo">${INV.code}</div><p class="nota" style="text-align:center;margin-top:4px">Si ya tiene el juego abierto, puede poner este código en Pilotos → Tengo un código.</p>
+    <div class="codigo">${INV.code}</div><p class="nota" style="text-align:center;margin-top:4px">Si ya tiene el juego abierto, puede poner este código en La Banda → Tengo un código.</p>
     <div class="opts"><button class="btn verde" id="wReenv">Mandar el link de nuevo</button><button class="btn sec" id="wCancel">Cancelar</button></div>`);
   $("#wReenv").onclick=()=>wa(txt);
   $("#wCancel").onclick=()=>{INV=null;lobbyPresence();modalLock=false;closeModal();};}
@@ -1556,7 +1830,7 @@ function beginLive(){
     if(p&&p.presence){const q=p.presence,O=RACE.O;O.x=+q.x||0;O.v=+q.v||0;O.rpm=+q.r||900;O.gear=q.g|0;O.spin=!!q.sp;O.nitroT=q.ni?1:0;O.launched=O.x>0;
       if(Number.isFinite(q.fin)&&O.fin===null)O.fin=+q.fin;if(q.ab||q.fu)RACE.opQuit=true;if(q.fu)RACE.opFundio=true;}
     if(ch.left.some(x=>x.peer===L.peer))RACE.opGone=Date.now();},()=>{});
-  startRace({kind:"live",opName:L.opName,opId:L.opId,opCar:op,mode:"vivo",modo:L.modo,bet:L.bet});
+  startRace({kind:"live",opName:L.opName,opId:L.opId,opCar:op,mode:"vivo",modo:L.modo,bet:L.bet,copaB:L.copaB});
 }
 function endLive(){if(LIVE&&LIVE.room){try{LIVE.room.leave();}catch(e){}}LIVE=null;lobbyPresence();}
 
@@ -1564,7 +1838,7 @@ function endLive(){if(LIVE&&LIVE.room){try{LIVE.room.leave();}catch(e){}}LIVE=nu
 function partCost(o,k,lv){const base=CAR[o.id].price*.06+12000;return Math.round(base*Math.pow(lv,1.55)/1000)*1000;}
 function vTaller(m){
   const c=curCar(),st=stats(c),cd=CAR[c.id];
-  m.append(el(`<div><h2>El taller de Beto</h2><p class="sub">Elegí qué fierro preparar. El último nivel de cada parte se paga con fichas.</p></div>`));
+  m.append(el(`<div><h2>El garage de Beto</h2><p class="sub">Elegí qué fierro preparar. El último nivel de cada parte se paga con fichas.</p></div>`));
   if(S.cars.length>1){const mc=el(`<div class="mycars"></div>`);S.cars.forEach(o=>{const b=el(`<button aria-pressed="${o.uid===S.cur}">${CAR[o.id].name}</button>`);b.onclick=()=>{S.cur=o.uid;save();pubPilot();lobbyPresence();render();};mc.append(b);});m.append(mc);}
   const hero=el(`<div class="hero"><canvas style="height:190px"></canvas><div class="cap"><div><div class="nom">${cd.name}</div><div class="ins">Inspirado en ${cd.ins} · ${cd.year}</div></div><span class="chip ${T3.err?"rojo":"cel"}">${T3.err?"Vista 2D":"Girá con el dedo"}</span></div></div>`);m.append(hero);
   if(T3.err){const n=el(`<p class="nota" style="border-color:var(--rojo);margin:8px 0 12px"></p>`);n.textContent="El 3D no cargó: "+T3.err;m.append(n);}
@@ -1597,7 +1871,7 @@ function vTaller(m){
   const sw=el(`<div class="swatches"></div>`);
   [{c:cd.col,n:"Color de fábrica"},...COLORS].forEach(k=>{const own=!k.f||(S.colors||[]).includes(k.c);
     const b=el(`<button class="sw" style="background:${k.c}" aria-label="${k.n}" aria-pressed="${c.color===k.c}">${own?"":`<span class="lk">${k.f}</span>`}</button>`);
-    b.onclick=()=>{if(!own){if(S.fichas<k.f){toast("Te faltan fichas: pasá por el Kiosco");return;}S.fichas-=k.f;S.colors=[...(S.colors||[]),k.c];}c.color=k.c;save();render();};sw.append(b);});
+    b.onclick=()=>{if(!own){if(S.fichas<k.f){toast("Te faltan fichas: pasá por el Quisco");return;}S.fichas-=k.f;S.colors=[...(S.colors||[]),k.c];}c.color=k.c;save();render();};sw.append(b);});
   m.append(sw);
   const fb=el(`<button class="btn ${c.filete?"sec":"oro"} full" style="margin-top:12px">${c.filete?"Sacar fileteado":`Fileteado porteño en la puerta · <i class="ficha"></i> 40`}</button>`);
   if(!c.filete&&!S.fileteOk&&S.fichas<40)fb.disabled=true;
@@ -1613,7 +1887,7 @@ function vClasif(m){
   m.append(el(`<div><h2>Clasificados</h2><p class="sub">${S.cars.length?"Autos usados del barrio. Los mejores se desbloquean ganando respeto o con fichas.":"Elegí tu primer fierro para salir a la avenida."}</p></div>`));
   if(!S.cars.length){const min=Math.min(...CARS.filter(c=>carUnlocked(c.id)).map(c=>c.price));
     if(S.pesos<min){const cd=Math.max(0,Math.ceil((S.adAt+120000-Date.now())/1000));
-      const bx=el(`<div class="pack dest" style="display:block;margin-bottom:12px"><div class="t">🚶 Te quedaste a pie</div><div class="s" style="margin:4px 0 10px">El más barato sale ${fmt(min)} y te faltan ${fmt(min-S.pesos)}. Mirá avisos con premio o conseguí plata en el Kiosco.</div><div style="display:flex;gap:8px"><button class="btn verde" style="flex:1" ${cd?"disabled":""}>${cd?cd+" s":"Aviso +$25.000"}</button><button class="btn oro" style="flex:1">Ir al Kiosco</button></div></div>`);
+      const bx=el(`<div class="pack dest" style="display:block;margin-bottom:12px"><div class="t">🚶 Te quedaste a pie</div><div class="s" style="margin:4px 0 10px">El más barato sale ${fmt(min)} y te faltan ${fmt(min-S.pesos)}. Mirá avisos con premio o conseguí plata en el Quisco.</div><div style="display:flex;gap:8px"><button class="btn verde" style="flex:1" ${cd?"disabled":""}>${cd?cd+" s":"Aviso +$25.000"}</button><button class="btn oro" style="flex:1">Ir al Quisco</button></div></div>`);
       const [ba,bk]=bx.querySelectorAll("button");ba.onclick=()=>fakeAd(()=>{S.pesos+=25000;S.adAt=Date.now();save();toast(`+${fmt(25000)}`);render();});bk.onclick=()=>{view="kiosco";render();};m.append(bx);}}
   const d=el(`<div class="diario"><div class="cab"><b>El Fierrero</b><span>Avisos clasificados · Automotores</span></div><div class="avisos"></div></div>`);
   const av=d.querySelector(".avisos");
@@ -1621,7 +1895,7 @@ function vClasif(m){
     const owned=S.cars.some(o=>o.id===c.id),unl=carUnlocked(c.id),uf=60+20*c.req;
     const a=el(`<div class="aviso"><canvas></canvas><h4>${c.name} ${c.year}</h4><span class="ins">inspirado en ${c.ins}</span><p>${c.ad}</p><p>${c.hp} CV · ${c.kg} kg · ${c.gears} marchas</p><span class="pr">${fmt(c.price)}</span><button></button></div>`);
     const b=a.querySelector("button");
-    if(!unl){b.className="lck";b.innerHTML=`🔒 Respeto ${c.req} · o <i class="ficha"></i> ${uf}`;b.onclick=()=>{if(S.fichas<uf){toast("Te faltan fichas: pasá por el Kiosco");return;}S.fichas-=uf;S.unl.push(c.id);save();toast(`${c.name} desbloqueado`);render();};}
+    if(!unl){b.className="lck";b.innerHTML=`🔒 Respeto ${c.req} · o <i class="ficha"></i> ${uf}`;b.onclick=()=>{if(S.fichas<uf){toast("Te faltan fichas: pasá por el Quisco");return;}S.fichas-=uf;S.unl.push(c.id);save();toast(`${c.name} desbloqueado`);render();};}
     else{b.textContent=owned?"Ya lo tenés · comprar otro":"Comprar";if(owned)b.className="own";if(S.pesos<c.price){b.disabled=true;b.textContent="No te alcanza";}
       b.onclick=()=>{S.pesos-=c.price;const o=newCar(c.id);S.cars.push(o);S.cur=o.uid;save();blip(520);toast(`¡Compraste el ${c.name}!`);const first=S.cars.length===1;view=first?"barrio":"taller";render();pubPilot();lobbyPresence();if(first&&!S.apodo)askApodo();};}
     av.append(a);requestAnimationFrame(()=>carThumb(a.querySelector("canvas"),{id:c.id,color:c.col}));});
@@ -1630,7 +1904,7 @@ function vClasif(m){
 
 /* ---------- KIOSCO ---------- */
 function vKiosco(m){
-  m.append(el(`<div><h2>El kiosco</h2><p class="sub">Las fichas compran el último nivel de cada parte, el nitro, la pintura especial y los autos antes de tiempo.</p></div>`));
+  m.append(el(`<div><h2>El quisco</h2><p class="sub">Las fichas compran el último nivel de cada parte, el nitro, la pintura especial y los autos antes de tiempo.</p></div>`));
   const st=el(`<div class="stack"></div>`);
   const now=Date.now(),cd=Math.max(0,Math.ceil((S.adAt+120000-now)/1000));
   const ad=el(`<div class="pack"><div class="big">▶</div><div><div class="t">Mirá un aviso</div><div class="s">Ganás ${fmt(25000)} gratis. Uno cada 2 minutos.</div></div><button class="btn verde" ${cd?"disabled":""}>${cd?cd+" s":"Ver"}</button></div>`);
@@ -1640,7 +1914,7 @@ function vKiosco(m){
   sh.querySelector("button").onclick=shareApp;st.append(sh);
   PESOS.forEach(p=>{const r=el(`<div class="pack"><div class="big">$</div><div><div class="t">${p.t}</div><div class="s">${fmt(p.v)} de plata para el juego</div></div><button class="btn oro">${p.p}</button></div>`);
     r.querySelector("button").onclick=()=>buy(p.t+` (${fmt(p.v)})`,p.p,()=>{S.pesos+=p.v;});st.append(r);});
-  PACKS.forEach(p=>{const r=el(`<div class="pack ${p.dest?"dest":""}"><div class="big">${p.f}</div><div><div class="t">${p.t}</div><div class="s">${p.b||"Fichas para el taller"}</div></div><button class="btn oro">${p.p}</button></div>`);
+  PACKS.forEach(p=>{const r=el(`<div class="pack ${p.dest?"dest":""}"><div class="big">${p.f}</div><div><div class="t">${p.t}</div><div class="s">${p.b||"Fichas para el garage"}</div></div><button class="btn oro">${p.p}</button></div>`);
     r.querySelector("button").onclick=()=>buy(p.t+` (${p.f} fichas)`,p.p,()=>{S.fichas+=p.f;});st.append(r);});
   const pase=el(`<div class="pack dest"><div class="big">★</div><div><div class="t">Pase Fierrero · mensual</div><div class="s">20 fichas extra con el mate diario y premios ×1,5 en cada picada ganada.</div></div><button class="btn oro" ${S.pase?"disabled":""}>${S.pase?"Activo":"$ 4.999"}</button></div>`);
   pase.querySelector("button").onclick=()=>buy("Pase Fierrero","$ 4.999 por mes",()=>{S.pase=true;});st.append(pase);
@@ -1663,16 +1937,16 @@ let RACE=null;
 const sec=s=>Math.round(s/H);
 function startRace(cfg){
   audioInit();
-  const me=curCar(),ms=stats(me),os=stats(cfg.opCar);
+  const me=curCar(),ms=stats(cfg.exig?Object.assign({},me,{pf:cfg.exig.pf}):me),os=stats(cfg.opCar);
   const P=makeRacer(ms,me.wear||0),O=makeRacer(os);
-  const lb=optLaunch(ms),sk=cfg.rival?cfg.rival.sk:.8;
+  const lb=optLaunch(ms),sk=cfg.rival?(BOT[cfg.rival.id]===cfg.rival?botSk(cfg.rival):cfg.rival.sk):.8;
   S.turno=(S.turno|0)+1;const stK=S.turno%2?"rubia":"morocha";const lights=STV[stK].T.slice();
   RACE={cfg,me,P,O,stK,n:0,greenN:null,phase:0,lightN:lights.map(sec),gas:false,acc:0,done:false,msgT:0,
     band:[Math.max(1500,lb-700),Math.min(ms.red-150,lb+400)],
     ai:{launch:optLaunch(os)*(1+(Math.random()-.5)*(1-sk)*.7),react:sec(.15+(1-sk)*.35*Math.random()),shiftX:.9-(1-sk)*.22*Math.random(),nitroGear:1},
     G:cfg.kind==="ghost"?{rec:cfg.ghost.rec}:null,
     rec:{l:null,r:null,s:[],z:[],g:[],w:0},quit:false,presAt:0,warn:0};
-  if(cfg.kind==="live"){O.nitroN=0;}bgm();
+  if(cfg.kind==="live"){O.nitroN=0;}if(cfg.kind==="solo"){O.nitroN=0;$("#pOp").style.visibility="hidden";}else $("#pOp").style.visibility="";bgm();
   $("#race").hidden=false;$("#rMsg").textContent="Levantá vueltas";$("#rMsg").style.color="";
   $("#bNitro").textContent=`NITRO ×${P.nitroN}`;$("#bNitro").disabled=!P.nitroN;
   sizeScene();engineStart(me.id,cfg.opCar.id);RACE.last=performance.now();lobbyPresence();
@@ -1724,7 +1998,7 @@ function tick(R){
     if(P.rpm<R.band[0])say("Te quedaste corto de vueltas","#ffb4bd");else if(P.rpm>R.band[1])say("¡Patinaste!","#ffb4bd");else say("¡Gran largada!","var(--verde)");}
   stepRacer(P,H,R.gas,k*H);
   dmgAlerts(R);
-  if(R.O.fin===null)oppTick(R,k);
+  if(R.cfg.kind==="solo"){R.O.x=P.x;R.O.v=P.v;}else if(R.O.fin===null)oppTick(R,k);
 }
 function loop(now){
   if(!RACE)return;const R=RACE;const dt=Math.min(.1,(now-R.last)/1000);R.last=now;R.dt=dt;
@@ -1736,7 +2010,7 @@ function loop(now){
   if(R.P.blown&&!R.done){R.blownAt=R.blownAt||now;if(now-R.blownAt>1800){R.done=true;R.doneAt=now;R.P.fin=99;R.dnf=true;}}
   steerAnim(R,dt);
   if(R.done&&!R.finishing){R.finishing=true;if(!R.dnf)say(R.O.fin===null?"¡Llegaste primero!":"Llegada","var(--oro)");}
-  if(R.done&&!R.finished&&R.cfg.kind!=="live"){const both=R.O.fin!==null||R.O.blown;
+  if(R.done&&!R.finished&&R.cfg.kind!=="live"){const both=R.O.fin!==null||R.O.blown||R.cfg.kind==="solo";
     if(both&&!R.bothAt)R.bothAt=now;
     const gone=Math.min(R.P.x,R.O.x)>DIST+40;
     if(((both&&(gone||now-R.bothAt>3500))&&(!R.focusAt||now-R.focusAt>3400))||now-R.doneAt>40000){R.finished=true;setTimeout(finish,500);}}
@@ -1764,7 +2038,7 @@ function draw(){
   const laneO=road+(h-road)*.42,laneP=road+(h-road)*.9;
   const ox=(R.O.x-cam)*s+w*.3-CAR[R.cfg.opCar.id].len*s,px=(R.P.x-cam)*s+w*.3-CAR[R.me.id].len*s;
   const sc=Math.min(s,(h-road)*.42/1.6);
-  drawCar(ctx,R.cfg.opCar,ox,laneO,sc*.92,{lights:true,rot:R.O.x/.3,smoke:R.O.spin,nitro:R.O.nitroT>0,ghost:R.cfg.kind==="ghost"});
+  if(R.cfg.kind!=="solo")drawCar(ctx,R.cfg.opCar,ox,laneO,sc*.92,{lights:true,rot:R.O.x/.3,smoke:R.O.spin,nitro:R.O.nitroT>0,ghost:R.cfg.kind==="ghost"});
   drawCar(ctx,R.me,px,laneP,sc,{lights:!R.P.blown,rot:R.P.v>.5?R.P.x/.3:0,smoke:R.P.spin,nitro:R.P.nitroT>0});
   if(R.P.dmg>=50){const L=CAR[R.me.id].len*sc,n=R.P.blown?14:R.P.dmg>=75?8:4;for(let i=0;i<n;i++){const hx=px+L*(.85+Math.random()*.3),hy=laneP-sc*1.2-Math.random()*sc*1.6;ctx.fillStyle=R.P.blown?`rgba(30,30,30,${.25+Math.random()*.3})`:`rgba(200,200,200,${.12+Math.random()*.18})`;ctx.beginPath();ctx.arc(hx,hy,sc*(.25+Math.random()*.5),0,7);ctx.fill();}}
   }
@@ -1782,7 +2056,7 @@ function draw(){
 function gasOn(e){e&&e.preventDefault();audioInit();if(!RACE)return;if(!RACE.gas&&RACE.P.launched&&!RACE.done)RACE.rec.g.push([kNow(),1]);RACE.gas=true;$("#bGas").classList.add("on");}
 function gasOff(e){e&&e.preventDefault();if(!RACE)return;if(RACE.gas&&RACE.P.launched&&!RACE.done)RACE.rec.g.push([kNow(),0]);RACE.gas=false;$("#bGas").classList.remove("on");}
 function shift(e){e&&e.preventDefault();if(!RACE||RACE.done)return;$("#bShift").classList.add("on");setTimeout(()=>$("#bShift").classList.remove("on"),120);
-  const q=doShift(RACE.P);if(q){RACE.rec.s.push(kNow());vib(q==="PERFECTO"?[20,30,20]:25);blip(q==="PERFECTO"?1300:700,.08);say(q==="PERFECTO"?"¡Cambio perfecto!":q==="BIEN"?"Buen cambio":q==="TEMPRANO"?"Cambio temprano":"Cambio tarde",q==="PERFECTO"?"var(--verde)":q==="BIEN"?"var(--celeste)":"#ffb4bd");}}
+  const q=doShift(RACE.P);if(q){RACE.rec.s.push(kNow());vib(q==="PERFECTO"?[20,30,20]:25);blip(q==="PERFECTO"?1300:700,.08);say(q==="PERFECTO"?"¡Cambio perfecto!":q==="ESTIRADO"?"¡Lo estiraste!":q==="BIEN"?"Buen cambio":q==="TEMPRANO"?"Cambio temprano":"Cambio tarde",q==="PERFECTO"?"var(--verde)":q==="ESTIRADO"?"var(--oro)":q==="BIEN"?"var(--celeste)":"#ffb4bd");}}
 function nitro(e){e&&e.preventDefault();if(!RACE||RACE.done)return;const P=RACE.P;if(P.launched&&P.nitroN>0&&P.nitroT<=0){P.nitroN--;P.nitroT=2;RACE.rec.z.push(kNow());vib(60);say("¡NITRO!","var(--verde)");$("#bNitro").textContent=`NITRO ×${P.nitroN}`;$("#bNitro").disabled=!P.nitroN;}}
 const bg=$("#bGas");bg.addEventListener("pointerdown",gasOn);["pointerup","pointercancel","pointerleave"].forEach(ev=>bg.addEventListener(ev,gasOff));
 $("#bShift").addEventListener("pointerdown",shift);
@@ -1795,25 +2069,31 @@ $("#bQuit").onclick=()=>{if(!RACE)return;starterStop();flagVidStop();const cfg=R
   if(cfg.kind==="live"&&LIVE&&LIVE.room)LIVE.room.presence({ab:1}).catch(()=>{});
   endRace();if(cfg.kind==="live")endLive();
   if(cfg.mode!=="practica"&&(cfg.bet||cfg.mode==="papeles"||cfg.modo==="papeles")){toast("Abandonaste: la apuesta se pierde igual");settle(false,cfg);}render();};
-function endRace(){setTimeout(bgm,0);if(RACE){const me=RACE.me,P=RACE.P;if(S.cars.includes(me)){me.wear=Math.round(Math.min(P.blown?100:99,P.dmg)*10)/10;me.fundido=!!P.blown;}}RACE=null;engineStop();$("#race").hidden=true;$("#bGas").classList.remove("on");lobbyPresence();}
+function endRace(){setTimeout(bgm,0);if(RACE){const me=RACE.me,P=RACE.P;if(S.cars.includes(me)){me.wear=Math.round(Math.min(P.blown?100:99,P.dmg)*10)/10;me.fundido=!!P.blown;
+  const ex=RACE.cfg.exig;if(ex&&RACE.P.launched){me.wear=Math.min(100,me.wear+ex.w);if(me.wear>=100){me.wear=100;me.fundido=true;}}}}RACE=null;engineStop();$("#race").hidden=true;$("#bGas").classList.remove("on");lobbyPresence();}
 function loseCar(winnerName){const me=curCar();S.cars=S.cars.filter(x=>x.uid!==me.uid);let line;
   if(!S.cars.length){S.cur=null;line=`${winnerName} se llevó tu ${CAR[me.id].name}. Te quedaste a pie: comprá otro fierro en los Clasificados.`;}else{line=`${winnerName} se llevó tu ${CAR[me.id].name}.`;S.cur=S.cars[0].uid;}return line;}
 function winCar(o,fromName){const c=cleanCar(o);if(!c)return "";const nc=newCar(c.id,c.color);nc.up=c.up;nc.filete=c.filete;S.cars.push(nc);return `¡Te quedaste con el ${CAR[c.id].name} de ${fromName}!`;}
 function settle(win,cfg,tie){
   const r=cfg.rival;let line="";const mult=S.pase?1.5:1;
   if(cfg.kind==="ai"){
+    if(cfg.mode==="copa"){line=copaResultado(win,cfg);S.races++;save();return line;}
     if(cfg.mode==="practica"){if(win){S.pesos+=15000;line=`Propina del barrio: ${fmt(15000)}`;}else line="Sin apuesta, sin drama.";}
     else if(cfg.mode==="plata"){if(win){const p=Math.round(cfg.bet*mult);S.pesos+=p;line=`Cobraste ${fmt(p)}${S.pase?" (Pase ×1,5)":""}`;}else{S.pesos=Math.max(0,S.pesos-cfg.bet);line=`Perdiste ${fmt(cfg.bet)}`;}}
     else{line=win?winCar(cfg.opCar,r.n):loseCar(r.n);}
     if(r.id!=="practica"&&BOT[r.id])line+=rankMove(r,win);
+    if(cfg.mode==="papeles"&&win&&BOT[r.id])line+=botPierdeAuto(r.id);
     if(win&&r.id!=="practica"&&!S.beaten.includes(r.id))S.beaten.push(r.id);
   } else {
     const modo=cfg.kind==="live"?cfg.modo:(cfg.bet?"plata":"amistosa");
     if(tie)line="¡Empate! Nadie cobra.";
     else if(modo==="papeles"){line=win?winCar(cfg.opCar,cfg.opName):loseCar(cfg.opName);}
     else if(modo==="plata"){if(win){const p=Math.round(cfg.bet*mult);S.pesos+=p;line=`Cobraste ${fmt(p)}`;}else{S.pesos=Math.max(0,S.pesos-cfg.bet);line=`Perdiste ${fmt(cfg.bet)}`;}}
+    else if(cfg.kind==="solo")line=win?"Llegaste sin fundir: pasás de ronda.":"Fundiste el motor: quedaste afuera del torneo.";
+    else if(modo==="copa")line=win?"¡Pasás de ronda en el torneo!":"Quedaste afuera del torneo.";
     else line=win?"Ganaste la amistosa.":"Perdiste la amistosa.";
-    if(!tie){if(win)S.ganadas++;else S.perdidas++;}
+    if(cfg.kind==="live"&&!tie)amigoSuma(cfg.opId,cfg.opName,win);
+    if(!tie&&cfg.kind!=="solo"){if(win)S.ganadas++;else S.perdidas++;}
   }
   S.races++;save();return line;
 }
@@ -1853,32 +2133,38 @@ function finish(){starterStop();flagVidStop();
   if(!RACE)return;const R=RACE,cfg=R.cfg;
   const pt=R.P.fin??99,ot=R.O.fin??99,top=Math.round(R.P.top*3.6),react=R.P.react??0;
   const opQuit=cfg.kind==="live"&&R.O.fin===null&&!R.dnf,dnf=!!R.dnf,opFundio=!!R.opFundio;
-  const tie=!opQuit&&!dnf&&Math.abs(pt-ot)<.0005;const win=!dnf&&(opQuit||(!tie&&pt<ot));
+  const solo=cfg.kind==="solo";const tie=!solo&&!opQuit&&!dnf&&Math.abs(pt-ot)<.0005;const win=!dnf&&(solo||opQuit||(!tie&&pt<ot));
+  bandaResultado(cfg,pt,dnf);
   // grabar mejor pasada (fantasma) si es válida
   let nuevoRecord=false;
-  if(pt<45&&R.rec.r!==null){const g={d:GHOST_V,car:cleanCar(R.me),rec:{l:R.rec.l,r:R.rec.r,s:R.rec.s,z:R.rec.z,g:R.rec.g,w:R.rec.w}};const t=simGhost(g);
+  if(pt<45&&R.rec.r!==null&&!cfg.exig&&cfg.kind!=="solo"){const g={d:GHOST_V,car:cleanCar(R.me),rec:{l:R.rec.l,r:R.rec.r,s:R.rec.s,z:R.rec.z,g:R.rec.g,w:R.rec.w}};const t=simGhost(g);
     if(t!==null&&Math.abs(t-pt)<.02&&(!S.best||t<S.best)){S.best=t;S.ghost=g;nuevoRecord=true;}}
-  endRace();
-  const line=settle(win,cfg,tie);
+  endRace();RACE_LAST={pt,ot};
+  const line=settle(win,cfg,tie);RACE_LAST=null;
   if(cfg.kind==="ghost"||cfg.kind==="live"){
     if(NET.db&&NET.uid&&cfg.opId&&cfg.opId!==NET.uid){NET.db.doc(NET.fb?`retos/${cfg.opId}/${NET.uid}`:`retos/${NET.uid}__${cfg.opId}`.replace(/[^A-Za-z0-9_\-.~:@+\/]/g,"")).set({de:NET.uid,a:cfg.opId,gano:win?NET.uid:cfg.opId,tDe:+pt.toFixed(3),tA:+Math.min(ot,99).toFixed(3),vivo:cfg.kind==="live",at:Date.now()}).catch(()=>{});}
   }
   if(cfg.kind==="live")endLive();
   pubPilot();
-  const rey=cfg.rival&&cfg.rival.rey&&win;const opn=esc(cfg.opName);
+  const rey=cfg.kind==="ai"&&win&&cfg.mode!=="copa"&&cfg.mode!=="practica"&&S.rank===1;const opn=esc(cfg.opName);
   const fmtT=x=>x<99?x.toFixed(2)+" s":"—",dif=(pt<99&&ot<99)?(pt<=ot?"-":"+")+Math.abs(pt-ot).toFixed(2)+" s":dnf?"MOTOR FUNDIDO":"—";
-  const info={win,practica:cfg.mode==="practica"||(!cfg.bet&&cfg.mode!=="papeles"&&cfg.modo!=="papeles"),papeles:cfg.mode==="papeles"||cfg.modo==="papeles",nombre:S.apodo||"Piloto",puesto:win?"P1":"P2",tiempo:fmtT(pt),dif};
-  if(tie)showPlate();else playResult(info,showPlate);
+  const info={win,practica:!cfg.copaB&&cfg.mode!=="copa"&&cfg.kind!=="solo"&&(cfg.mode==="practica"||(!cfg.bet&&cfg.mode!=="papeles"&&cfg.modo!=="papeles")),papeles:cfg.mode==="papeles"||cfg.modo==="papeles",nombre:S.apodo||"Piloto",puesto:win?"P1":"P2",tiempo:fmtT(pt),dif};
+  if(S.coronar){S.coronar=false;save();CER_PEND.push("trono");}
+  const cer=CER_PEND.splice(0);
+  if(tie)playCer(cer,showPlate);else playResult(info,()=>playCer(cer,showPlate));
   function showPlate(){
   modal(fileteSVG()+`<h3 class="gan" style="color:${win?"var(--oro)":tie?"var(--celeste)":"#ff8f9c"}">${dnf?"¡Fundiste el motor!":rey?"¡Sos el nuevo Rey de la Costanera!":opQuit?opn+(opFundio?" fundió el motor: ganaste":" abandonó: ganaste"):win?"¡Ganaste la picada!":tie?"¡Empate!":"Perdiste por "+(pt-ot).toFixed(2)+" s"}</h3>
-    <p>${esc(line)}${nuevoRecord?" Nuevo récord personal: tu fantasma se actualizó.":""}${dnf?" Te pasaste de vueltas demasiado tiempo. Llevalo al taller a rectificar.":""}</p>
+    <p>${esc(line)}${nuevoRecord?" Nuevo récord personal: tu fantasma se actualizó.":""}${dnf?" Te pasaste de vueltas demasiado tiempo. Llevalo al garage a rectificar.":""}</p>
     <div class="stats"><div class="stat"><b>${pt<99?pt.toFixed(2):"—"}</b><span>Tu tiempo</span></div><div class="stat"><b>${ot<99?ot.toFixed(2):"—"}</b><span>${cfg.kind==="ai"?"Rival":opn}</span></div><div class="stat"><b>${top}</b><span>km/h</span></div><div class="stat"><b>${react.toFixed(2)}</b><span>Reacción</span></div></div>
-    <div class="opts" id="ropts"></div>${S.noAds?"":`<div class="banner-ad">Espacio publicitario (simulado) · se saca en el Kiosco</div>`}`,"resplaca");
+    <div class="opts" id="ropts"></div>${S.noAds?"":`<div class="banner-ad">Espacio publicitario (simulado) · se saca en el Quisco</div>`}`,"resplaca");
   const o=$("#ropts");
   if(win&&!tie&&cfg.bet&&cfg.kind!=="live"){const d=el(`<button class="btn verde">Duplicar premio mirando un aviso</button>`);d.onclick=()=>fakeAd(()=>{const p=Math.round(cfg.bet*(S.pase?1.5:1));S.pesos+=p;save();toast(`+${fmt(p)}`);render();});o.append(d);}
   if(cfg.kind==="ghost"&&!win){const p=NET.pilots[cfg.opId];if(p){const rv=el(`<button class="btn">Otra vez contra su fantasma</button>`);rv.onclick=()=>{closeModal();ghostChallenge(p);};o.append(rv);}}
-  if(!win&&!tie&&(dnf||(cfg.mode!=="papeles"&&cfg.modo!=="papeles"))){const t=el(`<button class="btn oro">${dnf?"Al taller a rectificar el motor":"Al taller a preparar el auto"}</button>`);t.onclick=()=>{closeModal();view="taller";render();};o.append(t);}
-  const b=el(`<button class="btn sec">${cfg.kind==="ai"?"Volver al barrio":"Volver a pilotos"}</button>`);b.onclick=()=>{closeModal();view=cfg.kind==="ai"?"barrio":"pilotos";render();};o.append(b);
+  if(!win&&!tie&&(dnf||(cfg.mode!=="papeles"&&cfg.modo!=="papeles"))){const t=el(`<button class="btn oro">${dnf?"Al garage a rectificar el motor":"Al garage a preparar el auto"}</button>`);t.onclick=()=>{closeModal();view="taller";render();};o.append(t);}
+    if(cfg.mode==="copa"&&S.copa&&copaRival(S.copa)){const nx=el(`<button class="btn oro">Siguiente ronda: ${RONDA_N[S.copa.rondas.length-1]}</button>`);nx.onclick=()=>{closeModal();copaJugar();};o.append(nx);}
+  if(cfg.copaB&&BANDA.t){const nx=el(`<button class="btn oro">Volver al torneo</button>`);nx.onclick=()=>{closeModal();view="banda";render();};o.append(nx);}
+  const vb=cfg.kind==="ai"?"barrio":cfg.copaB||cfg.kind==="live"||cfg.kind==="solo"?"banda":"pilotos";
+  const b=el(`<button class="btn sec">Volver a ${vb==="barrio"?"La Lleca":vb==="banda"?"La Banda":"Ranking"}</button>`);b.onclick=()=>{closeModal();view=vb;render();};o.append(b);
   render();}
 }
 
@@ -1891,6 +2177,6 @@ function diag(extra){try{if(!NET.db||!NET.uid)return;let gl="?";try{const c=docu
   NET.db.doc("data/users/"+NET.uid+"/diag").set({v:BUILD,st:T3.st,err:String(T3.err||""),three:!!window.THREE,gltf:!!(window.THREE&&window.THREE.GLTFLoader),models:Object.keys(T3.models),gl,ua:navigator.userAgent.slice(0,160),at:Date.now(),...(extra||{})}).catch(()=>{});}catch(e){}}
 setTimeout(()=>diag(),12000);
 init3D().then(ok=>{if(ok&&curCar())loadModel(curCar().id).then(()=>{if(!RACE)render();},()=>{});});
-window.__test={NET,go:v=>{view=v;render();},inv:()=>INV,BOTS,botET,myET,ranking,T3,race:()=>RACE,live:()=>LIVE,stats,makeRacer,stepRacer,doShift,optLaunch,CARS,RIVALS,rivalCar,newCar,simGhost,cleanGhost,S:()=>S};
+window.__test={NET,cer:(l)=>playCer(l,()=>{}),go:v=>{view=v;render();},inv:()=>INV,BOTS,botET,myET,ranking,T3,race:()=>RACE,live:()=>LIVE,stats,makeRacer,stepRacer,doShift,optLaunch,CARS,RIVALS,rivalCar,newCar,simGhost,cleanGhost,S:()=>S};
 })();
 </script>
