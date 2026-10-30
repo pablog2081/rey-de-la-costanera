@@ -1566,9 +1566,9 @@ function bandaCorrer(){const t=BANDA.t;if(!t||!canRace())return;const M=bandaMiC
   (async()=>{await preload([me.id,opCar.id],6000);if(LIVE!==L)return;
     try{L.room=await NET.room.join(sala);}catch(e){LIVE=null;modalLock=false;closeModal();toast("No se pudo conectar");return;}
     L.room.presence({uid:NET.uid,listo:1}).catch(()=>{});
-    L.room.on("largada",()=>{if(LIVE!==L||RACE)return;const p=(L.room.peers()||[]).find(x=>!x.sameTab&&x.by===L.opId);if(p)L.peer=p.peer;modalLock=false;closeModal();beginLive();},()=>{});
+    L.room.on("largada",m=>{if(LIVE!==L||RACE)return;const p=(L.room.peers()||[]).find(x=>!x.sameTab&&x.by===L.opId);if(p)L.peer=p.peer;modalLock=false;closeModal();beginLive(m.data);},()=>{});
     L.room.onPeers(ch=>{if(LIVE!==L||RACE||L.go)return;const p=ch.peers.find(x=>!x.sameTab&&x.by===L.opId);if(!p)return;L.peer=p.peer;
-      if(L.role==="a"){L.go=1;setTimeout(()=>{if(LIVE===L&&!RACE)L.room.emit("largada",{}).catch(()=>{});},800);}},()=>{});})();}
+      if(L.role==="a"){L.go=1;setTimeout(()=>{if(LIVE===L&&!RACE)L.room.emit("largada",{t0:(NET.now?NET.now():Date.now())+1800,st:Math.random()<.5?"rubia":"morocha"}).catch(()=>{});},800);}},()=>{});})();}
 function bandaRonda(r,t){const n=toArr(t.info&&t.info.r0).length,left=n>>r;return left<=2?"Final":left===4?"Semifinal":left===8?"Cuartos":left===16?"Octavos":"Ronda "+(r+1);}
 function bandaSacar(u){const t=BANDA.t,L=bandaLlave(t);for(let r=0;r<L.rondas.length-1;r++){const i=L.rondas[r].indexOf(u);if(i<0)continue;const mk=`r${r}m${i>>1}`;
     if(!(t.res&&t.res[mk]&&t.res[mk][u])){tRef(`res/${mk}/${u}`).set({t:99,fu:true,wo:true}).catch(()=>{});toast(bandaNombre(u)+" quedó afuera");return;}}}
@@ -1807,7 +1807,7 @@ function onReto(msg){
     LIVE={peer:msg.peer,sala:d.sala,opName:name,opId:msg.by,modo,bet,role:"b",opCar:car,myCar:cleanCar(me)};
     await preload([me.id,car.id],6000);
     try{LIVE.room=await NET.room.join(d.sala);}catch(e){LIVE=null;toast("No se pudo conectar la picada");reply(false);return;}
-    LIVE.room.on("largada",m=>{if(LIVE&&!RACE)beginLive();},()=>{});
+    LIVE.room.on("largada",m=>{if(LIVE&&!RACE)beginLive(m.data);},()=>{});
     reply(true,{car:cleanCar(me)});
     setTimeout(()=>{if(LIVE&&!RACE&&LIVE.role==="b"){try{LIVE.room.leave();}catch(e){}LIVE=null;toast("La picada no arrancó");}},15000);};
   n.onclick=()=>{modalLock=false;closeModal();reply(false);};o.append(y,n);
@@ -1821,16 +1821,19 @@ async function onRespuesta(msg){
   const car=cleanCar(d.car);if(!car){LIVE=null;return;}LIVE.opCar=car;
   await preload([curCar().id,car.id],6000);if(!LIVE)return;
   try{LIVE.room=await NET.room.join(LIVE.sala);}catch(e){LIVE=null;toast("No se pudo conectar la picada");return;}
-  LIVE.room.on("largada",m=>{if(LIVE&&!RACE)beginLive();},()=>{});
-  LIVE.room.emit("largada",{}).catch(()=>{});
+  LIVE.room.on("largada",m=>{if(LIVE&&!RACE)beginLive(m.data);},()=>{});
+  LIVE.room.emit("largada",{t0:(NET.now?NET.now():Date.now())+1800,st:Math.random()<.5?"rubia":"morocha"}).catch(()=>{});
 }
-function beginLive(){
-  const L=LIVE;const op={id:L.opCar.id,color:L.opCar.color,filete:L.opCar.filete,up:L.opCar.up};
+function beginLive(d){
+  const L=LIVE;if(!L||L.begun)return;L.begun=true;d=d||{};const op={id:L.opCar.id,color:L.opCar.color,filete:L.opCar.filete,up:L.opCar.up};
   L.room.onPeers(ch=>{if(!RACE||RACE.cfg.kind!=="live")return;const p=ch.peers.find(x=>x.peer===L.peer);
     if(p&&p.presence){const q=p.presence,O=RACE.O;O.x=+q.x||0;O.v=+q.v||0;O.rpm=+q.r||900;O.gear=q.g|0;O.spin=!!q.sp;O.nitroT=q.ni?1:0;O.launched=O.x>0;
       if(Number.isFinite(q.fin)&&O.fin===null)O.fin=+q.fin;if(q.ab||q.fu)RACE.opQuit=true;if(q.fu)RACE.opFundio=true;}
     if(ch.left.some(x=>x.peer===L.peer))RACE.opGone=Date.now();},()=>{});
-  startRace({kind:"live",opName:L.opName,opId:L.opId,opCar:op,mode:"vivo",modo:L.modo,bet:L.bet,copaB:L.copaB});
+  // los dos celulares largan en el mismo instante (hora del servidor) y con la misma largadora
+  const wait=NET.now&&Number.isFinite(d.t0)?Math.max(0,Math.min(3000,d.t0-NET.now())):300;
+  const stK=d.st==="morocha"||d.st==="rubia"?d.st:"rubia";
+  setTimeout(()=>{if(LIVE!==L||RACE)return;startRace({kind:"live",opName:L.opName,opId:L.opId,opCar:op,mode:"vivo",modo:L.modo,bet:L.bet,copaB:L.copaB,stK});},wait);
 }
 function endLive(){if(LIVE&&LIVE.room){try{LIVE.room.leave();}catch(e){}}LIVE=null;lobbyPresence();}
 
@@ -1940,7 +1943,7 @@ function startRace(cfg){
   const me=curCar(),ms=stats(cfg.exig?Object.assign({},me,{pf:cfg.exig.pf}):me),os=stats(cfg.opCar);
   const P=makeRacer(ms,me.wear||0),O=makeRacer(os);
   const lb=optLaunch(ms),sk=cfg.rival?(BOT[cfg.rival.id]===cfg.rival?botSk(cfg.rival):cfg.rival.sk):.8;
-  S.turno=(S.turno|0)+1;const stK=S.turno%2?"rubia":"morocha";const lights=STV[stK].T.slice();
+  S.turno=(S.turno|0)+1;const stK=cfg.stK||(S.turno%2?"rubia":"morocha");const lights=STV[stK].T.slice();
   RACE={cfg,me,P,O,stK,n:0,greenN:null,phase:0,lightN:lights.map(sec),gas:false,acc:0,done:false,msgT:0,
     band:[Math.max(1500,lb-700),Math.min(ms.red-150,lb+400)],
     ai:{launch:optLaunch(os)*(1+(Math.random()-.5)*(1-sk)*.7),react:sec(.15+(1-sk)*.35*Math.random()),shiftX:.9-(1-sk)*.22*Math.random(),nitroGear:1},
