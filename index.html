@@ -377,7 +377,7 @@ const PACKS = [
  {f:1200,p:"$ 13.999",t:"Lata de fichas",b:"+20% de regalo",dest:true},
  {f:3000,p:"$ 29.999",t:"Cajón del kiosquero",b:"+50% de regalo"},
 ];
-const BUILD="v27";
+const BUILD="v28";
 const DIST = 402; // cuarto de milla
 const GHOST_V = 402;
 const H = 1/240;            // paso fijo de física: así una pasada grabada se reproduce igual en cualquier celular
@@ -721,8 +721,9 @@ function loadModel(id){
       holder.updateMatrixWorld(true);const mw=mesh.matrixWorld.clone(),g0=mesh.geometry;
       const sub=ix=>{const g=new TH.BufferGeometry();for(const k in g0.attributes)g.setAttribute(k,g0.attributes[k]);g.setIndex(ix);g.computeBoundingSphere();return g;};
       mesh.geometry=sub(W.body);
-      W.wheel.forEach((ix,i)=>{const pv=new TH.Group();pv.name="rueda";pv.position.set(W.centers[i][0],W.centers[i][2],0);holder.add(pv);pv.updateMatrixWorld(true);
-        const wm=new TH.Mesh(sub(ix),mesh.material);wm.matrixAutoUpdate=false;wm.matrix.copy(pv.matrixWorld.clone().invert().multiply(mw));pv.add(wm);});
+      // se saca lo que se ve de goma y llanta y se arma una rueda completa en su lugar (la parte tapada por el guardabarros queda en la chapa)
+      W.wheel.forEach((ix,i)=>{const [wx,sd,wy,R]=W.centers[i];const pv=new TH.Group();pv.name="rueda";pv.position.set(wx,wy,0);holder.add(pv);
+        pv.add(ruedaNueva(TH,R*1.04,sd,W.zt[i]||W.sz*.46,W.rim[i]));});
       wr=W.r;}}catch(e){console.warn("ruedas",e);}
     mesh.material.envMapIntensity=1;
     T3.models[id]={holder,mesh,mat:mesh.material,sx:sz.x,sy:sz.y,sz:sz.z,body:null,wr};res(T3.models[id]);
@@ -795,6 +796,29 @@ function carObj(o,opt={}){
   outer.userData={L,W,H:Hh,body,wheels,wr:(M.wr||M.sx*.08)*s,spin:0,shadow:sh};return outer;
 }
 
+
+// rueda armada: cubierta con banda y flancos, llanta con tasa que se nota girar
+const RUEDA_TEX={};
+function ruedaTex(TH,col){const k=col.map(v=>Math.round(v/24)).join("-");if(RUEDA_TEX[k])return RUEDA_TEX[k];
+  const c=document.createElement("canvas");c.width=c.height=256;const x=c.getContext("2d");
+  const lum=.299*col[0]+.587*col[1]+.114*col[2],base=lum<110?[168,170,176]:col.map(v=>Math.min(235,v*1.05));
+  x.fillStyle="#141416";x.fillRect(0,0,256,256);
+  const g=x.createRadialGradient(110,100,8,128,128,92);g.addColorStop(0,`rgb(${base.map(v=>Math.min(255,v+60)|0)})`);g.addColorStop(.6,`rgb(${base.map(v=>v|0)})`);g.addColorStop(1,`rgb(${base.map(v=>v*.55|0)})`);
+  x.fillStyle=g;x.beginPath();x.arc(128,128,92,0,7);x.fill();
+  x.strokeStyle="rgba(0,0,0,.45)";x.lineWidth=3;for(let i=0;i<8;i++){const a=i*Math.PI/4;x.beginPath();x.moveTo(128+Math.cos(a)*34,128+Math.sin(a)*34);x.lineTo(128+Math.cos(a)*84,128+Math.sin(a)*84);x.stroke();}
+  x.strokeStyle="rgba(255,255,255,.35)";x.lineWidth=2;x.beginPath();x.arc(128,128,84,0,7);x.stroke();
+  x.fillStyle="#2a2a2e";for(let i=0;i<4;i++){const a=i*Math.PI/2+.4;x.beginPath();x.arc(128+Math.cos(a)*22,128+Math.sin(a)*22,4,0,7);x.fill();}
+  const cg=x.createRadialGradient(122,122,2,128,128,16);cg.addColorStop(0,"#f2f2f2");cg.addColorStop(1,"#6d6d72");x.fillStyle=cg;x.beginPath();x.arc(128,128,14,0,7);x.fill();
+  const t=new TH.CanvasTexture(c);t.encoding=TH.sRGBEncoding;RUEDA_TEX[k]=t;return t;}
+function ruedaNueva(TH,R,sd,zt,col){const g=new TH.Group(),w=R*.62,zc=sd*(zt-w/2);
+  const rub=new TH.MeshStandardMaterial({color:0x151517,roughness:.92,metalness:0});
+  const tire=new TH.Mesh(new TH.CylinderGeometry(R,R,w,36,1,true),rub);tire.rotation.x=Math.PI/2;tire.position.z=zc;g.add(tire);
+  const side=new TH.MeshStandardMaterial({color:0x1b1b1e,roughness:.85,side:TH.DoubleSide});
+  for(const s2 of[1,-1]){const ring=new TH.Mesh(new TH.RingGeometry(R*.66,R,36),side);ring.position.z=zc+s2*w/2;if(s2!==sd)ring.rotation.y=Math.PI;g.add(ring);}
+  const cap=new TH.Mesh(new TH.CircleGeometry(R*.68,36),new TH.MeshStandardMaterial({map:ruedaTex(TH,col),roughness:.32,metalness:.65}));
+  cap.position.z=zc+sd*(w/2+.002);if(sd<0)cap.rotation.y=Math.PI;g.add(cap);
+  const inner=new TH.Mesh(new TH.CircleGeometry(R*.68,24),new TH.MeshStandardMaterial({color:0x222226,roughness:.7}));inner.position.z=zc-sd*(w/2);if(sd>0)inner.rotation.y=Math.PI;g.add(inner);
+  return g;}
 // separa las 4 ruedas de un modelo normalizado (frente +x, piso y=0, centrado en x/z)
 function splitWheels(holder,mesh,TH){
   holder.updateMatrixWorld(true);
@@ -821,11 +845,20 @@ function splitWheels(holder,mesh,TH){
     const R=Rs[Rs.length>>1];return [cx,y0+R,R];};
   const centers=[[fx,1],[fx,-1],[rx,1],[rx,-1]].map(([wx,sd])=>{const f=fit(wx,sd);return [f[0],sd,f[1],f[2]];});
   const tri=idx?idx.array:null,nt=(tri?tri.length:n)/3,body=[],wheel=[[],[],[],[]];
+  // color de la textura en cada triángulo: así se distingue goma/llanta de la chapa (guardabarros que tapan la rueda)
+  const uv=geo.attributes.uv,img=mesh.material.map&&mesh.material.map.image;let tx=null,TW=0,TH2=0;
+  try{if(img&&uv){TW=Math.min(512,img.width);TH2=Math.min(512,img.height);const cv=document.createElement("canvas");cv.width=TW;cv.height=TH2;const c2=cv.getContext("2d");c2.drawImage(img,0,0,TW,TH2);tx=c2.getImageData(0,0,TW,TH2).data;}}catch(e){tx=null;}
+  const colAt=(a,b,c)=>{if(!tx)return null;const u=(uv.getX(a)+uv.getX(b)+uv.getX(c))/3,v=(uv.getY(a)+uv.getY(b)+uv.getY(c))/3;
+    const px=Math.max(0,Math.min(TW-1,Math.floor(u*TW))),py=Math.max(0,Math.min(TH2-1,Math.floor(v*TH2))),o=(py*TW+px)*4;return [tx[o],tx[o+1],tx[o+2]];};
+  const rim=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],zt=[0,0,0,0];
   for(let t=0;t<nt;t++){const a=tri?tri[t*3]:t*3,b=tri?tri[t*3+1]:t*3+1,c=tri?tri[t*3+2]:t*3+2;
     const x=(P[a*3]+P[b*3]+P[c*3])/3,y=(P[a*3+1]+P[b*3+1]+P[c*3+1])/3,z=(P[a*3+2]+P[b*3+2]+P[c*3+2])/3;
-    let k=-1;if(Math.abs(z)>sz*.27){for(let w=0;w<4;w++){const [wx,sd,wy,wr]=centers[w];if(Math.sign(z)===sd&&Math.hypot(x-wx,y-wy)<wr&&Math.max(Math.hypot(P[a*3]-wx,P[a*3+1]-wy),Math.hypot(P[b*3]-wx,P[b*3+1]-wy),Math.hypot(P[c*3]-wx,P[c*3+1]-wy))<wr*1.08){k=w;break;}}}
+    let k=-1;if(Math.abs(z)>sz*.27){for(let w=0;w<4;w++){const [wx,sd,wy,wr]=centers[w];if(Math.sign(z)===sd){const d=Math.hypot(x-wx,y-wy);if(d<wr*1.12){const col=colAt(a,b,c);let isW=d<wr*1.03;
+          if(col){const mx=Math.max(...col),mn=Math.min(...col),lum=.299*col[0]+.587*col[1]+.114*col[2],sat=mx?(mx-mn)/mx:0;isW=(lum<80&&sat<.45)||(d<wr*.74&&sat<.25)||(d<wr*1.08&&sat<.14&&lum>150);
+            if(isW&&d<wr*.6){rim[w][0]+=col[0];rim[w][1]+=col[1];rim[w][2]+=col[2];rim[w][3]++;}}
+          if(isW){k=w;zt[w]=Math.max(zt[w],Math.abs(z));break;}}}}}
     (k<0?body:wheel[k]).push(a,b,c);}
-  return {r:centers.reduce((a,c)=>a+c[3],0)/4,cy,centers,body,wheel,sz};
+  return {r:centers.reduce((a,c)=>a+c[3],0)/4,cy,centers,body,wheel,sz,zt,rim:rim.map(q=>q[3]?[q[0]/q[3],q[1]/q[3],q[2]/q[3]]:[190,190,195])};
 }
 
 /* ---------- escenario de la picada ---------- */
@@ -1246,6 +1279,8 @@ function startShow(cv,o,drawBg,opts={}){
 // y después sale el elegido regulando, dobla para el mismo lado y se va de pantalla.
 const GSP=3.1,GLANE=5.2,GR=3.0;
 function garCanvasTex(w,h,draw){const TH=T3.TH,c=document.createElement("canvas");c.width=w;c.height=h;draw(c.getContext("2d"),w,h);const t=new TH.CanvasTexture(c);t.encoding=TH.sRGBEncoding;t.anisotropy=4;return t;}
+// cocheras ordenadas de la más cara (izquierda) a la más barata
+function garOrden(){return S.cars.slice().sort((a,b)=>CAR[b.id].price-CAR[a.id].price);}
 function garSlotX(i,n){return (i-(n-1)/2)*GSP;}
 function garPoster(){return garCanvasTex(1536,768,(x,w,h)=>{
   x.fillStyle="#f1e6c8";x.fillRect(0,0,w,h);x.strokeStyle="#1b1b1b";x.lineWidth=14;x.strokeRect(14,14,w-28,h-28);
@@ -1363,7 +1398,7 @@ function startGarage(cv,ui){
   const ids=[...new Set(S.cars.map(o=>o.id))];
   const go=()=>{if(S0.dead||!document.body.contains(cv))return;
     const TH=T3.TH,G=garBuild(S0),sc=G.sc,cam=new TH.PerspectiveCamera(36,1,.1,200);
-    const objs={};S.cars.forEach((o,i)=>{const p=garWrap(o);if(!p)return;p.userData.slot=i;objs[o.uid]=p;garPlace(p,garSlotX(i,G.n),-.6,-Math.PI/2);p.visible=o.uid!==S.cur;sc.add(p);});
+    const objs={};garOrden().forEach((o,i)=>{const p=garWrap(o);if(!p)return;p.userData.slot=i;objs[o.uid]=p;garPlace(p,garSlotX(i,G.n),-.6,-Math.PI/2);p.visible=o.uid!==S.cur;sc.add(p);});
     let camX=0,tgtX=null,drag=null,last=performance.now(),anim=null;
     const lim=Math.max(0,G.half-2.2-Math.min(G.n,3.4)*GSP/2);camX=Math.max(-lim,Math.min(lim,0));
     {const pk=Object.values(objs).filter(p=>p.visible).map(p=>p.position.x);const cx=pk.length?pk.slice(0,3).reduce((a,v)=>a+v,0)/Math.min(3,pk.length):0;camX=Math.max(-lim,Math.min(lim,cx));}
@@ -1417,7 +1452,7 @@ function vGarage(m){
   if(T3.err){const n=el(`<p class="nota" style="border-color:var(--rojo);margin:8px 0 12px"></p>`);n.textContent="El 3D no cargó: "+T3.err;m.append(n);}
   const mc=el(`<div class="mycars" style="margin-top:12px"></div>`);
   const paint=uid=>{mc.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.u===String(uid)));const o=S.cars.find(x=>String(x.uid)===String(uid));const nn=hero.querySelector("#garNom");if(o&&nn)nn.textContent=CAR[o.id].name;};
-  S.cars.forEach(o=>{const b=el(`<button aria-pressed="${o.uid===S.cur}" data-u="${o.uid}">${CAR[o.id].name}</button>`);b.onclick=()=>{if(G0&&G0.choose)G0.choose(o.uid);else{S.cur=o.uid;save();pubPilot();lobbyPresence();paint(o.uid);hud();}};mc.append(b);});
+  garOrden().forEach(o=>{const b=el(`<button aria-pressed="${o.uid===S.cur}" data-u="${o.uid}">${CAR[o.id].name}</button>`);b.onclick=()=>{if(G0&&G0.choose)G0.choose(o.uid);else{S.cur=o.uid;save();pubPilot();lobbyPresence();paint(o.uid);hud();}};mc.append(b);});
   m.append(mc);
   if(S.cars.length<2)m.append(el(`<p class="nota">Tenés un solo fierro y anda con vos. Comprá otro en los Clasificados y lo vas a ver estacionado acá.</p>`));
   let G0=null;requestAnimationFrame(()=>{G0=startGarage(hero.querySelector("canvas"),paint);});
