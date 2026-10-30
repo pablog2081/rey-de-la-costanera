@@ -335,7 +335,7 @@ const PACKS = [
  {f:1200,p:"$ 13.999",t:"Lata de fichas",b:"+20% de regalo",dest:true},
  {f:3000,p:"$ 29.999",t:"Cajón del kiosquero",b:"+50% de regalo"},
 ];
-const BUILD="v21";
+const BUILD="v22";
 const DIST = 402; // cuarto de milla
 const GHOST_V = 402;
 const H = 1/240;            // paso fijo de física: así una pasada grabada se reproduce igual en cualquier celular
@@ -1006,7 +1006,7 @@ function flagVidFrame(R,dt,passed,lead){const E=T3.env;if(R.stK==="morocha"){if(
   if(!passed){if(v.currentTime>5.0||v.ended){try{v.currentTime=.3;}catch(e){}}}
   else if(R.fvState===0){R.fvState=1;try{v.currentTime=5.2;}catch(e){}}
   if(R.fvState===1&&v.ended)return true;
-  if(v.paused&&!v.ended){v._unl=false;v.muted=muted;const p=v.play();if(p&&p.catch)p.catch(()=>{v.muted=true;v.play().catch(()=>{});});}
+  if(v.paused&&!v.ended){v._unl=false;v.muted=muted||noVoz;const p=v.play();if(p&&p.catch)p.catch(()=>{v.muted=true;v.play().catch(()=>{});});}
   return true;}
 function flagVidStop(){if(FV.v&&!FV.v.paused)FV.v.pause();if(FV.mesh)FV.mesh.visible=false;}
 function hideChicaVid(){if(CHV.spr)CHV.spr.visible=false;}
@@ -1025,7 +1025,7 @@ function keyedMat(video){const TH=T3.TH,tex=new TH.VideoTexture(video);
     fragmentShader:"uniform sampler2D map;varying vec2 vUv;void main(){if(vUv.y>.982||vUv.x<.006||vUv.x>.994)discard;vec4 c=texture2D(map,vUv);float k=c.g-max(c.r,c.b);float a=1.0-smoothstep(.07,.17,k);if(a<.02)discard;c.g=min(c.g,max(c.r,c.b)*1.05+.02);gl_FragColor=vec4(c.rgb*.88,a);}"});}
 function starterMesh(k){const o=STS[k];if(o.mesh)return o.mesh;const TH=T3.TH,c=STV[k];
   const m=new TH.Mesh(new TH.PlaneGeometry(c.w,c.h),keyedMat(o.v));m.layers.set(2);m.frustumCulled=false;o.mesh=m;return m;}
-function starterArm(R){const k=R.stK;const v=starterVideo(k);R.starter=true;try{v.muted=muted;v.volume=1;v.currentTime=0;const p=v.play();if(p&&p.then)p.then(()=>{if(RACE===R&&(R.loading||R.n===0))v.pause();}).catch(()=>{});}catch(e){}}
+function starterArm(R){const k=R.stK;const v=starterVideo(k);R.starter=true;try{v.muted=muted||noVoz;v.volume=1;v.currentTime=0;const p=v.play();if(p&&p.then)p.then(()=>{if(RACE===R&&(R.loading||R.n===0))v.pause();}).catch(()=>{});}catch(e){}}
 function starterFrame(R,camX){const E=T3.env;for(const k in STS)if(k!==R.stK&&STS[k].mesh)STS[k].mesh.visible=false;
   const o=STS[R.stK];if(!starterOn(R)){if(o&&o.mesh)o.mesh.visible=false;return;}
   const m=starterMesh(R.stK),v=o.v,c=STV[R.stK];if(m.parent!==E.sc)E.sc.add(m);
@@ -1169,16 +1169,16 @@ function drawTacho(cv,rpm,red,band,gear,spin,hard){hard=hard||red*1.15;
 }
 
 /* ================= SONIDO ================= */
-let AC=null,eng=null,muted=false;try{muted=localStorage.getItem(KEY+".mute")==="1";}catch(e){}
+let AC=null,eng=null,muted=false,noMus=false,noVoz=false,noFx=false;try{muted=localStorage.getItem(KEY+".mute")==="1";noMus=localStorage.getItem(KEY+".nomus")==="1";noVoz=localStorage.getItem(KEY+".novoz")==="1";noFx=localStorage.getItem(KEY+".nofx")==="1";}catch(e){}
 const BGM=new Audio();BGM.src="escenario/tema_rey.mp4";BGM.loop=true;BGM.preload="auto";BGM.volume=0;let bgmLow=false;
-function bgm(){try{if(muted){BGM.pause();return;}BGM.volume=bgmLow?.04:RACE?.1:.32;if(BGM.paused){const p=BGM.play();if(p&&p.catch)p.catch(()=>{});}}catch(e){}}
+function bgm(){try{if(muted||noMus){BGM.pause();return;}BGM.volume=bgmLow?.04:RACE?.1:.32;if(BGM.paused){const p=BGM.play();if(p&&p.catch)p.catch(()=>{});}}catch(e){}}
 ["pointerdown","keydown"].forEach(ev=>window.addEventListener(ev,()=>bgm(),{passive:true}));
 function audioInit(){bgm();if(AC||muted)return;try{AC=new (window.AudioContext||window.webkitAudioContext)();loadSounds();}catch(e){}}
 // Motores: sonidos reales en bucle según la motorización, con el tono siguiendo las vueltas
 const ENG_TYPE={spazio:"chico",fitito:"chico",trescv:"chico",cuatrol:"chico",tano:"chico",doce:"chico",unito:"chico",corsario:"chico",gacela:"chico",milqui:"chico",franchute:"chico",fogon:"medio",cordillera:"medio",halcon:"seis",chivo:"seis",toro:"seis",polar:"v8"};
 const SND={buf:{},p:null};
 function loadSounds(){if(SND.p||!AC)return SND.p;SND.p=Promise.all(["chico","medio","seis","v8"].map(n=>fetch("sonidos/motor2_"+n+".wav").then(r=>{if(!r.ok)throw 0;SND.v2=true;return r.arrayBuffer();}).catch(()=>fetch("sonidos/motor_"+n+".wav").then(r=>r.arrayBuffer())).then(a=>new Promise((ok,no)=>AC.decodeAudioData(a,ok,no))).then(b=>{SND.buf[n]=b;}).catch(()=>{})));return SND.p;}
-function makeEng(id,vol){if(!AC||muted)return null;const b=SND.buf[ENG_TYPE[id]||"chico"],f=AC.createBiquadFilter(),g=AC.createGain();f.type="lowpass";f.frequency.value=1800;g.gain.value=0;f.connect(g);g.connect(AC.destination);
+function makeEng(id,vol){if(!AC||muted||noFx)return null;const b=SND.buf[ENG_TYPE[id]||"chico"],f=AC.createBiquadFilter(),g=AC.createGain();f.type="lowpass";f.frequency.value=1800;g.gain.value=0;f.connect(g);g.connect(AC.destination);
   const e={f,g,vol,ref:SND.v2?CAR[id].red*.78:CAR[id].red/2.8,id};
   if(b){const src=AC.createBufferSource();src.buffer=b;src.loop=true;src.connect(f);src.start();e.src=src;}
   else{const o1=AC.createOscillator(),o2=AC.createOscillator();o1.type="sawtooth";o2.type="square";o1.connect(f);o2.connect(f);o1.start();o2.start();e.o1=o1;e.o2=o2;}
@@ -1189,13 +1189,21 @@ function engSet(e,rpm,thr,vol){if(!e)return;const t=AC.currentTime;
   e.f.frequency.setTargetAtTime(thr?3600:1300,t,.05);e.g.gain.setTargetAtTime((thr?1:.55)*(vol??e.vol),t,.05);}
 function engKill(e){if(!e)return;try{e.g.gain.setTargetAtTime(0,AC.currentTime,.05);const s=e.src,o1=e.o1,o2=e.o2;setTimeout(()=>{try{s&&s.stop();o1&&o1.stop();o2&&o2.stop();}catch(x){}},300);}catch(x){}}
 let engO=null;
-function engineStart(id,oid){if(!AC||muted)return;engineStop();const go=()=>{if(!RACE)return;engineStop();eng=makeEng(id,(ENG_TYPE[id]==="chico"?.32:.38));engO=oid?makeEng(oid,.25):null;};if(SND.buf.chico)go();else (loadSounds()||Promise.resolve()).then(go);}
+function engineStart(id,oid){if(!AC||muted||noFx)return;engineStop();const go=()=>{if(!RACE)return;engineStop();eng=makeEng(id,(ENG_TYPE[id]==="chico"?.32:.38));engO=oid?makeEng(oid,.25):null;};if(SND.buf.chico)go();else (loadSounds()||Promise.resolve()).then(go);}
 function engineSet(rpm,thr){if(eng)engSet(eng,rpm,thr);}
 function engineOpp(rpm,dist,on){if(engO)engSet(engO,rpm,on,.25/(1+dist/12));}
 function engineStop(){engKill(eng);engKill(engO);eng=null;engO=null;}
-function blip(f=880,d=.12){if(!AC||muted)return;const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;g.gain.value=.12;o.connect(g);g.connect(AC.destination);o.start();g.gain.setTargetAtTime(0,AC.currentTime+d*.6,.03);o.stop(AC.currentTime+d+.1);}
+function blip(f=880,d=.12){if(!AC||muted||noFx)return;const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;g.gain.value=.12;o.connect(g);g.connect(AC.destination);o.start();g.gain.setTargetAtTime(0,AC.currentTime+d*.6,.03);o.stop(AC.currentTime+d+.1);}
 $("#bMute").textContent=muted?"🔇":"🔊";
-$("#bMute").onclick=()=>{muted=!muted;try{localStorage.setItem(KEY+".mute",muted?"1":"0");}catch(e){}$("#bMute").textContent=muted?"🔇":"🔊";if(muted)engineStop();else audioInit();bgm();};
+function audioPrefs(){try{localStorage.setItem(KEY+".mute",muted?"1":"0");localStorage.setItem(KEY+".nomus",noMus?"1":"0");localStorage.setItem(KEY+".novoz",noVoz?"1":"0");localStorage.setItem(KEY+".nofx",noFx?"1":"0");}catch(e){}
+  $("#bMute").textContent=muted?"🔇":"🔊";if(muted||noFx)engineStop();else audioInit();bgm();}
+function audioMenu(){const row=(k,t,s,on)=>`<label class="aopt" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--linea)"><span><b style="font-size:18px">${t}</b><br><span style="color:var(--crema-2);font-size:14px">${s}</span></span><input type="checkbox" data-k="${k}" ${on?"checked":""} style="width:26px;height:26px;accent-color:var(--oro)"></label>`;
+  modal(`<h3>Sonido</h3>${row("all","Todo el sonido","Apaga y prende todo de una",!muted)}${row("mus","Música de fondo","El tema del Rey de la Costanera",!noMus)}${row("voz","Voces de las chicas","La largada, la llegada y las placas",!noVoz)}${row("fx","Motores y efectos","Ruido de los autos y los sonidos del juego",!noFx)}<div class="opts" style="margin-top:14px"><button class="btn sec" id="aok">Listo</button></div>`);
+  $("#mbox").querySelectorAll("input[data-k]").forEach(i=>i.onchange=()=>{const v=!i.checked;({all:()=>muted=v,mus:()=>noMus=v,voz:()=>noVoz=v,fx:()=>noFx=v})[i.dataset.k]();
+    if(RACE&&R_vids)R_vids();audioPrefs();});
+  $("#aok").onclick=closeModal;}
+function R_vids(){try{const m=muted||noVoz;document.querySelectorAll("video").forEach(()=>{});[window.__resv].forEach(v=>{if(v&&!v.paused)v.muted=m;});}catch(e){}}
+$("#bMute").onclick=()=>audioMenu();
 const vib=ms=>{try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){}};
 
 /* ================= UI ================= */
@@ -1676,7 +1684,7 @@ function playResult(info,done){
     <button class="btn sec sm" style="position:absolute;right:12px;bottom:14px;z-index:2">Saltar ▸</button></div>`);
   bgmLow=true;bgm();document.body.append(ov);const cv=ov.querySelector("canvas"),ctx=cv.getContext("2d"),end=()=>{if(fin)return;fin=true;bgmLow=false;bgm();try{v.pause();}catch(e){}ov.remove();done();};
   ov.querySelector("button").onclick=end;v.onended=end;v.onerror=end;
-  v._unl=false;v.src="escenario/res_"+k+".mp4";v.muted=muted;v.currentTime=0;const p=v.play();if(p&&p.catch)p.catch(()=>{v.muted=true;v.play().catch(end);});
+  v._unl=false;v.src="escenario/res_"+k+".mp4";v.muted=muted||noVoz;v.currentTime=0;const p=v.play();if(p&&p.catch)p.catch(()=>{v.muted=true;v.play().catch(end);});
   setTimeout(()=>{if(!fin&&v.readyState<2)end();},6000);
   const B=RES_B[k];
   const tick=()=>{if(fin)return;const dpr=Math.min(2,devicePixelRatio||1),W=ov.clientWidth,Hh=ov.clientHeight;if(cv.width!==W*dpr){cv.width=W*dpr;cv.height=Hh*dpr;}
