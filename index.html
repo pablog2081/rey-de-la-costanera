@@ -377,7 +377,7 @@ const PACKS = [
  {f:1200,p:"$ 13.999",t:"Lata de fichas",b:"+20% de regalo",dest:true},
  {f:3000,p:"$ 29.999",t:"Cajón del kiosquero",b:"+50% de regalo"},
 ];
-const BUILD="v28";
+const BUILD="v29";
 const DIST = 402; // cuarto de milla
 const GHOST_V = 402;
 const H = 1/240;            // paso fijo de física: así una pasada grabada se reproduce igual en cualquier celular
@@ -1528,6 +1528,10 @@ function engineStart(id,oid){if(!AC||muted||noFx)return;engineStop();const go=()
 function engineSet(rpm,thr){if(eng)engSet(eng,rpm,thr);}
 function engineOpp(rpm,dist,on){if(engO)engSet(engO,rpm,on,.25/(1+dist/12));}
 function engineStop(){engKill(eng);engKill(engO);eng=null;engO=null;}
+// pitidos de semáforo de largada: tres cortos y agudos y uno más largo para largar
+function pitido(f,d){if(!AC||muted||noFx)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain(),lp=AC.createBiquadFilter();
+  o.type="square";o.frequency.value=f;lp.type="lowpass";lp.frequency.value=f*3.2;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.085,t+.008);
+  g.gain.setValueAtTime(.085,t+d);g.gain.linearRampToValueAtTime(0,t+d+.03);o.connect(lp);lp.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+.06);}
 function blip(f=880,d=.12){if(!AC||muted||noFx)return;const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;g.gain.value=.12;o.connect(g);g.connect(AC.destination);o.start();g.gain.setTargetAtTime(0,AC.currentTime+d*.6,.03);o.stop(AC.currentTime+d+.1);}
 $("#bMute").textContent=muted?"🔇":"🔊";
 function audioPrefs(){try{localStorage.setItem(KEY+".mute",muted?"1":"0");localStorage.setItem(KEY+".nomus",noMus?"1":"0");localStorage.setItem(KEY+".novoz",noVoz?"1":"0");localStorage.setItem(KEY+".nofx",noFx?"1":"0");}catch(e){}
@@ -2227,7 +2231,7 @@ function drawCut(ctx,w,h){const v=flagVideo(),vw=v.videoWidth||960,vh=v.videoHei
 function coast(X){X.v=Math.max(0,X.v-3.2*H);X.x+=X.v*H;X.spin=false;X.nitroT=0;X.rpm+=(1100-X.rpm)*H*3;}
 function tick(R){
   R.n++;
-  if(R.phase<4&&R.n>=R.lightN[R.phase]){R.phase++;if(!starterOn(R))blip(R.phase<4?520:1040,.15);if(R.phase===4){R.greenN=R.n;say("¡LARGÁ!","var(--verde)");}}
+  if(R.phase<4&&R.n>=R.lightN[R.phase]){R.phase++;pitido(R.phase<4?1320:1760,R.phase<4?.14:.62);if(R.phase===4){R.greenN=R.n;say("¡LARGÁ!","var(--verde)");}}
   const k=kNow();
   if(k===null){stepRacer(R.P,H,R.gas,0);dmgAlerts(R);if(R.cfg.kind==="ai")R.O.rpm+=(R.ai.launch-R.O.rpm)*Math.min(1,H*6);else if(R.cfg.kind==="ghost")R.O.rpm+=(R.G.rec.l-R.O.rpm)*.05;return;}
   const P=R.P;
