@@ -335,7 +335,7 @@ const PACKS = [
  {f:1200,p:"$ 13.999",t:"Lata de fichas",b:"+20% de regalo",dest:true},
  {f:3000,p:"$ 29.999",t:"Cajón del kiosquero",b:"+50% de regalo"},
 ];
-const BUILD="v22";
+const BUILD="v23";
 const DIST = 402; // cuarto de milla
 const GHOST_V = 402;
 const H = 1/240;            // paso fijo de física: así una pasada grabada se reproduce igual en cualquier celular
@@ -934,9 +934,9 @@ function vidSpeed(t){return Math.max(.5,(vidD(t+.12)-vidD(t-.12))/.24);}
 function syncVideo(R,camX,dt){const v=DRV;if(R.vx0==null){R.vx0=camX;R.vcPrev=camX;R.vspd=0;}
   const inst=(camX-R.vcPrev)/Math.max(.001,dt);R.vcPrev=camX;R.vspd+=(inst-R.vspd)*Math.min(1,dt*6);const spd=Math.max(0,R.vspd);
   const tgt=vidTime(camX-R.vx0),cur=v.currentTime,diff=tgt-cur;
-  if(!v.seeking&&(diff>.7||diff<-.15)){try{v.currentTime=tgt;}catch(e){}return;}
+  if(!v.seeking&&(diff>1.6||diff<-.6)){try{v.currentTime=tgt;}catch(e){}return;}
   if(spd<.3&&Math.abs(diff)<.1){if(!v.paused)v.pause();return;}
-  const rate=Math.max(.1,Math.min(4,spd/vidSpeed(cur)+diff*1.5));if(Math.abs(v.playbackRate-rate)>.03)try{v.playbackRate=rate;}catch(e){}
+  const rate=Math.max(.1,Math.min(6,spd/vidSpeed(cur)+diff*1.2));if(Math.abs(v.playbackRate-rate)>.06)try{v.playbackRate=rate;}catch(e){}
   if(v.paused&&!v.seeking){const p=v.play();if(p&&p.catch)p.catch(()=>{});}}
 // banderillera 3D animada (Meshy): ondea la bandera y se da vuelta cuando pasan los autos
 const CH3={st:null,obj:null,act:null,mix:null,flag:null,bones:null};
@@ -1172,7 +1172,7 @@ function drawTacho(cv,rpm,red,band,gear,spin,hard){hard=hard||red*1.15;
 let AC=null,eng=null,muted=false,noMus=false,noVoz=false,noFx=false;try{muted=localStorage.getItem(KEY+".mute")==="1";noMus=localStorage.getItem(KEY+".nomus")==="1";noVoz=localStorage.getItem(KEY+".novoz")==="1";noFx=localStorage.getItem(KEY+".nofx")==="1";}catch(e){}
 const BGM=new Audio();BGM.src="escenario/tema_rey.mp4";BGM.loop=true;BGM.preload="auto";BGM.volume=0;let bgmLow=false;
 function bgm(){try{if(muted||noMus){BGM.pause();return;}BGM.volume=bgmLow?.04:RACE?.1:.32;if(BGM.paused){const p=BGM.play();if(p&&p.catch)p.catch(()=>{});}}catch(e){}}
-["pointerdown","keydown"].forEach(ev=>window.addEventListener(ev,()=>bgm(),{passive:true}));
+["pointerdown","keydown"].forEach(ev=>window.addEventListener(ev,()=>{if(BGM.paused)bgm();},{passive:true}));
 function audioInit(){bgm();if(AC||muted)return;try{AC=new (window.AudioContext||window.webkitAudioContext)();loadSounds();}catch(e){}}
 // Motores: sonidos reales en bucle según la motorización, con el tono siguiendo las vueltas
 const ENG_TYPE={spazio:"chico",fitito:"chico",trescv:"chico",cuatrol:"chico",tano:"chico",doce:"chico",unito:"chico",corsario:"chico",gacela:"chico",milqui:"chico",franchute:"chico",fogon:"medio",cordillera:"medio",halcon:"seis",chivo:"seis",toro:"seis",polar:"v8"};
@@ -1463,9 +1463,9 @@ function vTaller(m){
   const fb=el(`<button class="btn ${c.filete?"sec":"oro"} full" style="margin-top:12px">${c.filete?"Sacar fileteado":`Fileteado porteño en la puerta · <i class="ficha"></i> 40`}</button>`);
   if(!c.filete&&!S.fileteOk&&S.fichas<40)fb.disabled=true;
   fb.onclick=()=>{if(!c.filete&&!S.fileteOk){S.fichas-=40;S.fileteOk=true;}c.filete=!c.filete;save();render();};m.append(fb);
-  if(S.cars.length>1){const val=Math.round(sellValue(c));const sb=el(`<button class="btn sec full" style="margin-top:10px">Vender este auto · ${fmt(val)}</button>`);
-    sb.onclick=()=>{modal(`<h3>¿Vendés el ${cd.name}?</h3><p>Te dan ${fmt(val)} con las mejoras incluidas. No hay vuelta atrás.</p><div class="opts"><button class="btn" id="ys">Vender</button><button class="btn sec" id="ns">Me lo quedo</button></div>`);
-      $("#ys").onclick=()=>{S.pesos+=val;S.cars=S.cars.filter(x=>x.uid!==c.uid);S.cur=S.cars[0].uid;save();pubPilot();closeModal();toast("Vendido");render();};$("#ns").onclick=closeModal;};m.append(sb);}
+  {const val=Math.round(sellValue(c)),ult=S.cars.length===1;const sb=el(`<button class="btn sec full" style="margin-top:10px">Vender este auto · ${fmt(val)}</button>`);
+    sb.onclick=()=>{modal(`<h3>¿Vendés el ${cd.name}?</h3><p>Te dan ${fmt(val)} con las mejoras incluidas. No hay vuelta atrás.${ult?" Es tu único auto: te quedás a pie hasta que compres otro en los Clasificados.":""}</p><div class="opts"><button class="btn" id="ys">Vender</button><button class="btn sec" id="ns">Me lo quedo</button></div>`);
+      $("#ys").onclick=()=>{S.pesos+=val;S.cars=S.cars.filter(x=>x.uid!==c.uid);S.cur=S.cars.length?S.cars[0].uid:null;save();pubPilot();lobbyPresence();closeModal();toast(S.cars.length?"Vendido":"Vendido: a elegir otro fierro");if(!S.cars.length)view="clasif";render();};$("#ns").onclick=closeModal;};m.append(sb);}
 }
 function sellValue(o){let v=CAR[o.id].price*.6*(o.fundido?.5:1);for(const p of PARTS)for(let l=1;l<=Math.min(o.up[p.k],4);l++)v+=partCost(o,p.k,l)*.4;return v;}
 
