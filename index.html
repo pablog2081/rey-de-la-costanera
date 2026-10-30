@@ -333,7 +333,7 @@ function simET(st,sk){const R=makeRacer(st);R.launched=true;R.clutch=true;R.rpm=
     if(R.nitroN>0&&R.gear>=1&&R.nitroT<=0&&R.shiftT<=0){R.nitroN--;R.nitroT=2;}
     if(R.fin!==null)return R.fin+react;}return 99;}
 // Dificultad: todos los del barrio corren un poco más fuerte; los 3 de arriba están calibrados aparte.
-const PF_BOTS=1.04, TOP_T={1:12.50,2:12.60,3:12.70}, TOP_T2={1:23.6,2:23.85,3:24.1}, EXIG={1:{pf:1.09,w:100},2:{pf:1.07,w:50},3:{pf:1.05,w:25}};
+const PF_BOTS=1.04, TOP_T={1:12.50,2:12.60,3:12.70}, TOP_T2={1:24.9,2:25.2,3:25.45}, EXIG={1:{pf:1.09,w:100},2:{pf:1.07,w:50},3:{pf:1.05,w:25}};
 const CATS=[{k:"primera",n:"Primera"},{k:"b",n:"La B"},{k:"tercera",n:"Tercera"},{k:"reserva",n:"Reserva"},{k:"promo",n:"Promoción"}];
 const CAT_PREMIO0=[1000000,600000,350000,200000,120000];
 // en la playa las copas tienen nombre propio y pagan 25% más (y además del trofeo, el campeón se lleva la tabla de oro)
@@ -391,7 +391,7 @@ const PACKS = [
  {f:1200,p:"$ 13.999",t:"Lata de fichas",b:"+20% de regalo",dest:true},
  {f:3000,p:"$ 29.999",t:"Cajón del kiosquero",b:"+50% de regalo"},
 ];
-const BUILD="v33";
+const BUILD="v34";
 let DIST = 402; // cuarto de milla (en las Dunas: 1000 m)
 const GHOST_V = 402;
 /* ===== pistas: 1 = Costanera, 2 = El Crack de las Dunas ===== */
@@ -424,11 +424,18 @@ const QS=new URLSearchParams(location.search);
 const PUB="https://pablog2081.github.io/rey-de-la-costanera/";
 if(NUEVO&&/^[A-Za-z0-9]{10,40}$/.test(QS.get("ref")||""))S.refBy=QS.get("ref");
 migrate();
-const BOT_BASE=BOTS.map(b=>({id:b.id,car:b.car,u:b.u.slice(),nx:b.nx}));
+// en la playa manda otro: El Crack de las Dunas. El Rey de la Costanera sigue corriendo, pero ya no es el de la corona.
+const CRACK={id:"crack",n:"El Crack de las Dunas",car:"polar",t:5,u:[5,5,5,5,5,5],nx:3,sk:.96,bet:1500000,d:"Nació en un médano y nunca perdió en la arena. Corre por la tabla de oro.",rey:1};
+CRACK.up=Object.fromEntries(UPK.map((k,i)=>[k,CRACK.u[i]]));CRACK.up.nitro=CRACK.nx;CRACK.lv=CRACK.t;
+const BOT_BASE=[...BOTS,CRACK].map(b=>({id:b.id,car:b.car,u:b.u.slice(),nx:b.nx}));
+function syncBots(){const i=BOTS.indexOf(CRACK);
+  if(S.lvl===2&&i<0){BOTS.push(CRACK);BOT.crack=CRACK;}else if(S.lvl!==2&&i>=0){BOTS.splice(i,1);delete BOT.crack;}
+  if(BOT.rey)BOT.rey.rey=S.lvl===2?0:1;
+  if(S.ord){if(S.lvl===2&&!S.ord.includes("crack"))S.ord.unshift("crack");if(S.lvl!==2)S.ord=S.ord.filter(x=>x!=="crack");S.rank=S.ord.indexOf("yo")+1;}}
 if(QS.get("dunas")==="1")S.dunasOk=true;
 if(S.lvl===2&&S.dunasOk)setTrack(2,"mojada");else S.lvl=1;
 if(S.lvl===1&&S.rank===1)S.dunasOk=true;
-BOTS.forEach(botSand);
+syncBots();BOTS.forEach(botSand);
 if(S.botMod)for(const id in S.botMod)applyBotMod(id);
 S.cars.forEach(c=>{c.filete=false;});
 if(S.ghost&&S.ghost.d!==GHOST_V&&S.ghost.d!==1000){S.best=null;S.ghost=null;} // los récords de 200 m no valen para 400 m
@@ -449,7 +456,7 @@ function setLvl(n){n=n===2?2:1;if(n===S.lvl){setTrack(n,"mojada");return;}
   const nx=S.L[n]||{};const fr=fresh();PERL.forEach(k=>{S[k]=nx[k]!==undefined?nx[k]:(fr[k]!==undefined?fr[k]:null);});
   if(!S.beaten)S.beaten=[];
   S.cars.forEach(c=>{c.upL=c.upL||{};c.upL[S.lvl]=c.up;c.up=Object.assign(zeroUp(),c.upL[n]||{});});
-  S.lvl=n;setTrack(n,"mojada");
+  S.lvl=n;setTrack(n,"mojada");syncBots();
   BOTS.forEach(b=>{const o=BOT_BASE.find(x=>x.id===b.id);b.car=o.car;b.u=o.u.slice();b.nx=o.nx;b.up=Object.fromEntries(UPK.map((k,i)=>[k,b.u[i]|0]));b.up.nitro=b.nx;botSand(b);});
   if(S.botMod)for(const id in S.botMod)applyBotMod(id);
   if(n===2&&nx.rank===undefined){S.rank=BOTS.length+1;S.ord=null;} // en la playa se arranca último
@@ -605,6 +612,13 @@ function stepRacer(R,dt,thr,t,rng){
   }
   const wheelRpm=R.v/WR*g[R.gear]*st.fd*30/Math.PI;
   let F=0;R.spin=false;
+  if(R.air){ // en el aire: las ruedas giran libres, el motor se dispara y no hay tracción
+    const hard=hardOf(st);if(R.shiftT>0){R.shiftT-=dt;if(R.shiftT<=0)R.gear++;}
+    R.rpm=thr&&!R.blown?Math.min(hard-120,R.rpm+9000*dt):Math.max(900,R.rpm-3000*dt);engineWear(R,dt,false);
+    if(R.nitroT>0)R.nitroT-=dt;
+    R.v=Math.max(0,R.v-.5*1.2*.72*R.v*R.v/st.mass*dt);R.vy-=9.81*dt;R.y+=R.vy*dt;R.x+=R.v*dt;R.top=Math.max(R.top,R.v);
+    const gy=elevAt(R.x);if(R.y<=gy){const imp=Math.abs(R.vy-R.v*slopeAt(R.x));R.air=false;R.y=gy;R.v*=1-Math.min(.08,imp*.008);R.land=imp;R.landT=t;R.rpm=Math.max(R.v/WR*g[R.gear]*st.fd*30/Math.PI,900);}
+    if(R.fin===null&&R.x>=DIST)R.fin=t;return;}
   if(R.shiftT>0){R.shiftT-=dt;R.rpm=Math.max(wheelRpm,R.rpm-4000*dt);if(R.shiftT<=0){R.gear++;}}
   else{
     if(R.clutch){R.rpm=Math.max(wheelRpm,R.rpm-(thr?1500:3500*SUELTA)*dt);if(R.rpm<=wheelRpm+30)R.clutch=false;}
@@ -624,6 +638,9 @@ function stepRacer(R,dt,thr,t,rng){
   const drag=(.5*1.2*.72*R.v*R.v*(CL2?CL2.drag:1)+roll*st.mass*9.81*(R.v>.1?1:0))*(thr&&!R.blown?1:SUELTA)+(CL2?st.mass*9.81*slopeAt(R.x)*(R.v>.1||slopeAt(R.x)<0?1:0):0);
   R.v=Math.max(0,R.v+(F-drag)/st.mass*dt);if(CL2&&R.v<.1&&slopeAt(R.x)>0&&F<=0)R.v=0;
   R.x+=R.v*dt;R.top=Math.max(R.top,R.v);
+  // si la loma cae más rápido de lo que la gravedad baja al auto, despega
+  if(TRACK.lvl===2&&R.x>30&&!(t-(R.landT??-9)<.25)){const k=(elevAt(R.x+3)-2*elevAt(R.x)+elevAt(R.x-3))/9;
+    if(-k*R.v*R.v>9.81*1.25){R.air=true;R.y=elevAt(R.x);R.vy=R.v*slopeAt(R.x);R.airN=(R.airN|0)+1;}}
   if(R.fin===null&&R.x>=DIST)R.fin=t;
 }
 function shiftQuality(R){const x=R.rpm/R.st.red;if(R.limT>.25)return "TARDE";if(x>1.0)return "ESTIRADO";if(x>=.86)return "PERFECTO";if(x>=.74)return "BIEN";return "TEMPRANO";}
@@ -1083,8 +1100,8 @@ function render3D(R,w,h,dt,ctx){
 /* ================= EL CRACK DE LAS DUNAS: playa desierta en 3D ================= */
 const DUNAS={env:null};
 const DCL={ // cómo se ve cada clima
-  seco:{top:"#3f8fd8",hor:"#f3e2bf",fog:0xe9d9b6,fogN:120,fogF:620,sun:1.25,hemi:.75,sand:0xe6c98f,sea:0x2f7fa3,par:"arena"},
-  mojada:{top:"#2f78c4",hor:"#d9e7ef",fog:0xcfdde4,fogN:140,fogF:700,sun:1.1,hemi:.8,sand:0xb99a69,sea:0x2a6f93,par:null},
+  seco:{top:"#3b86cf",hor:"#cfe1ee",fog:0xdfe2dc,fogN:120,fogF:620,sun:1.25,hemi:.75,sand:0xe6c98f,sea:0x2f7fa3,par:"arena"},
+  mojada:{top:"#3582cc",hor:"#cfe1ee",fog:0xcfdde4,fogN:140,fogF:700,sun:1.1,hemi:.8,sand:0xb99a69,sea:0x2a6f93,par:null},
   lluvia:{top:"#4b5563",hor:"#9aa3ab",fog:0x8b949c,fogN:40,fogF:260,sun:.35,hemi:.75,sand:0x8f7a58,sea:0x3a5560,par:"lluvia"},
   viento:{top:"#7aa6c9",hor:"#e6d3ac",fog:0xd8c49c,fogN:60,fogF:330,sun:.95,hemi:.7,sand:0xdcbd84,sea:0x3b7b92,par:"arena"}};
 function dTex(w,h,fn,rep){const c=document.createElement("canvas");c.width=w;c.height=h;fn(c.getContext("2d"),w,h);const t=new T3.TH.CanvasTexture(c);t.encoding=T3.TH.sRGBEncoding;
@@ -1096,27 +1113,44 @@ function dunaLado(x,z){ // médanos alrededor de la pista: fuera del carril crec
   if(z>0)h+=k*(dn+3.5+Math.min(9,(z-25)*.18*(z>25?1:0)));
   else{const sea=Math.max(0,Math.min(1,(-z-22)/26));h=h*(1-sea)+(-2.2)*sea+k*(1-sea)*(dn*.6+1.2);}
   return h;}
+// fotos reales de la playa (generadas): texturas de arena y el horizonte alrededor de la cámara
+const PTX={};function ptex(n,rx,ry,mir){const TH=T3.TH,k=n+rx+"x"+ry;if(PTX[k])return PTX[k];const t=new TH.TextureLoader().load("escenario/playa/"+n+".webp");t.encoding=TH.sRGBEncoding;
+  if(rx){t.wrapS=t.wrapT=mir?TH.MirroredRepeatWrapping:TH.RepeatWrapping;t.repeat.set(rx,ry);}t.anisotropy=8;return PTX[k]=t;}
+// horizonte: un cilindro alrededor de la cámara con el mar de un lado y los médanos del otro, fundidos en las uniones
+function playaHorizonte(TH,R){const c=document.createElement("canvas");c.width=4096;c.height=1024;const x=c.getContext("2d"),T={};let pend=2;
+  const tex=new TH.CanvasTexture(c);tex.encoding=TH.sRGBEncoding;
+  // dos paneles con bordes que se desvanecen en el cielo: el mar del lado de la orilla y los médanos del otro; adelante y atrás queda la playa en 3D
+  const draw=()=>{const PW=1638,PH=Math.round(PW*768/1376),Y=1024-PH;
+    const panel=(img,x0)=>{const o=document.createElement("canvas");o.width=PW;o.height=PH;const q=o.getContext("2d");q.drawImage(img,0,0,PW,PH);
+      q.globalCompositeOperation="destination-in";const gh=q.createLinearGradient(0,0,PW,0);gh.addColorStop(0,"rgba(0,0,0,0)");gh.addColorStop(.18,"rgba(0,0,0,1)");gh.addColorStop(.82,"rgba(0,0,0,1)");gh.addColorStop(1,"rgba(0,0,0,0)");q.fillStyle=gh;q.fillRect(0,0,PW,PH);
+      const gv=q.createLinearGradient(0,0,0,PH);gv.addColorStop(0,"rgba(0,0,0,0)");gv.addColorStop(.22,"rgba(0,0,0,1)");gv.addColorStop(1,"rgba(0,0,0,1)");q.fillStyle=gv;q.fillRect(0,0,PW,PH);
+      x.drawImage(o,x0,Y);};
+    panel(T.mar,205);panel(T.medanos,2253);tex.needsUpdate=true;};
+  for(const n of ["mar","medanos"]){const im=new Image();im.onload=()=>{T[n]=im;if(--pend===0)draw();};im.src="escenario/playa/"+n+".webp";}
+  const H=R*2*Math.PI/4,PH=Math.round(1638*768/1376),hz=(1024-PH+PH/2)/1024;const g=new TH.CylinderGeometry(R,R,H,96,1,true);
+  const m=new TH.Mesh(g,new TH.MeshBasicMaterial({map:tex,side:TH.BackSide,fog:false,depthWrite:false,transparent:true}));m.renderOrder=-2;m.rotation.y=Math.PI/2;m.userData.dy=H*(hz-.5);return m;}
 function buildDunas(){
   const TH=T3.TH,sc=new TH.Scene(),E={sc};
   E.cam=new TH.PerspectiveCamera(46,1,.1,1400);E.cam.layers.enable(2);
   E.hemi=new TH.HemisphereLight(0xdfefff,0xb59a6a,.8);sc.add(E.hemi);
   E.sun=new TH.DirectionalLight(0xfff1d6,1.1);E.sun.position.set(-60,90,70);sc.add(E.sun);
   E.sky=new TH.Mesh(new TH.SphereGeometry(900,32,16),new TH.MeshBasicMaterial({side:TH.BackSide,fog:false,depthWrite:false}));sc.add(E.sky);
+  E.sky.renderOrder=-3;E.hor=playaHorizonte(TH,650);sc.add(E.hor);
   // arena con ondas del viento
   const sandT=dTex(512,512,(x,w,h)=>{x.fillStyle="#d8bd8a";x.fillRect(0,0,w,h);
     for(let i=0;i<9000;i++){const v=180+((i*73)%60);x.fillStyle=`rgba(${v},${v-18},${v-55},.35)`;x.fillRect((i*397)%w,(i*181)%h,2,2);}
     x.strokeStyle="rgba(120,92,52,.18)";x.lineWidth=3;for(let y=8;y<h;y+=17){x.beginPath();for(let xx=0;xx<=w;xx+=8)x.lineTo(xx,y+Math.sin(xx/37+y)*4);x.stroke();}},[90,12]);
-  const X0=-180,X1=1260,Z0=-140,Z1=110,NX=300,NZ=64;
+  const X0=-180,X1=1700,Z0=-140,Z1=110,NX=390,NZ=64;
   const g=new TH.PlaneGeometry(X1-X0,Z1-Z0,NX,NZ);g.rotateX(-Math.PI/2);const pos=g.attributes.position;
   for(let i=0;i<pos.count;i++){const x=pos.getX(i)+(X0+X1)/2,z=pos.getZ(i)+(Z0+Z1)/2;pos.setX(i,x);pos.setZ(i,z);pos.setY(i,dunaLado(x,z));}
-  g.computeVertexNormals();E.sandM=new TH.MeshStandardMaterial({map:sandT,color:0xffffff,roughness:.95,metalness:0});
+  g.computeVertexNormals();E.sandM=new TH.MeshStandardMaterial({map:ptex("arena",470,62,true),color:0xffffff,roughness:.95,metalness:0});
   E.ground=new TH.Mesh(g,E.sandM);sc.add(E.ground);
   // huella compactada de la picada con marcas de cubiertas
   const trT=dTex(256,256,(x,w,h)=>{x.fillStyle="#b89c6c";x.fillRect(0,0,w,h);for(let i=0;i<3000;i++){const v=150+((i*31)%50);x.fillStyle=`rgba(${v},${v-20},${v-60},.4)`;x.fillRect((i*211)%w,(i*97)%h,2,2);}
     x.fillStyle="rgba(90,70,40,.32)";for(const y of [28,64,170,206])x.fillRect(0,y,w,20);},[220,1]);
-  const tg=new TH.PlaneGeometry(1300,13,650,1);tg.rotateX(-Math.PI/2);const tp=tg.attributes.position;
-  for(let i=0;i<tp.count;i++){const x=tp.getX(i)+500;tp.setX(i,x);tp.setY(i,elevAt(Math.max(0,Math.min(1000,x)))+.03);}
-  tg.computeVertexNormals();E.trackM=new TH.MeshStandardMaterial({map:trT,roughness:.9,transparent:true,opacity:.85,polygonOffset:true,polygonOffsetFactor:-2});
+  const tg=new TH.PlaneGeometry(1800,13,900,1);tg.rotateX(-Math.PI/2);const tp=tg.attributes.position;
+  for(let i=0;i<tp.count;i++){const x=tp.getX(i)+750;tp.setX(i,x);tp.setY(i,elevAt(Math.max(0,Math.min(1000,x)))+.03);}
+  tg.computeVertexNormals();E.trackM=new TH.MeshStandardMaterial({map:ptex("huella",225,1,true),roughness:.9,transparent:true,opacity:.9,polygonOffset:true,polygonOffsetFactor:-2});
   sc.add(new TH.Mesh(tg,E.trackM));
   // mar y espuma de la orilla
   const seaT=dTex(256,256,(x,w,h)=>{x.fillStyle="#2a6f93";x.fillRect(0,0,w,h);for(let i=0;i<500;i++){x.fillStyle=`rgba(255,255,255,${.05+((i*13)%10)/120})`;x.fillRect((i*157)%w,(i*71)%h,18,2);}},[60,12]);
@@ -1167,7 +1201,7 @@ function buildDunas(){
 function dunasClima(E,k){const c=DCL[k]||DCL.mojada,TH=T3.TH;E.k=k;
   E.sky.material.map=dTex(16,256,(x,w,h)=>{const gr=x.createLinearGradient(0,0,0,h);gr.addColorStop(0,c.top);gr.addColorStop(.55,c.hor);gr.addColorStop(1,c.hor);x.fillStyle=gr;x.fillRect(0,0,w,h);});E.sky.material.needsUpdate=true;
   E.sc.fog=new TH.Fog(c.fog,c.fogN,c.fogF);E.sun.intensity=c.sun;E.hemi.intensity=c.hemi;E.sandM.color.setHex(0xffffff).lerp(new TH.Color(c.sand).multiplyScalar(1/0.85),.0);
-  E.sandM.color.set(c.sand).multiplyScalar(1.15);E.sandM.roughness=k==="lluvia"||k==="mojada"?.6:.95;E.trackM.color.set(k==="lluvia"||k==="mojada"?0x8f7a5a:0xffffff);
+  E.hor.material.color.set({lluvia:0x7e868e,viento:0xeadfcf,seco:0xfff4e2,mojada:0xffffff}[k]||0xffffff);E.sandM.color.set(c.sand).lerp(new TH.Color(0xffffff),.55);E.sandM.roughness=k==="lluvia"||k==="mojada"?.6:.95;{const wet=k==="lluvia"||k==="mojada";E.trackM.color.setRGB(wet?1.2:2.0,wet?1.08:1.72,wet?.92:1.32);}
   E.seaM.color.set(c.sea).multiplyScalar(2.2);E.wx.visible=c.par==="arena";E.rain.visible=c.par==="lluvia";}
 function setupDunas(R){
   if(!ready3D()||!T3.models[R.me.id]||!T3.models[R.cfg.opCar.id])return false;
@@ -1178,9 +1212,12 @@ function setupDunas(R){
 function dunasPart(E,x,y,z,big){const p=E.parts.find(q=>q.life<=0);if(!p)return;p.life=1;p.s.visible=true;p.s.position.set(x,y,z);p.vx=-2-Math.random()*3;p.vy=.8+Math.random()*1.2;p.sz=big?1.4:.8;p.s.scale.set(p.sz,p.sz,1);}
 function renderDunas(R,w,h,dt){
   const E=DUNAS.env,TH=T3.TH,ren=T3.ren,P=R.P,O=R.O,{me,op}=R.g3,t=performance.now()/1000;
-  const place=(c,X)=>{const cx=X.x-c.userData.L/2,y=elevAt(Math.max(0,Math.min(1000,cx))),sl=slopeAt(Math.max(0,Math.min(1000,cx)));c.position.x=cx;c.position.y=y;c.rotation.z=Math.atan(sl);};
+  const place=(c,X)=>{const cx=X.x-c.userData.L/2,g0=elevAt(Math.max(0,Math.min(1000,cx))),sl=slopeAt(Math.max(0,Math.min(1000,cx)));c.position.x=cx;
+    if(X.air){c.position.y=Math.max(g0,X.y-(elevAt(X.x)-g0));const pit=Math.atan2(X.vy,Math.max(1,X.v))*.8;c.rotation.z+=(pit-c.rotation.z)*Math.min(1,dt*4);}
+    else{c.position.y=g0;c.rotation.z+=(Math.atan(sl)-c.rotation.z)*Math.min(1,dt*(X.land?14:8));}
+    if(X.land){const E2=DUNAS.env;for(let i=0;i<Math.min(10,X.land*3);i++)dunasPart(E2,cx+Math.random()*2-1,g0+.2,c.position.z+(Math.random()-.5)*1.6,true);if(X===P&&X.land>2.5)vib(Math.min(120,X.land*25));X.land=0;}};
   place(me,P);place(op,O);op.visible=R.cfg.kind!=="solo";
-  for(const [c,X] of [[me,P],[op,O]]){const u=c.userData;u.spin-=(X.v/Math.max(.1,u.wr))*dt*(X.spin?1.9:1);u.wheels.forEach(w=>w.rotation.z=u.spin);
+  for(const [c,X] of [[me,P],[op,O]]){const u=c.userData,gr=X.st&&RATIOS[X.st.gears]?RATIOS[X.st.gears][X.gear]*X.st.fd:0;u.spin-=(X.air&&gr?X.rpm*Math.PI/30/gr:X.v/Math.max(.1,u.wr))*dt*(X.spin?1.9:1);u.wheels.forEach(w=>w.rotation.z=u.spin);
     u.body.position.y=X.v>.5?Math.sin(t*23+c.position.z)*.012*Math.min(1,X.v/20):0;}
   const inside=!!R.inside;me.userData.body.visible=!inside;me.userData.shadow.visible=!inside;
   // la cámara acompaña a TU auto: si le sacás ventaja, el rival queda fuera de cuadro
@@ -1191,6 +1228,8 @@ function renderDunas(R,w,h,dt){
     const pitch=(1-2*(R.horizon??.17))*Math.tan(58*Math.PI/360),sl=Math.atan(slopeAt(Math.max(0,Math.min(1000,ex))));
     E.cam.position.set(ex,eyY+shake*.3,ez);E.cam.lookAt(ex+10,eyY-10*pitch+10*Math.tan(sl),ez);}
   else if(S.vista==="costado"||R.finishedView){const back=port?12:10;E.cam.position.set(cx-5+shake,ey+3.4+sp*.4,back-sp*1.2);E.cam.lookAt(cx+3,elevAt(Math.max(0,Math.min(1000,cx+3)))+.8,-1);}
+  else if(!P.launched&&R.starter&&!R.dunasCamGo){ // la cuenta: cámara baja entre los dos autos, mirando a la largadora
+    E.cam.fov=port?44:36;E.cam.updateProjectionMatrix();E.cam.position.set(-5.2,1.35,.15);E.cam.lookAt(2.6,1.05,0);E.camY=null;}
   else{ // de atrás, persiguiendo a tu auto por la playa (subís y bajás con él)
     const L=me.userData.L,bx=cx-L*.5-(port?7.6:6.2)-sp*1.4,by=elevAt(Math.max(0,Math.min(1000,bx))),hy=Math.max(by,ey)+(port?2.9:2.4)+sp*.2,lx=cx+18,ly=elevAt(Math.max(0,Math.min(1000,lx)));
     E.camY=E.camY==null?hy:E.camY+(hy-E.camY)*Math.min(1,dt*4);E.camZ=E.camZ==null?me.position.z*.55:E.camZ;
@@ -1209,7 +1248,7 @@ function renderDunas(R,w,h,dt){
   fl(E.flames[0],me,P.nitroT>0);fl(E.flames[1],op,O.nitroT>0&&op.visible);
   const pr=Math.min(1.5,devicePixelRatio||1),W=Math.round(w*pr),Hh=Math.round(h*pr);
   if(ren.domElement.width!==W||ren.domElement.height!==Hh)ren.setSize(W,Hh,false);
-  ren.setClearColor(0x000000,1);ren.render(E.sc,E.cam);return ren.domElement;}
+  E.hor.position.copy(E.cam.position);E.hor.position.y+=E.hor.userData.dy;E.sky.position.copy(E.cam.position);ren.setClearColor(0x000000,1);ren.render(E.sc,E.cam);return ren.domElement;}
 
 /* ---------- tomas fijas tipo transmisión, con las fotos reales de fondo ---------- */
 // Cada toma: la foto y una cámara 3D calibrada con la misma posición, ángulo y lente (coordenadas de la pista).
@@ -1344,14 +1383,14 @@ function flagVidFrame(R,dt,passed,lead){const E=T3.env;if(R.stK==="morocha"){if(
   if(v.paused&&!v.ended){v._unl=false;v.muted=muted||noVoz;const p=v.play();if(p&&p.catch)p.catch(()=>{v.muted=true;v.play().catch(()=>{});});}
   return true;}
 const FVD={};function flagVidD(){if(!FVD.v){const v=document.createElement("video");v.playsInline=true;v.setAttribute("playsinline","");v.preload="auto";v.crossOrigin="anonymous";v.loop=true;
-  v.src="escenario/bandera_d."+(v.canPlayType('video/mp4; codecs="avc1.42E01E"')?"mp4":"webm");v.addEventListener("error",()=>{FVD.bad=true;});v.addEventListener("loadeddata",()=>{FVD.ok=true;});FVD.v=v;}return FVD.v;}
+  v.addEventListener("seeked",()=>{});v.addEventListener("timeupdate",()=>{if(RACE&&v.currentTime<(FVD.lt||0)-1){RACE.fvLoop=1;v.muted=true;}FVD.lt=v.currentTime;});v.src="escenario/bandera_d."+(v.canPlayType('video/mp4; codecs="avc1.42E01E"')?"mp4":"webm");v.addEventListener("error",()=>{FVD.bad=true;});v.addEventListener("loadeddata",()=>{FVD.ok=true;});FVD.v=v;}return FVD.v;}
 // en la playa la morocha flamea la bandera a un costado de la llegada
 function flagDunas(R,E){const v=flagVidD();if(!FVD.ok||FVD.bad){return;}const TH=T3.TH;
   if(!FVD.mesh){FVD.mesh=new TH.Mesh(new TH.PlaneGeometry(1.18,2.1),keyedMat(v));FVD.mesh.frustumCulled=false;FVD.mesh.layers.enable(2);FVD.mesh.renderOrder=5;}
   const m=FVD.mesh;if(m.parent!==E.sc)E.sc.add(m);const lead=Math.max(R.P.x,R.O.x),X=DIST+3;
-  m.position.set(X,elevAt(DIST)+.976,-7.6);m.rotation.set(0,-Math.PI/2+.35,0);
+  m.scale.setScalar(1.15);m.position.set(DIST+7,elevAt(DIST)+.976*1.15,-4.3);m.rotation.set(0,-Math.PI/2+.55,0);
   const on=lead>DIST-170&&!(R.P.x>DIST+25&&R.O.x>DIST+25);m.visible=on;
-  if(on&&v.paused){v.muted=muted||noVoz;const p=v.play();if(p&&p.catch)p.catch(()=>{v.muted=true;v.play().catch(()=>{});});}else if(!on&&!v.paused)v.pause();}
+  if(on&&v.paused){v.muted=muted||noVoz||!!R.fvLoop;const p=v.play();if(p&&p.catch)p.catch(()=>{v.muted=true;v.play().catch(()=>{});});}else if(!on&&!v.paused)v.pause();}
 function flagVidStop(){if(FVD.v&&!FVD.v.paused)FVD.v.pause();if(FVD.mesh)FVD.mesh.visible=false;if(FV.v&&!FV.v.paused)FV.v.pause();if(FV.mesh)FV.mesh.visible=false;}
 function hideChicaVid(){if(CHV.spr)CHV.spr.visible=false;}
 function hideChica(){if(CH3.obj)CH3.obj.visible=false;if(CH3.flag)CH3.flag.grp.visible=false;}
@@ -1374,8 +1413,8 @@ function starterFrame(R,camX,E0){const E=E0||T3.env;for(const k in STS)if(k!==R.
   const o=STS[R.stK];if(!starterOn(R)){if(o&&o.mesh)o.mesh.visible=false;return;}
   const m=starterMesh(R.stK),v=o.v,c=STV[R.stK];if(m.parent!==E.sc)E.sc.add(m);
   const t=R.n*H,end=v.duration||9.3;
-  if(camX>(R.dunas?1.6:STARTER_X-1)||t>end-.05){m.visible=false;if(!v.paused)v.pause();return;}
-  const SX=R.dunas?2.6:STARTER_X;m.renderOrder=R.dunas?5:0;m.visible=true;m.position.set(SX,c.y+(R.dunas?elevAt(SX):0),0);m.rotation.set(0,-Math.PI/2,0);
+  if(camX>(R.dunas?1.6:STARTER_X-1)||t>end-.05||(R.dunas&&(v.readyState<2||v.currentTime<.05))){m.visible=false;if(!v.paused)v.pause();return;}
+  const SX=R.dunas?2.6:STARTER_X,SC=R.dunas?1.12:1;m.renderOrder=R.dunas?5:0;m.scale.setScalar(SC);m.visible=true;m.position.set(SX,c.y*SC+(R.dunas?elevAt(SX):0),0);m.rotation.set(0,-Math.PI/2,0);
   if(R.n>0){const d=t-v.currentTime;if(Math.abs(d)>.6&&!v.seeking){try{v.currentTime=t;}catch(e){}}else{const r=Math.max(.6,Math.min(1.5,1+d*1.5));if(Math.abs(v.playbackRate-r)>.02)try{v.playbackRate=r;}catch(e){}}if(v.paused){const p=v.play();if(p&&p.catch)p.catch(()=>{});}}}
 function starterStop(){for(const k in STS){const o=STS[k];if(o.v&&!o.v.paused)o.v.pause();if(o.mesh)o.mesh.visible=false;}}
 function cabGeom(w,h,id){const m=CABINA[id];const s=Math.max(w/1280,h/720*.8),iw=1280*s,ih=720*s;let ox=w/2-(m.cx+150)*s;ox=Math.min(0,Math.max(w-iw,ox));return {s,ox,oy:h-ih,m};}
@@ -1533,15 +1572,16 @@ function garBuildPlaya(S0,k){
   const add=(geo,mat,x,y,z,ry)=>{const m=new TH.Mesh(geo,mat);m.position.set(x,y,z);if(ry)m.rotation.y=ry;sc.add(m);return m;};
   // cielo y mar de fondo
   const sky=new TH.Mesh(new TH.SphereGeometry(300,24,12),new TH.MeshBasicMaterial({side:TH.BackSide,fog:false,depthWrite:false,map:garCanvasTex(16,256,(x,w,h)=>{const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,c.top);g.addColorStop(.5,c.hor);g.addColorStop(1,c.hor);x.fillStyle=g;x.fillRect(0,0,w,h);})}));sc.add(sky);
-  const seaM=std({color:new TH.Color(c.sea).multiplyScalar(1.6),roughness:.25,metalness:.2});const sea=add(new TH.PlaneGeometry(900,300),seaM,0,-.35,-180);sea.rotation.x=-Math.PI/2;
-  const foam=add(new TH.PlaneGeometry(900,1.6),new TH.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.7,depthWrite:false}),0,-.3,-31);foam.rotation.x=-Math.PI/2;
+  // fondo: foto real de los médanos detrás del tinglado (teñida según el clima)
+  const tint={lluvia:0x8a9198,viento:0xf0e6d6,seco:0xfff6e8,mojada:0xffffff}[k]||0xffffff;
+  const bg=add(new TH.PlaneGeometry(150,150*768/1376),new TH.MeshBasicMaterial({map:ptex("medanos"),color:tint,fog:false}),0,9,-46);
+  const foam={position:{z:0}};
   // arena alrededor, con médanos suaves detrás
   const sandT=garCanvasTex(512,512,(x,w,h)=>{x.fillStyle="#d8bd8a";x.fillRect(0,0,w,h);for(let i=0;i<9000;i++){const v=180+((i*73)%60);x.fillStyle=`rgba(${v},${v-18},${v-55},.35)`;x.fillRect((i*397)%w,(i*181)%h,2,2);}
     x.strokeStyle="rgba(120,92,52,.16)";x.lineWidth=3;for(let y=8;y<h;y+=17){x.beginPath();for(let xx=0;xx<=w;xx+=8)x.lineTo(xx,y+Math.sin(xx/37+y)*4);x.stroke();}});
-  sandT.wrapS=sandT.wrapT=TH.RepeatWrapping;sandT.repeat.set(40,12);
-  const sandM=std({map:sandT,color:new TH.Color(c.sand).multiplyScalar(1.15),roughness:lluvia||k==="mojada"?.6:.95});
+  const sandM=std({map:ptex("arena",60,15,true),color:new TH.Color(c.sand).lerp(new TH.Color(0xffffff),.55),roughness:lluvia||k==="mojada"?.6:.95});
   const sg=new TH.PlaneGeometry(240,60,120,30);sg.rotateX(-Math.PI/2);const sp=sg.attributes.position;
-  for(let i=0;i<sp.count;i++){const x=sp.getX(i),z=sp.getZ(i)-10;sp.setZ(i,z);const d=Math.max(0,-z-7);sp.setY(i,-.02+(z<-6&&z>-28?Math.sin(Math.min(1,d/6)*Math.PI/2)*(1.6+Math.sin(x*.17)*.9+Math.sin(x*.05+1)*1.1)*(1-Math.max(0,(-z-20)/8)):0)-(z<=-28?(-z-28)*.05:0));}
+  for(let i=0;i<sp.count;i++){const x=sp.getX(i),z=sp.getZ(i)-10;sp.setZ(i,z);const d=Math.max(0,-z-7);sp.setY(i,-.02+.25*(z<-6&&z>-28?Math.sin(Math.min(1,d/6)*Math.PI/2)*(1.6+Math.sin(x*.17)*.9+Math.sin(x*.05+1)*1.1)*(1-Math.max(0,(-z-20)/8)):0)-(z<=-28?(-z-28)*.05:0));}
   sg.computeVertexNormals();add(sg,sandM,0,0,0);
   // pastos de médano
   const pastoT=garCanvasTex(128,128,(x,w,h)=>{x.clearRect(0,0,w,h);x.strokeStyle="#7f8a3a";x.lineWidth=3;for(let i=0;i<26;i++){const bx=20+(i*37)%90;x.beginPath();x.moveTo(bx,h);x.quadraticCurveTo(bx+((i*11)%30-15),h*.5,bx+((i*17)%50-25),8+(i*7)%40);x.stroke();}});
@@ -1549,14 +1589,14 @@ function garBuildPlaya(S0,k){
   for(let i=0;i<70;i++){const x=(i*53)%(W+30)-(W+30)/2,z=-8-(i*29)%14;const s2=new TH.Sprite(pm);const q=1+(i%4)*.35;s2.scale.set(q,q,1);s2.center.set(.5,0);s2.position.set(x,.9+((i*7)%5)*.2,z);sc.add(s2);pastos.push(s2);}
   // platea de cemento alisado, prolija, con cocheras pintadas
   const ft=garFloor();ft.wrapS=ft.wrapT=TH.RepeatWrapping;ft.repeat.set(W/7,13/7);
-  const slab=add(new TH.BoxGeometry(W-2,.16,13),std({map:ft,color:0xfff8ea,emissive:0x2a2620,roughness:lluvia?.28:.6,metalness:lluvia?.25:.05}),0,.0,2.6);
+  const slab=add(new TH.BoxGeometry(W-2,.16,13),std({map:ptex("cemento",W/5,13/5,true),color:lluvia?0x8c8982:0xb3aea4,roughness:lluvia?.28:.6,metalness:lluvia?.25:.05}),0,.0,2.6);
   const lineM=new TH.MeshBasicMaterial({color:0xf3f0e6,transparent:true,opacity:.85});
   for(let i=0;i<=n;i++){const l=new TH.Mesh(new TH.PlaneGeometry(.1,5.4),lineM);l.rotation.x=-Math.PI/2;l.position.set(garSlotX(i,n)-GSP/2,.085,-.6);sc.add(l);}
   const tm=std({color:0x1d4f63,roughness:.8});for(let i=0;i<n;i++)add(new TH.BoxGeometry(1.5,.13,.2),tm,garSlotX(i,n),.14,-3.05);
   // fondo: media pared de tablas pintadas, cartel del parador y el cartel con los modelos
   const tabT=garCanvasTex(512,256,(x,w,h)=>{for(let i=0;i<8;i++){x.fillStyle=i%2?"#e9e1cf":"#e2d8c3";x.fillRect(0,i*32,w,31);x.fillStyle="rgba(0,0,0,.12)";x.fillRect(0,i*32+30,w,2);}});
   tabT.wrapS=TH.RepeatWrapping;tabT.repeat.set(W/4,1);
-  add(new TH.BoxGeometry(W-2,1.5,.12),std({map:tabT,roughness:.85}),0,.83,-3.85);
+  add(new TH.BoxGeometry(W-2,1.5,.12),std({map:ptex("madera",W/3,.5,true),roughness:.85}),0,.83,-3.85);
   add(new TH.BoxGeometry(W-2,.1,.24),std({color:0x1d6f8a,roughness:.6}),0,1.6,-3.85);
   const pw=4.6,ph=2.3,wood=std({color:0x8a6a45,roughness:.85});
   for(const sx of[-1,1])add(new TH.BoxGeometry(.16,4.9,.16),wood,sx*(pw/2+.1),2.45,-3.95);
@@ -1568,7 +1608,7 @@ function garBuildPlaya(S0,k){
   const tablas=[["#f6c445","#c0281d"],["#2a8fb5","#ffffff"],["#e86a3a","#1d6f8a"],["#ffffff","#f6c445"]].map(([a,b])=>std({map:garTabla(a,b),transparent:true,alphaTest:.4,roughness:.4,side:TH.DoubleSide}));
   let kk=0;for(let xx=pw/2+1.4;xx<W/2-2;xx+=1.9){for(const sd of[1,-1]){const t2=add(new TH.PlaneGeometry(.55,2.3),tablas[kk%4],sd*xx,1.2,-3.72);t2.rotation.z=sd*.1;kk++;}}
   // tinglado: postes de madera, cabriadas y chapa ondulada clara
-  const postM=std({color:0x7a5a38,roughness:.85}),zf=8.2;
+  const postM=std({map:ptex("madera",.25,2,true),color:0xcfc6b8,roughness:.85}),zf=8.2;
   const postes=[];for(let x=-W/2+1.2;x<=W/2-1.1;x+=GSP*2){postes.push(x);}
   for(const x of postes){add(new TH.BoxGeometry(.2,4.5,.2),postM,x,2.25,-3.55);}
   for(const x of[-W/2+1.2,W/2-1.2])add(new TH.BoxGeometry(.2,4.9,.2),postM,x,2.45,zf);
@@ -2572,6 +2612,8 @@ function loop(now){
   if(R.P.blown&&!R.done){R.blownAt=R.blownAt||now;if(now-R.blownAt>1800){R.done=true;R.doneAt=now;R.P.fin=99;R.dnf=true;}}
   steerAnim(R,dt);
   if(R.done&&!R.finishing){R.finishing=true;if(!R.dnf)say(R.O.fin===null?"¡Llegaste primero!":"Llegada","var(--oro)");}
+  if(R.dunas&&R.done&&!R.finished&&R.cfg.kind!=="live"&&R.O.fin===null&&!R.O.blown&&R.cfg.kind!=="solo"&&now-R.doneAt>1800){
+    let g=0;const sv=R.n;while(R.O.fin===null&&!R.O.blown&&g++<240*90){R.n++;oppTick(R,kNow());}R.n=sv+1;}
   if(R.done&&!R.finished&&R.cfg.kind!=="live"){const both=R.O.fin!==null||R.O.blown||R.cfg.kind==="solo";
     if(both&&!R.bothAt)R.bothAt=now;
     const gone=Math.min(R.P.x,R.O.x)>DIST+40;
