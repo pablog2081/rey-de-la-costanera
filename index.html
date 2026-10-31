@@ -485,7 +485,7 @@ const PACKS = [
  {f:1200,p:"$ 13.999",t:"Lata de fichas",b:"+20% de regalo",dest:true},
  {f:3000,p:"$ 29.999",t:"Cajón del kiosquero",b:"+50% de regalo"},
 ];
-const BUILD="v48";
+const BUILD="v49";
 let DIST = 402; // cuarto de milla (en las Dunas: 1000 m)
 const GHOST_V = 402;
 /* ===== pistas: 1 = Costanera, 2 = El Crack de las Dunas ===== */
@@ -1371,7 +1371,7 @@ function init3D(){
     if(!window.THREE)for(const u of THREE_URLS)await loadScript(u).catch(()=>{T3.err="No se pudo bajar three.js";throw new Error(T3.err);});
     const TH=window.THREE;if(!TH||!TH.GLTFLoader)throw 0;
     const ren=new TH.WebGLRenderer({canvas:document.createElement("canvas"),antialias:true,alpha:true});
-    ren.outputEncoding=TH.sRGBEncoding;ren.toneMapping=TH.ACESFilmicToneMapping;ren.toneMappingExposure=1.15;ren.setPixelRatio(1);ren.setClearColor(0x000000,0);
+    ren.outputEncoding=TH.sRGBEncoding;ren.toneMapping=TH.ACESFilmicToneMapping;ren.toneMappingExposure=1.15;ren.setPixelRatio(1);ren.setClearColor(0x000000,0);ren.shadowMap.enabled=true;ren.shadowMap.type=TH.PCFSoftShadowMap;
     T3.TH=TH;T3.ren=ren;T3.loader=new TH.GLTFLoader();T3.st="ready";return true;
   }catch(e){T3.st="off";T3.err=T3.err||"No se pudo iniciar el 3D ("+(e&&e.message||"sin WebGL o sin three.js")+")";console.error("3D",e);return false;}})();
   return T3.p;
@@ -1694,7 +1694,7 @@ function render3D(R,w,h,dt,ctx){
   fl(E.flames[0],me,P.nitroT>0);fl(E.flames[1],op,O.nitroT>0);
   if(videoReady()){renderVideo(R,w,h,dt,ctx,inside);return null;}
   if(!inside&&shotsReady()){R.shotIdx=Math.max(R.shotIdx||0,shotFor(R));renderShot(R,w,h,dt,ctx);return null;}
-  const pr=Math.min(1.5,devicePixelRatio||1),W=Math.round(w*pr),Hh=Math.round(h*pr);
+  const pr=prUltra(Math.min(1.5,devicePixelRatio||1)),W=Math.round(w*pr),Hh=Math.round(h*pr);
   if(ren.domElement.width!==W||ren.domElement.height!==Hh)ren.setSize(W,Hh,false);
   ren.setClearColor(0x000000,1);ren.render(E.sc,E.cam);
   return ren.domElement;
@@ -1853,7 +1853,7 @@ function renderDunas(R,w,h,dt){
   for(const p of E.parts){if(p.life<=0)continue;p.life-=dt*1.1;if(p.life<=0){p.s.visible=false;continue;}p.s.position.x+=p.vx*dt;p.s.position.y+=p.vy*dt;p.vy-=dt*1.5;const z=p.sz*(1+(1-p.life)*1.8);p.s.scale.set(z,z,1);p.s.material.opacity=Math.max(0,p.life)*.55;}
   const fl=(f,c,on)=>{f.visible=on;if(on){f.position.set(c.position.x-.25,c.position.y+.38,c.position.z+.35);const s=1.1+Math.random()*.5;f.scale.set(s,s*.35,1);}};
   fl(E.flames[0],me,P.nitroT>0);fl(E.flames[1],op,O.nitroT>0&&op.visible);
-  const pr=Math.min(1.5,devicePixelRatio||1),W=Math.round(w*pr),Hh=Math.round(h*pr);
+  const pr=prUltra(Math.min(1.5,devicePixelRatio||1)),W=Math.round(w*pr),Hh=Math.round(h*pr);
   if(ren.domElement.width!==W||ren.domElement.height!==Hh)ren.setSize(W,Hh,false);
   E.hor.position.copy(E.cam.position);E.hor.position.y+=E.hor.userData.dy;E.sky.position.copy(E.cam.position);ren.setClearColor(0x000000,1);ren.render(E.sc,E.cam);return ren.domElement;}
 
@@ -2464,11 +2464,15 @@ function teclasMenu(){let esp=null;
   const mo=$("#modal"),obs=new MutationObserver(()=>{if(mo.hidden){window.removeEventListener("keydown",cap,true);obs.disconnect();}});obs.observe(mo,{attributes:true});}
 
 
+/* ================= GRÁFICOS: Normal o Ultra (en PC arranca en Ultra) ================= */
+const ES_PC=(()=>{try{return matchMedia("(hover:hover) and (pointer:fine)").matches&&Math.max(screen.width,screen.height)>=1000;}catch(e){return false;}})();
+function ultra(){const g=S.graf||"auto";return g==="ultra"||(g==="auto"&&ES_PC);}
+const prUltra=base=>ultra()?Math.min(2,(devicePixelRatio||1)*1.5):base;
 /* ================= LOOK DE CINE: viñeta, color y brillo de las luces sobre la imagen 3D ================= */
 const CINE={c:null,x:null,g:{},ok:(()=>{try{return "filter" in CanvasRenderingContext2D.prototype;}catch(e){return false;}})()};
 function cineFX(ctx,w,h,modo){if(!w||!h)return;const night=modo==="noche";
   // brillo (bloom barato): las luces fuertes se difuminan y se suman a la imagen
-  if(CINE.ok){const bw=Math.max(32,Math.round(w/5)),bh=Math.max(32,Math.round(h/5));if(!CINE.c){CINE.c=document.createElement("canvas");CINE.x=CINE.c.getContext("2d");}
+  if(CINE.ok){const dv=ultra()?3:5,bw=Math.max(32,Math.round(w/dv)),bh=Math.max(32,Math.round(h/dv));if(!CINE.c){CINE.c=document.createElement("canvas");CINE.x=CINE.c.getContext("2d");}
     if(CINE.c.width!==bw||CINE.c.height!==bh){CINE.c.width=bw;CINE.c.height=bh;}
     const x=CINE.x;x.filter=night?"brightness(.75) contrast(3.2) blur(4px)":"brightness(.85) contrast(2.4) blur(4px)";x.clearRect(0,0,bw,bh);x.drawImage(ctx.canvas,0,0,bw,bh);x.filter="none";
     ctx.save();ctx.globalCompositeOperation="screen";ctx.globalAlpha=night?.42:.22;ctx.drawImage(CINE.c,0,0,w,h);ctx.restore();}
@@ -2514,10 +2518,10 @@ $("#bMute").textContent=muted?"🔇":"🔊";
 function audioPrefs(){try{localStorage.setItem(KEY+".mute",muted?"1":"0");localStorage.setItem(KEY+".nomus",noMus?"1":"0");localStorage.setItem(KEY+".novoz",noVoz?"1":"0");localStorage.setItem(KEY+".nofx",noFx?"1":"0");}catch(e){}
   $("#bMute").textContent=muted?"🔇":"🔊";if(muted||noFx)engineStop();else audioInit();bgm();}
 function audioMenu(){const row=(k,t,s,on)=>`<label class="aopt" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--linea)"><span><b style="font-size:18px">${t}</b><br><span style="color:var(--crema-2);font-size:14px">${s}</span></span><input type="checkbox" data-k="${k}" ${on?"checked":""} style="width:26px;height:26px;accent-color:var(--oro)"></label>`;
-  modal(`<h3>Sonido</h3>${row("all","Todo el sonido","Apaga y prende todo de una",!muted)}${row("mus","Música de fondo","El tema del Rey de la Costanera",!noMus)}${row("voz","Voces de las chicas","La largada, la llegada y las placas",!noVoz)}${row("fx","Motores y efectos","Ruido de los autos y los sonidos del juego",!noFx)}<div class="opts" style="margin-top:14px"><button class="btn sec" id="akb">⌨️ Teclas (PC)</button><button class="btn sec" id="aok">Listo</button></div>`);
+  modal(`<h3>Sonido</h3>${row("all","Todo el sonido","Apaga y prende todo de una",!muted)}${row("mus","Música de fondo","El tema del Rey de la Costanera",!noMus)}${row("voz","Voces de las chicas","La largada, la llegada y las placas",!noVoz)}${row("fx","Motores y efectos","Ruido de los autos y los sonidos del juego",!noFx)}<div class="tkrow" style="grid-template-columns:1fr auto"><b>Gráficos<br><span style="font-weight:400;color:var(--crema-2);font-size:14px">Ultra: sombras, más resolución y luces (para PC)</span></b><select id="agraf" style="padding:8px;border-radius:10px;background:var(--chapa);color:var(--crema);border:2px solid var(--linea);font-weight:800"><option value="auto">Automático</option><option value="normal">Normal</option><option value="ultra">Ultra</option></select></div><div class="opts" style="margin-top:14px"><button class="btn sec" id="akb">⌨️ Teclas (PC)</button><button class="btn sec" id="aok">Listo</button></div>`);
   $("#mbox").querySelectorAll("input[data-k]").forEach(i=>i.onchange=()=>{const v=!i.checked;({all:()=>muted=v,mus:()=>noMus=v,voz:()=>noVoz=v,fx:()=>noFx=v})[i.dataset.k]();
     if(RACE&&R_vids)R_vids();audioPrefs();});
-  $("#aok").onclick=closeModal;$("#akb").onclick=()=>{closeModal();teclasMenu();};}
+  $("#aok").onclick=closeModal;$("#akb").onclick=()=>{closeModal();teclasMenu();};const sg=$("#agraf");sg.value=S.graf||"auto";sg.onchange=()=>{S.graf=sg.value;save();toast(ultra()?"Gráficos Ultra: se ve en la próxima carrera":"Gráficos normales");};}
 function R_vids(){try{const m=muted||noVoz;document.querySelectorAll("video").forEach(()=>{});[window.__resv].forEach(v=>{if(v&&!v.paused)v.muted=m;});}catch(e){}}
 $("#bMute").onclick=()=>audioMenu();$("#bKeys").onclick=()=>teclasMenu();
 const vib=ms=>{try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){}};
@@ -3504,8 +3508,8 @@ const TY_P={};TY_PIL.forEach(p=>TY_P[p.id]=p);
 function tyState(){let T=S.taya;
   if(!T||!T.pts){T=S.taya={fecha:0,pts:{},po:null,hist:[],up:{motor:0,gomas:0},m:"ma",col:"#f2b632",num:(S.apodo?77:77),champ:null,yaSabe:false};save();}
   if(!T.up)T.up={motor:0,gomas:0};if(T.desg==null)T.desg=0;if(TY_M_VIEJO[T.m])T.m=TY_M_VIEJO[T.m];return T;}
-const tyNombre=id=>id==="yo"?(S.apodo||"Vos"):TY_P[id]?TY_P[id].n:"?";
-const tyNum=id=>id==="yo"?tyState().num:TY_P[id].num;
+const tyNombre=id=>id==="yo"?(S.apodo||"Vos"):TY_P[id]?TY_P[id].n:(typeof TYV!=="undefined"&&TYV&&TYV.info[id])?TYV.info[id].apodo:"?";
+const tyNum=id=>id==="yo"?tyState().num:TY_P[id]?TY_P[id].num:(TYV&&TYV.info[id]?TYV.info[id].num:0);
 function tyIds(){return ["yo",...TY_PIL.map(p=>p.id)];}
 function tyTabla(){const T=tyState();const ids=T.po&&T.po.vivos?null:tyIds();
   const rows=tyIds().map(id=>({id,p:T.pts[id]|0,po:T.po?(T.po.pts[id]|0):0,vivo:T.po?T.po.vivos.includes(id):false}));
@@ -3610,16 +3614,16 @@ function tyBox(J,cont){const T=tyState();
 /* ---------- la carrera ---------- */
 var TYR=null;
 const TYH=1/120; // paso de física del midget
-function tyAuto(id,i,grid){const p=id==="yo"?null:TY_P[id],T=tyState();
+function tyAuto(id,i,grid){const T=tyState();let p=id==="yo"?null:TY_P[id];if(!p&&TYV&&TYV.info[id]){const f=TYV.info[id];p={n:f.apodo,num:f.num,m:TY_M.includes(f.m)?f.m:"ma",col:f.col||"#ccc",spon:f.apodo,sk:.8,hp:168,kg:455};}
   const J=S.tayaJ,uso=J?J.gUso|0:0;
   const hp=id==="yo"?(168+T.up.motor*3)*tyMotorK():p.hp,kg=id==="yo"?455:p.kg,mu=1.5*(id==="yo"?(1+T.up.gomas*.012)*tyGomaK(uso):1)*(1+(p?(p.sk-.75)*.05:0));
-  return {id,yo:id==="yo",n:tyNombre(id),num:tyNum(id),m:id==="yo"?T.m:p.m,col:id==="yo"?T.col:p.col,spon:id==="yo"?(S.apodo||""):p.spon,
+  return {id,yo:id==="yo",n:id==="yo"?tyNombre(id):p.n,num:id==="yo"?((TYV&&TYV.go&&TYV.miNum)||tyNum(id)):p.num,m:id==="yo"?T.m:p.m,col:id==="yo"?T.col:p.col,spon:id==="yo"?(S.apodo||""):p.spon,
     hp,kg:kg+70,mu,sk:id==="yo"?1:p.sk,s:0,d:0,vl:0,v:0,th:0,sa:0,pitch:0,lap:0,dist:0,fin:null,out:null,dmg:0,
     dT:0,ai:{err:0,errT:0,pase:0,linea:-2.2+Math.random()*1.4},grid:i,g:null,lastS:0};}
 function tyLargar(c,J){audioInit();tyBanderaBlanca(false);narStopF();narLoadF();
   const ids=c.ids.slice();
   // grilla: en las series por sorteo; después por cómo vienen clasificados (el orden de la lista)
-  const cars=ids.map((id,i)=>tyAuto(id,i));
+  const cars=ids.map((id,i)=>tyAuto(id,i));if(c.vivo)tyVivoMarcar(cars,c.vivo);
   TYR={c,J,cars,P:cars.find(e=>e.yo),t:0,acc:0,green:false,phase:0,lightT:0,laps:c.laps,done:false,pos:[],posAt:0,roja:null,relargadas:0,gas:false,steer:0,
     cam:S.tyCam||"lado",msgT:0,loading:true,last:performance.now(),evento:[],choques:0,t0:performance.now()};
   tyGrilla(TYR,cars,true);
@@ -3627,6 +3631,7 @@ function tyLargar(c,J){audioInit();tyBanderaBlanca(false);narStopF();narLoadF();
   tyAudioStart();
   const go=()=>{if(!TYR)return;TYR.loading=false;tySetup3D(TYR);TYR.last=performance.now();
     // la chica anuncia la carrera; Fefón se presenta en la primera de la noche
+    if(c.vivo){tyMsg(c.nom+": "+c.laps+" vueltas, "+c.ids.length+" autos. Largan juntos en todos los celulares","var(--oro)");const ahora=()=>NET.now?NET.now():Date.now();setTimeout(()=>{if(TYR&&TYR.c===c)tySemaforo();},Math.max(300,c.vivo.t0-3600-ahora()));return;}
     const prim=!J.yaPresento;J.yaPresento=true;
     tyAnuncio(c,()=>{if(!TYR)return;if(prim)fefonIntro(()=>tySemaforo());else{narraF("previa",{});setTimeout(tySemaforo,2200);}});};
   Promise.all([init3D(),...[...new Set(cars.map(e=>e.m))].map(m=>tyModelo(m))]).then(go,go);
@@ -3649,7 +3654,8 @@ function tyLoop(now){const R=TYR;if(!R)return;const dt=Math.min(.1,(now-R.last)/
     else{R.acc+=dt;let g=0;while(R.acc>=TYH&&g++<40){R.acc-=TYH;tyPaso(R);}}
     tyRelato(R,now);
     if(R.done&&!R.cerrando){R.cerrando=now;}
-    if(R.cerrando&&!R.cerrado&&now-R.cerrando>2600){R.cerrado=true;tyCompletar(R);setTimeout(()=>tyFinCarrera(R),400);}
+    if(R.c.vivo){tyVivoTick(R,now);if(R.cerrando&&!R.cerrado&&now-R.cerrando>2600&&(R.cars.every(e=>e.out||e.fin!==null)||now-R.cerrando>60000)){R.cerrado=true;setTimeout(()=>tyVivoFin(R),400);}}
+    else if(R.cerrando&&!R.cerrado&&now-R.cerrando>2600){R.cerrado=true;tyCompletar(R);setTimeout(()=>tyFinCarrera(R),400);}
   }
   tyDraw(R);tyAudioSet(R);
   if(TYR===R)requestAnimationFrame(tyLoop);}
@@ -3660,6 +3666,7 @@ function tyPosiciones(R){return R.cars.slice().sort((a,b)=>{
 function tyPaso(R){const dt=TYH;R.t+=dt;const g=9.81;
   const L=TY.LAP;
   for(const e of R.cars){
+    if(e.remote){tyVivoRemoto(R,e);continue;}
     if(e.out){if(e.gone)continue;e.v=Math.max(0,e.v-9*dt);e.dist+=e.v*dt;e.s=e.dist;e.sa+=e.spinW?e.spinW*dt:0;if(e.spinW)e.spinW*=1-1.5*dt;continue;}
     if(e.fin!==null){e.v=Math.max(9,e.v-3*dt);e.th=0;}
     else if(!R.green){e.v=0;e.th=R.esperaLuz&&R.phase>=1?(e.yo?(R.gas?1:0):.6):0;e.pitch=0;continue;}
@@ -3703,7 +3710,7 @@ function tyPaso(R){const dt=TYH;R.t+=dt;const g=9.81;
     let ds=b.dist-a.dist;if(Math.abs(ds)>4.2)continue;const dd=b.d-a.d;if(Math.abs(dd)>1.62)continue;
     const [f,r]=ds>0?[b,a]:[a,b];const gap=Math.abs(ds);
     if(gap<2.35&&!a.out&&!b.out&&R.green&&a.fin===null&&b.fin===null){ // rueda con rueda: los midgets tienen las ruedas afuera, se enganchan y vuelan
-      const cierre=Math.abs(a.vl-b.vl);if(cierre>1.1||Math.abs(dd)<.95){tyChoque(R,a,"rueda",cierre,b);tyChoque(R,b,"rueda",cierre,a);continue;}
+      const cierre=Math.abs(a.vl-b.vl);if(a.remote&&b.remote)continue;if(cierre>1.1||Math.abs(dd)<.95){if(!a.remote)tyChoque(R,a,"rueda",cierre,b);if(!b.remote)tyChoque(R,b,"rueda",cierre,a);continue;}
       // roce de costado: se separan, pierden velocidad y se dañan un poco
       const s2=Math.sign(dd)||1;a.vl=Math.min(a.vl,0)-s2*.5;b.vl=Math.max(b.vl,0)+s2*.5;a.v*=.997;b.v*=.997;a.dmg+=2*TYH*60;b.dmg+=2*TYH*60;
       if(!R.roceT||R.t-R.roceT>.6){R.roceT=R.t;tySonido("toque",.5);if(a.yo||b.yo){vib(25);tyMsg("¡Cuidado! Rueda con rueda: si se enganchan, vuelan","#ffb4bd");}}continue;}
@@ -3744,7 +3751,7 @@ function tyChoque(R,e,tipo,imp,otro){if(e.out)return;e.out=tipo;e.outT=R.t;e.dmg
   if(e.yo){vib([90,60,140]);tyMsg(tipo==="rueda"?"¡Se tocaron rueda con rueda! Volaste":tipo==="pared"?"¡Al paredón! Se terminó tu noche":tipo==="trompo"?"¡Trompo! Te pasaste de acelerador en la curva":"¡Chocaste!","#ff8f9c");R.J.danio=true;}
   if(!R.narChoqueT||R.t-R.narChoqueT>3){R.narChoqueT=R.t;narraF(tipo==="rueda"?"rueda":tipo==="pared"?"pared":tipo==="trompo"?"trompo":"choque",{a:e,b:otro});}
   // bandera roja: se para todo y se relarga
-  if(R.green&&!R.done&&R.cars.filter(x=>!x.out&&x.fin===null).length>1){R.green=false;R.roja={t:5};R.cars.forEach(x=>{if(!x.out){x.vl=0;}});
+  if(!R.c.vivo&&R.green&&!R.done&&R.cars.filter(x=>!x.out&&x.fin===null).length>1){R.green=false;R.roja={t:5};R.cars.forEach(x=>{if(!x.out){x.vl=0;}});
     setTimeout(()=>{if(TYR===R){tyMsg("¡BANDERA ROJA! Se para la carrera y se relarga","#ff8f9c");narraF("roja",{});}},1500);}
   if(e.yo){R.yoFuera=true;setTimeout(()=>{if(TYR===R&&!R.done){R.done=true;}},3500);}}
 // cuando terminás (o quedás afuera) se completa el resto de la carrera a toda velocidad
@@ -3800,7 +3807,7 @@ function tyUI(on){let u=$("#tyRace");
       ["pointerup","pointercancel","pointerleave"].forEach(ev=>b.addEventListener(ev,e=>{if(TYR&&TYR.steer===v)TYR.steer=0;b.classList.remove("on");}));}
     $("#tyCam").onclick=()=>{S.tyCam=(S.tyCam||"lado")==="lado"?"atras":(S.tyCam==="atras"?"arriba":"lado");if(TYR)TYR.cam=S.tyCam;save();tyCamBtn();};
     $("#tyVol").onclick=()=>{S.tyVol=(S.tyVol||"auto")==="auto"?"manual":"auto";save();tyVolBtn();toast(S.tyVol==="auto"?"Volante automático: sigue la línea y esquiva. ◀ ▶ cambian la línea":"Volante manual: ◀ dobla adentro, ▶ contravolante");};
-    $("#tyQuit").onclick=()=>{if(!TYR||TYR.done)return;const R=TYR;R.P.out="abandono";R.yoFuera=true;R.done=true;toast("Abandonaste: se termina tu noche");};
+    $("#tyQuit").onclick=()=>{if(!TYR||TYR.done)return;const R=TYR;R.P.out="abandono";R.yoFuera=true;R.done=true;toast(R.c.vivo?"Abandonaste la carrera":"Abandonaste: se termina tu noche");};
     u.addEventListener("contextmenu",e=>e.preventDefault());}
   u.hidden=false;document.body.classList.add("tyrun");tyCamBtn();tyVolBtn();$("#tyGas").classList.remove("on");}
 function tyCamBtn(){const b=$("#tyCam");if(b)b.innerHTML="Cámara<br>"+({lado:"de costado",atras:"de atrás",arriba:"de arriba"}[S.tyCam||"lado"]);}
@@ -3840,13 +3847,13 @@ function tyDecalPts(m,src){TY3.dec=TY3.dec||{};if(TY3.dec[m])return TY3.dec[m];c
   for(const fx of[-.36,-.3,-.42]){const o=new TH.Vector3(cx+fx*L,box.max.y+2,0);const h=hit(o,new TH.Vector3(0,-1,0));if(h&&h.n.y>.6&&h.p.y<box.min.y+.75*(box.max.y-box.min.y)){h.p.add(h.n.clone().multiplyScalar(.012));out.push({p:h.p,n:h.n,w:.38,top:true});break;}}
   return TY3.dec[m]=out;}
 function tyAutoObj(e){const TH=T3.TH,src=TY3.mod[e.m];if(!src)return null;const o=src.clone(true);
-  const tint=new TH.Color(e.col);o.traverse(q=>{if(q.isMesh){q.material=q.material.clone();q.material.color=new TH.Color(1,1,1).lerp(tint,TY_BLANCOS.includes(e.m)?.9:.38);}});
+  const tint=new TH.Color(e.col);o.traverse(q=>{if(q.isMesh){q.castShadow=true;q.material=q.material.clone();q.material.color=new TH.Color(1,1,1).lerp(tint,TY_BLANCOS.includes(e.m)?.9:.38);}});
   const grp=new TH.Group(),piv=new TH.Group();grp.add(piv);piv.add(o);
   // el número va pegado a la carrocería: calcos en los dos costados y en la cola, apoyados sobre la chapa
   const dc=tyDecalPts(e.m,src),nm=new TH.MeshStandardMaterial({map:tyNumTex(e.num,e.col,e.spon),transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,roughness:.5});
   for(const d of dc){const pl=new TH.Mesh(new TH.PlaneGeometry(d.w,d.w*.62),nm);pl.position.copy(d.p);pl.lookAt(d.p.clone().add(d.n));if(d.top)pl.rotateZ(-Math.PI/2);piv.add(pl);}
   if(!TY3.shT)TY3.shT=dTex(128,64,(x,w,h)=>{const g=x.createRadialGradient(w/2,h/2,4,w/2,h/2,w/2);g.addColorStop(0,"rgba(0,0,0,.7)");g.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=g;x.save();x.scale(1,h/w);x.beginPath();x.arc(w/2,w/2,w/2,0,7);x.fill();x.restore();});
-  const sh=new TH.Mesh(new TH.PlaneGeometry(3.3,1.9),new TH.MeshBasicMaterial({map:TY3.shT,transparent:true,depthWrite:false}));sh.rotation.x=-Math.PI/2;sh.position.y=.03;grp.add(sh);
+  const sh=new TH.Mesh(new TH.PlaneGeometry(3.3,1.9),new TH.MeshBasicMaterial({map:TY3.shT,transparent:true,depthWrite:false}));sh.rotation.x=-Math.PI/2;sh.position.y=.03;sh.material.opacity=ultra()?.45:1;grp.add(sh);
   grp.userData={piv};return grp;}
 function tyTierraTex(){return dTex(512,512,(x,w,h)=>{x.fillStyle="#6b4a33";x.fillRect(0,0,w,h);
   for(let i=0;i<9000;i++){const v=Math.random();x.fillStyle=`rgba(${70+v*70|0},${45+v*40|0},${28+v*25|0},.5)`;x.fillRect(Math.random()*w,Math.random()*h,1+Math.random()*3,1+Math.random()*2);}
@@ -3861,7 +3868,7 @@ function tyBuild(){const TH=T3.TH,sc=new TH.Scene(),E={sc,flags:[]};const L=TY.L
   const postM=std({color:0x777777,roughness:.6});
   torres.forEach(([x,z],i)=>{const p=new TH.Mesh(new TH.CylinderGeometry(.35,.5,26,8),postM);p.position.set(x,13,z);sc.add(p);
     const head=new TH.Mesh(new TH.BoxGeometry(5,2.2,.8),new TH.MeshBasicMaterial({color:0xfff6dc}));head.position.set(x,26.5,z);head.lookAt(0,0,0);sc.add(head);
-    if(i<4){const sp=new TH.SpotLight(0xfff1d6,.62,200,Math.PI/3.6,.65,2);sp.position.set(x,26,z);sp.target.position.set(x*.25,0,z*.25);sc.add(sp,sp.target);}
+    if(i<4){const sp=new TH.SpotLight(0xfff1d6,.62,200,Math.PI/3.6,.65,2);sp.position.set(x,26,z);sp.target.position.set(x*.25,0,z*.25);sp.shadow.mapSize.set(2048,2048);sp.shadow.bias=-.0004;sp.shadow.camera.near=8;sp.shadow.camera.far=160;sc.add(sp,sp.target);(E.spots=E.spots||[]).push(sp);}
     const glow=new TH.Sprite(new TH.SpriteMaterial({map:dTex(64,64,(c,w,h)=>{const g=c.createRadialGradient(32,32,2,32,32,32);g.addColorStop(0,"rgba(255,248,220,1)");g.addColorStop(1,"rgba(255,240,200,0)");c.fillStyle=g;c.fillRect(0,0,w,h);}),transparent:true,depthWrite:false,fog:false}));glow.scale.set(18,18,1);glow.position.set(x,26.5,z);sc.add(glow);});
   sc.add(new TH.AmbientLight(0xffe7c4,.08));
   // cielo con estrellas
@@ -3877,7 +3884,7 @@ function tyBuild(){const TH=T3.TH,sc=new TH.Scene(),E={sc,flags:[]};const L=TY.L
   // tierra de verdad (foto de una pista de arcilla mojada); mientras carga, la dibujada
   const tierra=tyTierraTex();tierra.wrapS=tierra.wrapT=TH.RepeatWrapping;const pisoM=std({map:tierra,color:0xb08a6a,roughness:1});
   new TH.TextureLoader().load("taya/tierra.webp",t=>{t.encoding=TH.sRGBEncoding;t.wrapS=t.wrapT=TH.RepeatWrapping;t.anisotropy=8;pisoM.map=t;pisoM.color.setHex(0x9a7a66);pisoM.needsUpdate=true;});
-  strip(-TY.W/2-.2,TY.W/2,pisoM,.02);
+  strip(-TY.W/2-.2,TY.W/2,pisoM,.02).receiveShadow=true;
   // huella oscura (la línea de carrera mojada y apisonada)
   strip(-4.2,-.6,std({color:0x3b2818,roughness:.95,transparent:true,opacity:.55}),.035);
   // infield: pasto con cubiertas pintadas en el borde
@@ -3896,8 +3903,12 @@ function tyBuild(){const TH=T3.TH,sc=new TH.Scene(),E={sc,flags:[]};const L=TY.L
   // carteles de publicidad sobre el paredón
   const ad=t=>dTex(512,96,(x,w,h)=>{x.fillStyle=t[1];x.fillRect(0,0,w,h);x.fillStyle=t[2];x.font="bold 54px 'Barlow Condensed',Arial Narrow,sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillText(t[0],w/2,h/2+3);});
   const ADS=[["TAYA'xs","#111","#f2c230"],["LUBRICANTES PAMPA","#c0392b","#fff"],["¡VAMOS POCHÓN!","#f2c230","#111"],["CUBIERTAS TORNADO","#111","#f4d03f"],["RADIO FIERRERA","#f39c12","#111"],["CORRALÓN BAHÍA","#1f5fa8","#fff"],["ALDEA ROMANA","#1e8a4c","#fff"],["FRIGORÍFICO ROMANA","#7a1d1d","#fff"]];
-  for(let i=0;i<24;i++){const s=i*L/24+5,p=tyPose(s,TY.W/2+.05),t=ADS[i%ADS.length];const b=new TH.Mesh(new TH.PlaneGeometry(11,1.05),new TH.MeshBasicMaterial({map:ad(t)}));b.position.set(p.x,tyY(s,TY.W/2)+.66,p.z);b.rotation.y=p.h+Math.PI;sc.add(b);
-    const b2=b.clone();b2.rotation.y=p.h;const q=tyPose(s,TY.W/2+.17);b2.position.set(q.x,b.position.y,q.z);sc.add(b2);}
+  // cada cartel se dobla siguiendo el paredón (en las curvas también), pegado a la pared de los dos lados
+  const cartelPared=(s0,len,d,mat,flip)=>{const pts=[],uv=[],idx=[],N=12;for(let k=0;k<=N;k++){const ss=s0+len*k/N,q=tyPose(ss,d),y=tyY(ss,TY.W/2+.1);pts.push(q.x,y+.14,q.z,q.x,y+1.19,q.z);const u=flip?k/N:1-k/N;uv.push(u,0,u,1);
+      if(k){const a=(k-1)*2;if(flip)idx.push(a,a+1,a+2,a+1,a+3,a+2);else idx.push(a,a+2,a+1,a+1,a+2,a+3);}}
+    const g=new TH.BufferGeometry();g.setAttribute("position",new TH.Float32BufferAttribute(pts,3));g.setAttribute("uv",new TH.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();const m=new TH.Mesh(g,mat);sc.add(m);return m;};
+  for(let i=0;i<24;i++){const s=i*L/24+5,t=ADS[i%ADS.length],mat=new TH.MeshBasicMaterial({map:ad(t),side:TH.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2});
+    cartelPared(s-5.5,11,TY.W/2+.065,mat,false);cartelPared(s-5.5,11,TY.W/2+.135,mat,true);}
   // línea de llegada
   {const chk=dTex(256,32,(x,w,h)=>{for(let i=0;i<16;i++)for(let j=0;j<2;j++){x.fillStyle=(i+j)%2?"#111":"#f4f4f4";x.fillRect(i*16,j*16,16,16);}});
     const fl=new TH.Mesh(new TH.PlaneGeometry(1.2,TY.W),new TH.MeshBasicMaterial({map:chk}));fl.rotation.x=-Math.PI/2;fl.rotation.z=Math.PI/2;fl.position.set(0,.06,TY.R);sc.add(fl);}
@@ -3956,7 +3967,7 @@ function tyBuild(){const TH=T3.TH,sc=new TH.Scene(),E={sc,flags:[]};const L=TY.L
     const tx=new TH.Mesh(new TH.PlaneGeometry(6,1),new TH.MeshBasicMaterial({map:ad(["TAYA'xs TV","#111","#f2c230"])}));tx.position.set(0,12.6,3.25);sc.add(tx);const tx2=tx.clone();tx2.rotation.y=Math.PI;tx2.position.z=-3.25;sc.add(tx2);}
   // la chica de la bandera a cuadros, en el borde de adentro de la llegada
   E.cars=[];return E;}
-function tySetup3D(R){if(!ready3D())return;const E=TY3.env||(TY3.env=tyBuild());E.cars.forEach(c=>E.sc.remove(c));E.cars=[];
+function tySetup3D(R){if(!ready3D())return;const E=TY3.env||(TY3.env=tyBuild());tyGraf(E);E.cars.forEach(c=>E.sc.remove(c));E.cars=[];
   for(const e of R.cars){const o=tyAutoObj(e);if(!o){e.g=null;continue;}E.sc.add(o);E.cars.push(o);e.g=o;}
   tyChica(E);R.g3=true;}
 // la chica (modelo 3D con la animación de la bandera) se para en el borde de adentro de la recta principal
@@ -3973,18 +3984,19 @@ function tyChicaFrame(E,R,dt){if(CH3.st!=="ok")return;
   const agita=R.green&&(R.lapN===R.laps||R.done);CH3.act.time=agita?R.chT:CH_WAVE[0]+.05;CH3.mix.update(0);CH3.obj.updateMatrixWorld(true);updFlag(dt,performance.now()/1000);}
 
 // la tierra que levantan las ruedas de atrás: más cuando derrapan y aceleran
+function tyGraf(E){const u=ultra();(E.spots||[]).forEach(sp=>sp.castShadow=u);if(E.polvo)E.polvo.n=u?E.polvo.L.length:110;}
 function tyPolvoIni(E){if(E.polvo)return E.polvo;const TH=T3.TH;const tex=dTex(64,64,(x,w,h)=>{const g=x.createRadialGradient(32,32,2,32,32,32);g.addColorStop(0,"rgba(190,150,110,.9)");g.addColorStop(.5,"rgba(150,115,85,.45)");g.addColorStop(1,"rgba(120,90,70,0)");x.fillStyle=g;x.fillRect(0,0,w,h);});
-  const L=[];for(let i=0;i<110;i++){const m=new TH.SpriteMaterial({map:tex,transparent:true,depthWrite:false,opacity:0,color:0xb89a7c});const sp=new TH.Sprite(m);sp.visible=false;E.sc.add(sp);L.push({sp,life:0,vx:0,vy:0,vz:0,sz:1});}
-  E.polvo={L,i:0};return E.polvo;}
-function tyPolvoEmite(E,g,yaw,e,dt){const P=tyPolvoIni(E),k=Math.min(1,e.v/22)*(.35+Math.min(1,Math.abs(e.sa)*1.6)+e.th*.4);if(Math.random()>k*dt*22)return;
+  const L=[];for(let i=0;i<220;i++){const m=new TH.SpriteMaterial({map:tex,transparent:true,depthWrite:false,opacity:0,color:0xb89a7c});const sp=new TH.Sprite(m);sp.visible=false;E.sc.add(sp);L.push({sp,life:0,vx:0,vy:0,vz:0,sz:1});}
+  E.polvo={L,i:0,n:ultra()?220:110};return E.polvo;}
+function tyPolvoEmite(E,g,yaw,e,dt){const P=tyPolvoIni(E),k=Math.min(1,e.v/22)*(.35+Math.min(1,Math.abs(e.sa)*1.6)+e.th*.4)*(ultra()?1.6:1);if(Math.random()>k*dt*22)return;
   const fx=Math.cos(yaw),fz=-Math.sin(yaw),sx=Math.sin(yaw),sz=Math.cos(yaw),lado=Math.random()<.5?-.62:.62;
-  const q=P.L[P.i++%P.L.length];q.life=1;q.sz=.7+Math.random()*.6;q.sp.visible=true;
+  const q=P.L[P.i++%(P.n||110)];q.life=1;q.sz=.7+Math.random()*.6;q.sp.visible=true;
   q.sp.position.set(g.position.x-fx*1.25+sx*lado,g.position.y+.25,g.position.z-fz*1.25+sz*lado);
   const v=e.v*.18;q.vx=-fx*v+(Math.random()-.5)*1.5+sx*Math.sign(lado)*e.sa*3;q.vz=-fz*v+(Math.random()-.5)*1.5+sz*Math.sign(lado)*e.sa*3;q.vy=.6+Math.random()*1.2;}
 function tyPolvoPaso(E,dt){const P=E.polvo;if(!P)return;for(const q of P.L){if(q.life<=0)continue;q.life-=dt*.8;if(q.life<=0){q.sp.visible=false;continue;}
   q.sp.position.x+=q.vx*dt;q.sp.position.y+=q.vy*dt;q.sp.position.z+=q.vz*dt;q.vx*=1-dt*1.6;q.vz*=1-dt*1.6;q.vy*=1-dt*.8;
   const z=q.sz*(1+(1-q.life)*3.2);q.sp.scale.set(z,z,1);q.sp.material.opacity=Math.max(0,q.life)*.32;}}
-function tyDraw(R){const cv=$("#tyScene");if(!cv)return;const dpr=Math.min(2,devicePixelRatio||1);if(cv.width!==Math.round(cv.clientWidth*dpr)||cv.height!==Math.round(cv.clientHeight*dpr)){cv.width=Math.round(cv.clientWidth*dpr);cv.height=Math.round(cv.clientHeight*dpr);}
+function tyDraw(R){const cv=$("#tyScene");if(!cv)return;const dpr=prUltra(Math.min(2,devicePixelRatio||1));if(cv.width!==Math.round(cv.clientWidth*dpr)||cv.height!==Math.round(cv.clientHeight*dpr)){cv.width=Math.round(cv.clientWidth*dpr);cv.height=Math.round(cv.clientHeight*dpr);}
   const ctx=cv.getContext("2d"),w=cv.width,h=cv.height,E=TY3.env;
   if(R.g3&&E&&w>0){const TH=T3.TH,ren=T3.ren,dt=R.dt||.016,tt=performance.now()/1000;
     for(const e of R.cars){if(!e.g)continue;e.g.visible=!e.gone;const p=tyPose(e.s,e.d),g=e.g,piv=g.userData.piv;g.position.set(p.x,tyY(e.s,e.d),p.z);
@@ -4111,7 +4123,7 @@ function tyPodio(ids,done){if(!ids.length||!ready3D()){done();return;}
   const real=TY3.mod.f100;const camioneta=real?(()=>{const g=new TH.Group();g.add(real.clone(true));const fa=new TH.PointLight(0xfff0c0,1.2,18);fa.position.set(3,1,0);g.add(fa);return g;})():tyF100(TH);E.sc.add(camioneta);
   // los tres pilotos arriba del podio, en la caja de la camioneta
   const podY=real?TY_F100_POD:[1.85,1.6,1.45],podX=real?TY_F100_X:-1.4;
-  const pilotos=ids.map((id,i)=>{const g=tyPilotoReal(TH,id)||tyPilotoFig(TH,id);if(g.userData.real)g.rotation.y=Math.PI+(i===1?-.3:i===2?.3:0);else g.scale.setScalar(1.05);if(real)g.position.set(TY_F100_PX[i],podY[i],TY_F100_PZ);else g.position.set(podX,podY[i],i===0?0:i===1?-.6:.6);camioneta.add(g);return g;});
+  const pilotos=ids.map((id,i)=>{const g=tyPilotoReal(TH,id)||tyPilotoFig(TH,id);if(g.userData.real)g.rotation.y=(i===1?.3:i===2?-.3:0); /* miran hacia las tribunas */else g.scale.setScalar(1.05);if(real)g.position.set(TY_F100_PX[i],podY[i],TY_F100_PZ);else g.position.set(podX,podY[i],i===0?0:i===1?-.6:.6);camioneta.add(g);return g;});
   narStopF();const bgmWas=!BGM.paused;tyCumbia(true);
   const nm=ids.map(id=>({id,n:tyNombre(id),yo:id==="yo"}));narraF("podio",{a:nm[0],b:nm[1],c:nm[2]});
   tyMsg(`🏆 1º ${tyNombre(ids[0])} · 2º ${ids[1]?tyNombre(ids[1]):"-"} · 3º ${ids[2]?tyNombre(ids[2]):"-"}`,"var(--oro)");
@@ -4122,7 +4134,7 @@ function tyPodio(ids,done){if(!ids.length||!ready3D()){done();return;}
     pilotos.forEach((g,i)=>{if(g.userData.real){g.position.y=podY[i]+Math.abs(Math.sin(tt*3.2+i*1.3))*.05;}else g.children[2].rotation.z=Math.sin(tt*6+i)*.6-1.2;});
     fake.P.s=s+10;fake.P.d=2;
     const cv=$("#tyScene"),dpr=Math.min(2,devicePixelRatio||1);if(cv.width!==Math.round(cv.clientWidth*dpr)){cv.width=Math.round(cv.clientWidth*dpr);cv.height=Math.round(cv.clientHeight*dpr);}
-    const w=cv.width,h=cv.height,ctx=cv.getContext("2d");E.cam.aspect=w/h;const c0=tyPose(s+10-2,-TY.W/2-10);E.cam.position.set(c0.x,4.2,c0.z);E.cam.lookAt(p.x,1.8,p.z);E.cam.fov=w<h?62:46;if(window.__podCam){const q=window.__podCam;E.cam.position.set(p.x+q[0],q[1],p.z+q[2]);E.cam.lookAt(p.x,1.5,p.z);}E.cam.updateProjectionMatrix();
+    const w=cv.width,h=cv.height,ctx=cv.getContext("2d");E.cam.aspect=w/h;const c0=tyPose(s+10+4.2,TY.W/2-1);E.cam.position.set(c0.x,tyY(s+14,TY.W/2)+3,c0.z);E.cam.lookAt(p.x,2.7,p.z);E.cam.fov=w<h?62:46; /* desde la tribuna: se les ven las caras */if(window.__podCam){const q=window.__podCam;E.cam.position.set(p.x+q[0],q[1],p.z+q[2]);E.cam.lookAt(p.x,1.5,p.z);}E.cam.updateProjectionMatrix();
     for(const f of E.flags){f.piv.rotation.y=f.h+Math.PI/2+Math.sin(tt*2.6+f.ph)*1.1;}
     const ren=T3.ren;if(ren.domElement.width!==w||ren.domElement.height!==h)ren.setSize(w,h,false);ren.render(E.sc,E.cam);ctx.drawImage(ren.domElement,0,0,w,h);cineFX(ctx,w,h,"noche");
     ctx.fillStyle="rgba(10,12,18,.72)";ctx.fillRect(0,h*.06,w,h*.09);ctx.fillStyle="#f2b632";ctx.font=`900 ${Math.round(h*.045)}px 'Alfa Slab One',serif`;ctx.textAlign="center";ctx.fillText("¡VUELTA DEL PODIO!",w/2,h*.12);
@@ -4140,7 +4152,7 @@ function tyF100(TH){const g=new TH.Group(),std=o=>new TH.MeshStandardMaterial(o)
   const podM=std({color:0xf2f2f2}),oro=std({color:0xf2b632,metalness:.6,roughness:.3});
   box(.8,.6,.55,podM,-1.4,1.3,0);box(.8,.35,.55,podM,-1.4,1.18,-.55);box(.8,.2,.55,podM,-1.4,1.1,.55);box(.3,.3,.02,oro,-1.0,1.35,0.28);
   const faro=new TH.PointLight(0xfff0c0,1.2,18);faro.position.set(2.8,1,0);g.add(faro);return g;}
-function tyPiloto(id){return id==="yo"?{col:tyState().col}:TY_P[id]||{col:"#ccc"};}
+function tyPiloto(id){return id==="yo"?{col:tyState().col}:TY_P[id]||(TYV&&TYV.info[id])||{col:"#ccc"};}
 // un piloto con el buzo de su color, saludando con el brazo en alto (Pochón con su gorra amarilla)
 // piloto de verdad (modelo de Meshy): el buzo blanco toma el color del piloto, la cara y las manos quedan
 function tyPersona(f,alto){TY3.per=TY3.per||{};if(TY3.per[f])return Promise.resolve(TY3.per[f]);if(TY3.per["_"+f])return TY3.per["_"+f];
@@ -4180,6 +4192,7 @@ function vTaya(m){const T=tyState();
     const bL=$("#tyL"),chk=()=>{const v=(J.gUso|0)>=TY_GOMA_MAX;bL.disabled=v;bL.textContent=v?"Cambiá las gomas para largar":"¡A la pista!";};
     if(J.carreras){const bx=tyBox(J,chk);$("#tyBoxW").append(bx());}chk();
     bL.onclick=()=>{if((J.gUso|0)>=TY_GOMA_MAX)return;closeModal();tyLargar(c,J);};};
+  tyAmigosCard(m);
   // tu midget
   const enNoche=!!S.tayaJ;
   const car=el(`<div class="copa"><div class="t">Tu midget</div><div class="s">Chasis ${TY_HUMAN[T.m]} · número ${T.num}. Cambiar de chasis cuesta ${fmt(TY_CHASIS_P)} y no se puede con la noche empezada.</div>
@@ -4207,6 +4220,107 @@ function vTaya(m){const T=tyState();
   if(T.hist.length)m.append(el(`<p class="nota">Última noche: sumaste ${T.hist[0].yo} puntos${T.hist[0].pos>=0?` y llegaste ${T.hist[0].pos+1}º en la final`:""}.</p>`));
   if(PRUEBA){const rz=el(`<button class="btn sec sm" style="margin:10px 0">↺ Reiniciar TAYA'xs (prueba)</button>`);rz.onclick=()=>{S.taya=null;S.tayaJ=null;tyState();save();toast("Campeonato reiniciado");render();};m.append(rz);}}
 
+/* =====================================================================
+   TAYA'xs CON AMIGOS: carreras en vivo de hasta 12 (desafío y campeonato)
+   - cada celular maneja su auto y manda su posición; los demás autos se dibujan con lo que llega
+   - las máquinas (si se completa la grilla) las corre el que organiza y las manda a todos
+   - la grilla se arma por el avance de cada uno en el juego (en el campeonato, por la tabla)
+   ===================================================================== */
+var TYV=null; // {room,code,modo,peers,st,me,go,host,info,tabla}
+const TYV_MAX=12;
+function tyVivoAvance(){const T=tyState();return (T.fecha|0)*1000+(T.pts.yo|0)*10+((T.up.motor|0)+(T.up.gomas|0))*40+(T.champ==="yo"?5000:0);}
+function tyVivoCodigo(){const A="ABCDEFGHJKLMNPQRSTUVWXYZ";let c="";for(let i=0;i<4;i++)c+=A[Math.floor(Math.random()*A.length)];return c;}
+function tyVivoPedirCodigo(tit,cb){modal(`<h3>${tit}</h3><p>Escribí el código de 4 letras que te pasó tu amigo.</p><input id="tyvC" maxlength="4" autocapitalize="characters" style="width:100%;font-size:28px;letter-spacing:8px;text-align:center;padding:10px;border-radius:12px;border:2px solid var(--linea);background:var(--chapa);color:var(--crema);text-transform:uppercase"><div class="opts"><button class="btn oro" id="tyvOk">Entrar</button><button class="btn sec" id="tyvNo">Cancelar</button></div>`);
+  const ok=()=>{const v=($("#tyvC").value||"").toUpperCase().replace(/[^A-Z]/g,"");if(v.length!==4){toast("El código tiene 4 letras");return;}closeModal();cb(v);};$("#tyvOk").onclick=ok;$("#tyvNo").onclick=closeModal;$("#tyvC").addEventListener("keydown",e=>{if(e.key==="Enter")ok();});setTimeout(()=>{try{$("#tyvC").focus();}catch(e){}},50);}
+function tyVivoPres(extra){if(!TYV||!TYV.room)return;const T=tyState();
+  return TYV.room.presence({apodo:(S.apodo||"Piloto").slice(0,16),num:T.num,m:T.m,col:T.col,av:tyVivoAvance(),uid:NET.uid||null,sala:1,...(extra||{})}).catch(()=>{});}
+async function tyVivoEntrar(modo,code){if(TYR)return;if(!NET.room||!NET.room.join){toast("Jugar con amigos necesita conexión");return;}
+  if(!S.apodo){toast("Primero elegí tu apodo");return;}
+  modalLock=true;modal(`<h3>${modo==="fecha"?"Campeonato con amigos":"Desafío con amigos"}</h3><p>Conectando a la sala ${esc(code)}…</p>`);
+  let room;try{room=await NET.room.join("tyv_"+(modo==="fecha"?"f_":"r_")+code);}catch(e){modalLock=false;closeModal();toast("No se pudo conectar");return;}
+  TYV={room,code,modo,peers:[],st:{},me:null,go:false,info:{},tabla:null};tyVivoPres();
+  if(modo==="fecha")tyVivoTablaLeer().then(()=>{if(TYV&&!TYV.go)tyVivoSala();});
+  room.onPeers(ch=>{if(!TYV||TYV.room!==room)return;TYV.peers=ch.peers.filter(p=>p.presence&&p.presence.apodo);
+    for(const p of TYV.peers){if(p.sameTab)TYV.me=p.peer;const q=p.presence;if(q&&q.en)TYV.st[p.peer]={...q,rt:performance.now()};}
+    for(const l of ch.left||[]){if(TYV.st[l.peer])TYV.st[l.peer].gone=1;}
+    if(!TYV.go)tyVivoSala();},()=>{});
+  room.on("largada",m=>{if(!TYV||TYV.go||TYV.room!==room)return;const d=m.data||{};if(d.ty!==1||!Array.isArray(d.grid)||!d.grid.some(g=>g.peer===TYV.me))return;tyVivoArrancar(d);},()=>{});
+  tyVivoSala();}
+function tyVivoOrden(ps){const pts=uid=>TYV.tabla&&TYV.tabla.t&&uid&&TYV.tabla.t[uid]?TYV.tabla.t[uid].pts|0:0;
+  return ps.slice().sort((a,b)=>TYV.modo==="fecha"?(pts(b.presence.uid)-pts(a.presence.uid))||((b.presence.av|0)-(a.presence.av|0)):((b.presence.av|0)-(a.presence.av|0)));}
+function tyVivoSala(){if(!TYV||TYV.go)return;const ps=tyVivoOrden(TYV.peers.filter(p=>p.presence.sala&&!p.presence.en)).slice(0,TYV_MAX);
+  const host=ps.map(p=>p.peer).sort()[0],soy=host&&host===TYV.me,fecha=TYV.modo==="fecha";
+  const tab=fecha&&TYV.tabla&&TYV.tabla.t?Object.values(TYV.tabla.t).sort((a,b)=>b.pts-a.pts):[];
+  modalLock=true;modal(`<h3>${fecha?"Campeonato con amigos":"Desafío con amigos"} · código <span style="color:var(--oro);letter-spacing:3px">${esc(TYV.code)}</span></h3>
+    <p>Pasales el código a tus amigos: entran desde TAYA'xs → <b>Con amigos</b>. Hasta ${TYV_MAX} pilotos, carrera del largo de una final (${TY.LAPS.final} vueltas). ${fecha?"La grilla sale de la tabla del campeonato.":"La grilla sale del avance de cada uno en el juego: el que más avanzó larga adelante."}</p>
+    <table class="ovtab"><tr><th>Larga</th><th>Piloto</th><th>Chasis</th></tr>${ps.map((p,i)=>`<tr${p.sameTab?' class="yo"':''}><td>${i+1}º</td><td>#${p.presence.num|0} ${esc(p.presence.apodo)}${p.peer===host?" · organiza":""}</td><td>${esc(TY_HUMAN[p.presence.m]||"")}</td></tr>`).join("")}</table>
+    ${fecha?`<div class="sec-t">Tabla del campeonato <span>${TYV.tabla?(TYV.tabla.n|0)+" fechas":"…"}</span></div>${tab.length?`<table class="ovtab"><tr><th>Pos</th><th>Piloto</th><th>Pts</th></tr>${tab.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.n)}</td><td>${r.pts}</td></tr>`).join("")}</table>`:`<p class="nota">Todavía no se corrió ninguna fecha.</p>`}`:""}
+    ${soy?`<label style="display:flex;gap:10px;align-items:center;margin:10px 0"><input type="checkbox" id="tyvMaq" checked style="width:22px;height:22px;accent-color:var(--oro)"> Completar la grilla con máquinas hasta ${TYV_MAX}</label>`:""}
+    <p class="nota">${soy?"Vos organizás: largá cuando estén todos.":"Esperá a que el que organiza largue la carrera."}</p><div class="opts" id="tyvo"></div>`,"resplaca");
+  const o=$("#tyvo");if(soy){const b=el(`<button class="btn oro">Largar (${ps.length} piloto${ps.length===1?"":"s"})</button>`);b.onclick=()=>tyVivoLargar(ps,$("#tyvMaq")&&$("#tyvMaq").checked);o.append(b);}
+  const x=el(`<button class="btn sec">Salir de la sala</button>`);x.onclick=()=>{tyVivoSalir();modalLock=false;closeModal();render();};o.append(x);}
+function tyVivoLargar(ps,maq){if(!TYV)return;const usados=new Set(),grid=[];
+  const libre=n=>{n=Math.max(1,n|0);while(usados.has(n))n=n%199+1;usados.add(n);return n;};
+  ps.forEach(p=>{const q=p.presence;grid.push({peer:p.peer,apodo:String(q.apodo).slice(0,16),num:libre(q.num),m:q.m,col:q.col,uid:q.uid||null});});
+  let bots=[];if(maq&&grid.length<TYV_MAX){const pool=TY_PIL.map(p=>p.id).sort((a,b)=>tyRating(b)-tyRating(a));
+    bots=pool.slice(0,30).sort(()=>Math.random()-.5).slice(0,TYV_MAX-grid.length).map(id=>({id,num:libre(TY_P[id].num)}));}
+  const n=TYV.tabla?(TYV.tabla.n|0)+1:1;
+  TYV.room.emit("largada",{ty:1,t0:(NET.now?NET.now():Date.now())+9000,host:TYV.me,grid,bots,laps:TY.LAPS.final,modo:TYV.modo,fecha:n}).catch(()=>toast("No se pudo largar: probá de nuevo"));}
+function tyVivoArrancar(d){TYV.go=true;TYV.host=d.host;TYV.d=d;modalLock=false;closeModal();
+  const ids=[];d.grid.forEach(g=>{if(g.peer===TYV.me){ids.push("yo");TYV.miNum=g.num;return;}const id="p_"+g.peer;TYV.info[id]={apodo:g.apodo,num:g.num,m:g.m,col:g.col,uid:g.uid};ids.push(id);});
+  (d.bots||[]).forEach(b=>ids.push(b.id));
+  const c={k:"vivo",n:1,nom:d.modo==="fecha"?`Fecha ${d.fecha} con amigos`:"Desafío con amigos",ids,laps:d.laps||TY.LAPS.final,vivo:d};
+  const J={vivo:true,yaPresento:true,res:{},fuera:false};tyVivoPres({en:1,dist:0,d:0,v:0});tyLargar(c,J);}
+// quién maneja cada auto: el mío acá; los de los amigos llegan por la red; las máquinas, del que organiza
+function tyVivoMarcar(cars,d){const host=d.host===TYV.me;let k=0;
+  for(const e of cars){if(e.yo)continue;if(String(e.id).startsWith("p_")){e.remote=true;e.peer=e.id.slice(2);continue;}
+    e.bk=k++;if(!host){e.remote=true;e.peer=d.host;}}}
+function tyVivoRemoto(R,e){if(!R.green&&!R.done)return;const bot=e.bk!==undefined,h=TYV&&TYV.st[e.peer];let s=null;
+  if(bot){if(h&&Array.isArray(h.b)&&h.b[e.bk]){const a=h.b[e.bk];s={dist:a[0],d:a[1],v:a[2],sa:a[3],fin:a[4],out:a[5],rt:h.rt};}
+    // si el que organiza se fue, las máquinas siguen corriendo en este celular
+    if(R.green&&(!h||h.gone||performance.now()-(h.rt||0)>4000)&&R.t-(R.tGreen||0)>3){e.remote=false;e.peer=null;return;}}
+  else s=h;
+  if(!s||s.dist===undefined){if(h&&h.gone&&!e.out&&e.fin===null&&!bot){e.out="abandono";e.outT=R.t;}return;}
+  const pred=(+s.dist||0)+(+s.v||0)*Math.min(1,(performance.now()-s.rt)/1000);
+  if(Math.abs(pred-e.dist)>30||!R.green)e.dist=pred;else e.dist+=(pred-e.dist)*Math.min(1,TYH*7);e.s=e.dist;
+  e.d+=((+s.d||0)-e.d)*Math.min(1,TYH*8);e.v=+s.v||0;e.sa+=((+s.sa||0)-e.sa)*Math.min(1,TYH*8);e.th=e.v>1?.8:0;
+  if(s.fin!=null&&e.fin===null)e.fin=+s.fin;
+  if(s.out&&!e.out){e.out=s.out;e.outT=R.t;e.vuelco=s.out==="rueda";e.dmg=100;if(!R.narChoqueT||R.t-R.narChoqueT>3){R.narChoqueT=R.t;narraF(s.out==="pared"?"pared":s.out==="trompo"?"trompo":"choque",{a:e});}}
+  if(h&&h.gone&&!e.out&&e.fin===null&&!bot){e.out="abandono";e.outT=R.t;}}
+function tyVivoTick(R,now){if(!TYV||!TYV.room||now-(TYV.sent||0)<130)return;TYV.sent=now;const P=R.P,r1=x=>Math.round(x*100)/100;
+  const q={en:1,dist:r1(P.dist),d:r1(P.d),v:r1(P.v),sa:r1(P.sa),fin:P.fin!=null?r1(P.fin):null,out:P.out||null};
+  if(TYV.host===TYV.me)q.b=R.cars.filter(e=>e.bk!==undefined&&!e.remote).sort((a,b)=>a.bk-b.bk).map(e=>[r1(e.dist),r1(e.d),r1(e.v),r1(e.sa),e.fin!=null?r1(e.fin):null,e.out||null]);
+  tyVivoPres(q);}
+function tyVivoFin(R){if(TYR!==R)return;const pos=tyPosiciones(R),d=R.c.vivo,yo=pos.findIndex(e=>e.yo);
+  TYR=null;tyBanderaBlanca(false);tyUI(false);tyAudioStop();if(pos[0])narraF("bandera",{a:pos[0]});
+  const filas=pos.map((e,i)=>`<tr${e.yo?' class="yo"':''}><td>${i+1}</td><td>#${e.num} ${esc(e.n)}${e.remote&&e.bk===undefined||String(e.id).startsWith("p_")?" 👤":""}</td><td>${e.out?"Afuera":e.fin!=null?e.fin.toFixed(2)+" s":"—"}</td><td>${d.modo==="fecha"&&!e.out&&e.fin!=null?(TY_PTS_FINAL[i]||0):""}</td></tr>`).join("");
+  const premio=yo===0&&!R.P.out?60000:yo>=0&&yo<3&&!R.P.out?20000:0;if(premio){S.pesos+=premio;save();}
+  // campeonato: el que organiza anota la fecha (puntos de la final por la posición) para todo el grupo
+  if(d.modo==="fecha"&&TYV&&TYV.host===TYV.me){const res=pos.map((e,i)=>({uid:e.yo?(NET.uid||"yo"):e.id.startsWith("p_")?(TYV.info[e.id].uid||e.id):null,n:e.n,pts:!e.out&&e.fin!=null?(TY_PTS_FINAL[i]||0):0})).filter(r=>r.uid);
+    tyVivoTablaSumar(res,d.fecha);}
+  modalLock=false;modal(`<h3 class="gan" style="color:${yo===0?"var(--oro)":"var(--crema)"}">${esc(R.c.nom)}: ${R.P.out?"¡Afuera!":(yo+1)+"º"}</h3>
+    <p>${yo===0&&!R.P.out?"¡Les ganaste a todos!":"Carrera terminada."}${premio?" Cobraste "+fmt(premio)+".":""}${d.modo==="fecha"?" Los puntos se suman a la tabla del grupo.":""}</p>
+    <table class="ovtab"><tr><th>Pos</th><th>Piloto</th><th>Tiempo</th><th>${d.modo==="fecha"?"Pts":""}</th></tr>${filas}</table>
+    <div class="opts"><button class="btn oro" id="tyvOtra">Volver a la sala</button><button class="btn sec" id="tyvFin">Salir</button></div>`,"resplaca");
+  $("#tyvOtra").onclick=()=>{closeModal();if(!TYV){render();return;}TYV.go=false;TYV.st={};TYV.info={};tyVivoPres({en:0});if(TYV.modo==="fecha")tyVivoTablaLeer().then(tyVivoSala);else tyVivoSala();};
+  $("#tyvFin").onclick=()=>{tyVivoSalir();closeModal();render();};}
+function tyVivoSalir(){if(TYV&&TYV.room){try{TYV.room.leave();}catch(e){}}TYV=null;}
+// tabla del campeonato con amigos (un documento por grupo)
+async function tyVivoTablaLeer(){if(!TYV||!NET.db)return;try{const s=await NET.db.doc("tyamigos/"+TYV.code).get();TYV.tabla=s.exists?s.data():{n:0,t:{}};}catch(e){TYV.tabla=TYV.tabla||{n:0,t:{}};}}
+async function tyVivoTablaSumar(res,fecha){if(!NET.db||!TYV)return;try{await tyVivoTablaLeer();const T=TYV.tabla||{n:0,t:{}};T.t=T.t||{};
+    res.forEach(r=>{const k=String(r.uid).replace(/[.#$\[\]\/]/g,"_");const o=T.t[k]||(T.t[k]={n:r.n,pts:0,f:0});o.n=r.n;o.pts+=r.pts;o.f++;});
+    T.n=Math.max(T.n|0,fecha|0);T.at=Date.now();await NET.db.doc("tyamigos/"+TYV.code).set(T);TYV.tabla=T;}catch(e){toast("No se pudo guardar la tabla del grupo");}}
+// tarjeta "Con amigos" del menú de TAYA'xs
+function tyAmigosCard(m){const G=S.tyGrupo;
+  const card=el(`<div class="copa"><div class="t">Con amigos</div><div class="s">Carreras en vivo de hasta ${TYV_MAX} pilotos, del largo de una final. La grilla la arma el avance de cada uno en el juego.</div>
+    <div class="row" style="flex-wrap:wrap;gap:8px;margin-top:10px"><button class="btn oro sm" id="tyaR">🏁 Crear desafío</button><button class="btn sec sm" id="tyaU">Unirme a un desafío</button></div>
+    <div class="row" style="flex-wrap:wrap;gap:8px;margin-top:10px"><button class="btn sm" id="tyaF">🏆 ${G?"Campeonato "+esc(G):"Crear campeonato con amigos"}</button><button class="btn sec sm" id="tyaFU">${G?"Cambiar de grupo":"Unirme a un campeonato"}</button></div></div>`);
+  card.querySelector("#tyaR").onclick=()=>tyVivoEntrar("reto",tyVivoCodigo());
+  card.querySelector("#tyaU").onclick=()=>tyVivoPedirCodigo("Unirme a un desafío",c=>tyVivoEntrar("reto",c));
+  card.querySelector("#tyaF").onclick=()=>{let g=S.tyGrupo;if(!g){g=S.tyGrupo=tyVivoCodigo();save();}tyVivoEntrar("fecha",g);};
+  card.querySelector("#tyaFU").onclick=()=>tyVivoPedirCodigo("Unirme a un campeonato",c=>{S.tyGrupo=c;save();tyVivoEntrar("fecha",c);});
+  m.append(card);}
+
 /*TAYA_FIN*/
 // arranque
 if(S.cars.length&&!curCar())S.cur=S.cars[0].uid;
@@ -4217,6 +4331,6 @@ function diag(extra){try{if(!NET.db||!NET.uid)return;let gl="?";try{const c=docu
   NET.db.doc("data/users/"+NET.uid+"/diag").set({v:BUILD,st:T3.st,err:String(T3.err||""),three:!!window.THREE,gltf:!!(window.THREE&&window.THREE.GLTFLoader),models:Object.keys(T3.models),gl,ua:navigator.userAgent.slice(0,160),at:Date.now(),...(extra||{})}).catch(()=>{});}catch(e){}}
 setTimeout(()=>diag(),12000);
 init3D().then(ok=>{if(ok&&curCar())loadModel(curCar().id).then(()=>{if(!RACE)render();},()=>{});});
-window.__test={taya:{modelo:tyModelo,persona:tyPersona,F100:()=>TY3.mod.f100,st:tyState,J:()=>S.tayaJ,R:()=>TYR,nueva:tyJornadaNueva,sig:tySiguiente,largar:tyLargar,paso:tyPaso,pos:tyPosiciones,pose:tyPose,TY,PIL:TY_PIL,env:()=>TY3.env,podio:tyPodio,terminar:tyTerminarNoche,cerrar:tyCerrarNoche,narra:narraF,narf:()=>NARF,sim:tySimular},ovr:()=>OVR,ovClasif,ovClasifBot,narv:()=>NARV,narra,ov3:()=>OV3,ovStart,ovPaso,ovPosiciones,ovFin,ovTorneo,ovTabla,ovPasar,ovPose,OVAL,setLvl3:()=>setLvl(3),sts:()=>STS,banda:()=>BANDA,bandaArrancar,bandaLlave,bandaNombre,bandaMiCruce,enCopa,dunaRelato,startRace,setLvl,setTrack,TRACK,simET,CLIMAS,loadModel,NET,cer:(l)=>playCer(l,()=>{}),go:v=>{view=v;render();},inv:()=>INV,BOTS,botET,myET,ranking,T3,race:()=>RACE,live:()=>LIVE,stats,makeRacer,stepRacer,doShift,optLaunch,CARS,RIVALS,rivalCar,newCar,simGhost,cleanGhost,S:()=>S};
+window.__test={net:()=>NET,tyv:()=>TYV,taya:{modelo:tyModelo,persona:tyPersona,F100:()=>TY3.mod.f100,st:tyState,J:()=>S.tayaJ,R:()=>TYR,nueva:tyJornadaNueva,sig:tySiguiente,largar:tyLargar,paso:tyPaso,pos:tyPosiciones,pose:tyPose,TY,PIL:TY_PIL,env:()=>TY3.env,podio:tyPodio,terminar:tyTerminarNoche,cerrar:tyCerrarNoche,narra:narraF,narf:()=>NARF,sim:tySimular},ovr:()=>OVR,ovClasif,ovClasifBot,narv:()=>NARV,narra,ov3:()=>OV3,ovStart,ovPaso,ovPosiciones,ovFin,ovTorneo,ovTabla,ovPasar,ovPose,OVAL,setLvl3:()=>setLvl(3),sts:()=>STS,banda:()=>BANDA,bandaArrancar,bandaLlave,bandaNombre,bandaMiCruce,enCopa,dunaRelato,startRace,setLvl,setTrack,TRACK,simET,CLIMAS,loadModel,NET,cer:(l)=>playCer(l,()=>{}),go:v=>{view=v;render();},inv:()=>INV,BOTS,botET,myET,ranking,T3,race:()=>RACE,live:()=>LIVE,stats,makeRacer,stepRacer,doShift,optLaunch,CARS,RIVALS,rivalCar,newCar,simGhost,cleanGhost,S:()=>S};
 })();
 </script>
