@@ -502,7 +502,7 @@ const PACKS = [
  {f:1200,p:"$ 13.999",t:"Lata de fichas",b:"+20% de regalo",dest:true},
  {f:3000,p:"$ 29.999",t:"Cajón del kiosquero",b:"+50% de regalo"},
 ];
-const BUILD="v51";
+const BUILD="v52";
 let DIST = 402; // cuarto de milla (en las Dunas: 1000 m)
 const GHOST_V = 402;
 /* ===== pistas: 1 = Costanera, 2 = El Crack de las Dunas ===== */
@@ -3627,11 +3627,11 @@ function tyBox(J,cont,enGar){const T=tyState();
       <div class="s">Plata: ${fmt(S.pesos)}</div>
       <p class="nota" style="margin:6px 0">Gomas: ${u} de ${TY_GOMA_MAX} carreras · agarre ${tyPct(tyGomaK(u))}${venc?" · <b style=\"color:var(--rojo)\">ya no aguantan otra carrera</b>":""}<br>
       Motor: ${tyPct(tyMotorK())} de potencia (${Math.round((168+T.up.motor*3)*tyMotorK())} HP). El motor no se rectifica durante la noche.</p>
-      <div class="row" style="flex-wrap:wrap;gap:6px">
+      ${tyGarageOk()&&!enGar?`<p class="nota" style="margin:4px 0">Las gomas y el service se hacen adentro de tu box.</p>`:`<div class="row" style="flex-wrap:wrap;gap:6px">
         <button class="btn sm${venc?" oro":""}" data-b="gomas"${u===0?" disabled":""}>Cambiar gomas · ${fmt(TY_GOMA_P)}</button>
         <button class="btn sm" data-b="mejora"${T.up.gomas>=4?" disabled":""}>Mejorar cubiertas ${T.up.gomas}/4${T.up.gomas<4?" · "+fmt(45000*(T.up.gomas+1)):""}</button>
-        <button class="btn sm" data-b="serv"${J.serv||T.desg<.01?" disabled":""}>${J.serv?"Service hecho":"Service · "+fmt(TY_SERV_P)}</button></div>
-      ${tyGarageOk()&&!enGar?`<button class="btn oro sm" data-b="garage" style="margin-top:10px;width:100%">🔧 Ir al box (ver el auto en el galpón)</button>`:""}</div>`;};
+        <button class="btn sm" data-b="serv"${J.serv||T.desg<.01?" disabled":""}>${J.serv?"Service hecho":"Service · "+fmt(TY_SERV_P)}</button></div>`}
+      ${tyGarageOk()&&!enGar?`<button class="btn oro sm" data-b="garage" style="margin-top:10px;width:100%">🔧 Ir al box${venc?" · ¡cambiá las gomas!":" · gomas y service"}</button>`:""}</div>`;};
   let box=el(html());
   const pinta=()=>{const n=el(html());box.replaceWith(n);wire(n);cont&&cont();};
   const pagar=p=>{if(S.pesos<p){toast("No te alcanza la plata");return false;}S.pesos-=p;return true;};
@@ -3898,7 +3898,18 @@ function tyModelo(m,largo){largo=largo||3.05;if(TY3.mod[m])return Promise.resolv
     if(sz.z>sz.x)inner.rotation.y=Math.PI/2;inner.rotation.y+=m==="f100"?TY_FWD_F100:TY_FWD;
     holder.updateMatrixWorld(true);b=new TH.Box3().setFromObject(holder);const c=b.getCenter(new TH.Vector3());inner.position.set(-c.x,-b.min.y,-c.z);
     inner.traverse(o=>{if(o.isMesh){o.material.roughness=.75;o.material.metalness=.1;}});
+    if(TY_COLA[m])tyCortaCola(holder,TY_COLA[m]);
     TY3.mod[m]=holder;res(holder);},rej))).catch(err=>{delete TY3.mod["_"+m];throw err;});}
+/* el modelo mc trae una quinta rueda pegada en la cola (error del modelo): se borran esos triángulos */
+const TY_COLA={mc:{lado:window.__colaLado||-1,largo:window.__colaLargo||.15,ancho:.24,alto:window.__colaAlto||.62}};
+function tyCortaCola(holder,o){holder.updateMatrixWorld(true);const TH=T3.TH,b=new TH.Box3().setFromObject(holder),sz=b.getSize(new TH.Vector3()),c=b.getCenter(new TH.Vector3());
+  const x0=o.lado>0?b.max.x-sz.x*o.largo:b.min.x+sz.x*o.largo,v=new TH.Vector3();
+  holder.traverse(q=>{if(!q.isMesh)return;const g=q.geometry,P=g.attributes.position,I=g.index?g.index.array:null,n=I?I.length:P.count,keep=[];
+    const pt=k=>{v.fromBufferAttribute(P,k).applyMatrix4(q.matrixWorld);return v;};
+    for(let t=0;t<n;t+=3){let cx=0,cy=0,cz=0;for(let j=0;j<3;j++){const p=pt(I?I[t+j]:t+j);cx+=p.x;cy+=p.y;cz+=p.z;}cx/=3;cy/=3;cz/=3;
+      const enCola=(o.lado>0?cx>x0:cx<x0)&&Math.abs(cz-c.z)<sz.z*o.ancho&&cy<b.min.y+sz.y*o.alto;
+      if(!enCola)for(let j=0;j<3;j++)keep.push(I?I[t+j]:t+j);}
+    g.setIndex(keep);});}
 const TY_FWD=Math.PI,TY_FWD_F100=Math.PI; // el frente de los modelos de Meshy mira a −x: se dan vuelta
 function tyNumTex(n,col,spon){return dTex(256,160,(x,w,h)=>{x.clearRect(0,0,w,h);
   const c=new T3.TH.Color(col||"#fff"),lum=c.r*.3+c.g*.59+c.b*.11,tinta=lum>.55?"#111":"#fff",borde=lum>.55?"#fff":"#111";
@@ -4099,7 +4110,7 @@ function tyBoxesBuild(TH,sc,std,ad){const B=TYB,W2=TY.W/2;
   B.mods.forEach(([m0,m1],k)=>{const L1=lonas[k];
     // piso de cemento de los boxes y techo de chapa que cubre las dos filas enfrentadas y la calle
     banda(m0,m1,B.dIn-2.4,B.dIn+2.3,.04,piso);banda(m0,m1,B.dOut-2.3,B.dOut+2.4,.04,piso);
-    const t=banda(m0-.6,m1+.6,B.dIn-2.7,B.dOut+2.7,4.6,chapa,1);t.castShadow=true;
+    for(const [d0,d1] of [[B.dIn-2.7,B.dIn+2.5],[B.dOut-2.5,B.dOut+2.7]]){const t=banda(m0-.6,m1+.6,d0,d1,4.6,chapa,1);t.castShadow=true;} /* un techo por fila; la calle del medio queda al aire */
     // fondos de lona y lonas entre box y box
     pared(m0,m1,B.dIn-2.4,0,3.1,L1);pared(m0,m1,B.dOut+2.4,0,3.1,L1);
     for(const b of B.boxes.filter(x=>x.mod===k)){for(const sd of[-.5,.5]){const s1=b.s+sd*b.w,p0=tyPose(s1,b.d-2.3),p1=tyPose(s1,b.d+2.3);
@@ -4107,7 +4118,7 @@ function tyBoxesBuild(TH,sc,std,ad){const B=TYB,W2=TY.W/2;
       // tubo de luz en cada box
       const q=tyPose(b.s,b.d),tl=new TH.Mesh(new TH.BoxGeometry(1.2,.06,.14),new TH.MeshBasicMaterial({color:0xfff3d6}));tl.position.set(q.x,4.45,q.z);tl.rotation.y=q.h;sc.add(tl);}
     // postes del tinglado
-    for(const s1 of[m0-.4,(m0+m1)/2,m1+.4])for(const d of[B.dIn-2.6,B.dOut+2.6]){const q=tyPose(s1,d),c=new TH.Mesh(new TH.CylinderGeometry(.09,.09,4.6,6),poste);c.position.set(q.x,2.3,q.z);sc.add(c);}
+    for(const s1 of[m0-.4,(m0+m1)/2,m1+.4])for(const d of[B.dIn-2.6,B.dIn+2.4,B.dOut-2.4,B.dOut+2.6]){const q=tyPose(s1,d),c=new TH.Mesh(new TH.CylinderGeometry(.09,.09,4.6,6),poste);c.position.set(q.x,2.3,q.z);sc.add(c);}
     // cartel del módulo
     const q=tyPose((m0+m1)/2,B.dOut+2.75),cart=new TH.Mesh(new TH.PlaneGeometry(6,1),new TH.MeshBasicMaterial({map:ad(["BOXES "+(k+1),"#111","#f2c230"])}));cart.position.set(q.x,3.9,q.z);cart.rotation.y=q.h+Math.PI;sc.add(cart);});
   // una luz cálida que baña la zona de boxes
@@ -4135,6 +4146,7 @@ function tyBoxesSalida(R,cb){if(!R||R.c.vivo||!R.g3){cb();return;}const B=TYB,L=
   orden.forEach((e,i)=>{const bx=tyBoxDe(e.id,i),gs=e.dist+L,gd=e.d,gdist=e.dist;e.box=bx;
     const r=tyRuta([[bx.s,bx.d],[bx.s,B.road],[B.sal-7,B.road],[B.sal+5,TY.W/2-2.5],[gs-9,gd],[gs,gd]]);
     items.push({e,r,delay:i*.4,fin:e=>{e.dist=gdist;e.s=gdist;e.d=gd;}});});
+  const cb0=cb;cb=()=>{const t0=performance.now(),esp=()=>{if(TYR!==R)return;if(narLibreF()||performance.now()-t0>9000)cb0();else setTimeout(esp,200);};esp();}; /* que termine de presentar a los pilotos antes de seguir con la largada */
   tyAnimIni(R,"salida",items,15,cb);const p={};const ks=[];orden.slice(0,12).forEach((e,i)=>{const k="c"+i;p[k]=e;ks.push(k);});NARRA_F4.salida=[1,2,3,4,5].map(n=>["f:salida"+n,...ks,"f:grilla1"]);NARF_BOLSA.salida=null;narraF("salida",p);}
 function tyBoxesEntrada(R,cb){if(!R||R.c.vivo||!R.g3){cb();return;}const B=TYB,L=TY.LAP,items=[];
   R.cars.forEach((e,i)=>{if(e.gone||e.out){if(e.g)e.g.visible=false;e.gone=true;return;}const bx=e.box||tyBoxDe(e.id,i),s0=((e.s%L)+L)%L;let off=0;if(B.ent-9<s0+4)off=L;
@@ -4164,7 +4176,8 @@ function tyDraw(R){const cv=$("#tyScene");if(!cv)return;const dpr=prUltra(Math.m
     else{ // 90° desde adentro: el auto pasa de costado y atrás se ven las tribunas llenas
       const dIn=asp<1?-TY.W/2-15:-TY.W/2-11,c0=tyPose(P.s-2,dIn);const tgt=new TH.Vector3(c0.x,3.4,c0.z);if(!R.cp||R.cp.distanceTo(tgt)>30)R.cp=tgt.clone();else R.cp.lerp(tgt,Math.min(1,dt*5));
       E.cam.fov=asp<1?62:44;E.cam.position.copy(R.cp);E.cam.lookAt(pp.x,py+1.6,pp.z);}
-    if(R.anim){const C=R.anim.cam,F=C?{s:C.fs,d:C.fd}:(R.anim.sigue||P),fp=tyPose(F.s,F.d),c0=C?tyPose(C.s,C.d):tyPose(F.s-11,F.d-3);const tgt=new TH.Vector3(c0.x,C?C.y:6.5,c0.z);if(!R.ap||R.ap.distanceTo(tgt)>40)R.ap=tgt.clone();else R.ap.lerp(tgt,Math.min(1,dt*3));E.cam.fov=asp<1?64:50;E.cam.position.copy(R.ap);E.cam.lookAt(fp.x,tyYc(F.s,F.d)+.8,fp.z);}
+    if(R.anim&&R.anim.tipo==="salida"){const SB=TYB,m1=SB.mods[SB.mods.length-1][1],L0=TY.LAP,ya=R.anim.corte||(R.anim.corte=R.anim.items.some(o=>{const q=((o.e.s%L0)+L0)%L0;return q>SB.sal-4||q<60;})),CP=window.__salCam||(ya?[372,-10,8,350,14,1,70]:[m1+5,SB.road,7.5,m1-28,SB.road,.8,62]),c0=tyPose(CP[0],CP[1]),t0=tyPose(CP[3],CP[4]);E.cam.fov=asp<1?CP[6]+14:CP[6];E.cam.position.set(c0.x,CP[2],c0.z);E.cam.lookAt(t0.x,CP[5],t0.z);}
+    else if(R.anim){const C=R.anim.cam,F=C?{s:C.fs,d:C.fd}:(R.anim.sigue||P),fp=tyPose(F.s,F.d),c0=C?tyPose(C.s,C.d):tyPose(F.s-11,F.d-3);const tgt=new TH.Vector3(c0.x,C?C.y:6.5,c0.z);if(!R.ap||R.ap.distanceTo(tgt)>40)R.ap=tgt.clone();else R.ap.lerp(tgt,Math.min(1,dt*3));E.cam.fov=asp<1?64:50;E.cam.position.copy(R.ap);E.cam.lookAt(fp.x,tyYc(F.s,F.d)+.8,fp.z);}
     if(window.__tyCam){const q=window.__tyCam;E.cam.position.set(...q.p);E.cam.lookAt(...q.l);E.cam.fov=q.f||60;}
     E.cam.updateProjectionMatrix();
     if(ren.domElement.width!==w||ren.domElement.height!==h)ren.setSize(w,h,false);ren.setClearColor(0x05070d,1);ren.render(E.sc,E.cam);ctx.drawImage(ren.domElement,0,0,w,h);cineFX(ctx,w,h,"noche");}
@@ -4249,7 +4262,7 @@ function narraF(k,p){p=p||{};const L=NARRA_F4[k];if(!L)return;let b=NARF_BOLSA[k
   if(!(muted||noVoz||!AC)){narLoadF();const it={clips,prio,t:performance.now()};if(prio){NARF.q=NARF.q.filter(x=>x.prio);NARF.q.push(it);}else if(NARF.q.length<1&&!(NARF.busy&&k==="pasa"))NARF.q.push(it);narPlayF();}
   if(TYR)tyMsg("🎙️ "+txt.join(" ").replace(/ ([,!.])/g,"$1"),"var(--celeste)");}
 function narLoadF(){if(NARF.buf||NARF.loading||!AC)return;NARF.loading=true;
-  Promise.all([fetch("taya/relato.json?v=51").then(r=>r.json()),fetch("taya/relato.mp3?v=51").then(r=>r.arrayBuffer())]).then(([m,ab])=>{NARF.map=m;return new Promise((res,rej)=>AC.decodeAudioData(ab,res,rej));}).then(b=>{NARF.buf=b;narPlayF();}).catch(()=>{NARF.loading=false;});}
+  Promise.all([fetch("taya/relato.json?v=52").then(r=>r.json()),fetch("taya/relato.mp3?v=52").then(r=>r.arrayBuffer())]).then(([m,ab])=>{NARF.map=m;return new Promise((res,rej)=>AC.decodeAudioData(ab,res,rej));}).then(b=>{NARF.buf=b;narPlayF();}).catch(()=>{NARF.loading=false;});}
 function narPlayF(){if(NARF.busy||!NARF.q.length||!NARF.buf||!AC)return;const it=NARF.q.shift();if(!it.prio&&performance.now()-it.t>2500){narPlayF();return;}const cl=it.clips.filter(c=>c&&NARF.map[c]);if(!cl.length){narPlayF();return;}
   NARF.busy=true;if(!NARF.gain){NARF.gain=AC.createGain();NARF.gain.gain.value=1.2;NARF.gain.connect(AC.destination);}
   let t=AC.currentTime+.03;const srcs=[];cl.forEach((c,i)=>{const [o,d]=NARF.map[c];const s=AC.createBufferSource(),g=AC.createGain();s.buffer=NARF.buf;
