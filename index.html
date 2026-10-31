@@ -502,7 +502,7 @@ const PACKS = [
  {f:1200,p:"$ 13.999",t:"Lata de fichas",b:"+20% de regalo",dest:true},
  {f:3000,p:"$ 29.999",t:"Cajón del kiosquero",b:"+50% de regalo"},
 ];
-const BUILD="v52";
+const BUILD="v53";
 let DIST = 402; // cuarto de milla (en las Dunas: 1000 m)
 const GHOST_V = 402;
 /* ===== pistas: 1 = Costanera, 2 = El Crack de las Dunas ===== */
@@ -3740,8 +3740,8 @@ function tyPaso(R){const dt=TYH;R.t+=dt;const g=9.81;
     e.th+=(thT-e.th)*Math.min(1,dt*(thT>e.th?5.5:12));
     // fuerzas: tracción directa, sin caja → la potencia se entrega toda junta
     const m=e.kg,P=e.hp*745.7*.82,v=Math.max(2.5,e.v);
-    const muL=e.mu*(e.d<TY.IN?.55:1)*(1-.0*e.dmg/100);
-    let aDrive=Math.min(P/(m*v),muL*g*.95)*e.th;
+    const muL=e.mu*(e.d<TY.IN?.55:1)*(e.gomaR?.66:1);
+    let aDrive=Math.min(P/(m*v)*(e.gomaR?.85:1),muL*g*.95)*e.th;
     // se para de manos: con mucha aceleración levanta la trompa y pierde un poco de empuje
     const lift=Math.max(0,(aDrive-5.2)/4);e.pitch+=(Math.min(.32,lift*.3)-e.pitch)*Math.min(1,dt*6);if(e.pitch>.22)aDrive*=.9;
     const aRes=(1.5*e.v*e.v+.02*m*g)/m+(e.th<.05?1.6:0);
@@ -3759,11 +3759,17 @@ function tyPaso(R){const dt=TYH;R.t+=dt;const g=9.81;
     e.sa+=(Math.max(-.2,saT)-e.sa)*Math.min(1,dt*(saT>e.sa?2.6:4));
     if(e.sa>1.12&&!e.out){tyChoque(R,e,"trompo");continue;}
     if(e.yo&&e.sa>.72&&R.t-(R.avisoSa||-9)>2.5){R.avisoSa=R.t;tyMsg("¡Se te va la cola! Levantá el pie o contravolanteá ▶","#ff8f9c");vib(40);}
+    if(!c&&e.sa>.15){e.vl-=e.v*Math.sin(e.sa-.1)*.9*dt;e.v=Math.max(0,e.v-(e.sa-.15)*4*dt);} /* tijera: sale de la curva cruzado → frena un poco y se mete para adentro */
     e.d+=e.vl*dt;
-    // paredón y borde de adentro
-    if(e.d>TY.WALL){const imp=e.vl;e.d=TY.WALL;e.vl=-Math.abs(e.vl)*.25;
-      if(imp>1.35){tyChoque(R,e,"pared",imp);continue;}else if(imp>.25){e.v*=1-imp*.06;e.dmg+=imp*14;tySonido("roce",.4);if(e.yo){vib(30);tyMsg("¡Rozaste el paredón!","#ffb4bd");}
-        if(e.dmg>=100){tyChoque(R,e,"pared",imp);continue;}}}
+    // paredón: el auto ocupa más de costado cuando va cruzado, y lo primero que pega es la cola
+    const ext=.85*Math.cos(e.sa)+1.45*Math.abs(Math.sin(e.sa)),dW=TY.W/2-ext;
+    if(e.d>dW){const imp=Math.max(0,e.vl),cola=e.sa>.22;e.d=dW;e.vl=-Math.abs(e.vl)*.25;
+      if(imp>1.35&&!cola){tyChoque(R,e,"pared",imp);continue;}
+      if(cola&&!e.gomaR){e.gomaR=true;e.v*=.8;e.sa*=.6;e.dmg+=25;tySonido("pared",.55);if(e.yo){vib([60,40,90]);tyMsg("¡Tocaste el paredón con la cola! Rompiste la goma trasera","#ff8f9c");R.J.gomaRota=true;}
+        if(R.t-(R.narChoqueT||-9)>3){R.narChoqueT=R.t;narraF("pared",{a:e});}}
+      else if(imp>.25){e.v*=1-imp*.06;e.dmg+=imp*14;tySonido("roce",.4);if(e.yo){vib(30);tyMsg(e.gomaR?"¡Seguís pegándole al paredón con la goma rota!":"¡Rozaste el paredón!","#ffb4bd");}}
+      else{e.v*=1-.5*dt;e.dmg+=3*dt;if(e.yo&&R.t-(R.avisoRoce||-9)>1.5){R.avisoRoce=R.t;tySonido("roce",.3);tyMsg("¡Vas raspando el paredón! Abrite para adentro ◀","#ffb4bd");}}
+      if(e.dmg>=100){tyChoque(R,e,"pared",imp);continue;}}
     if(e.d<TY.IN-1.6){e.d=TY.IN-1.6;e.vl=Math.max(0,e.vl);}
     // avance: por adentro se recorre menos
     const k=c?TY.R/Math.max(10,Rc):1,ds=e.v*dt*k;e.s+=ds;e.dist+=ds;
@@ -3803,7 +3809,8 @@ function tyVolanteIA(R,e){
 // tu volante: automático (sigue la línea elegida con ◀ ▶ y esquiva), o manual (◀ ▶ doblan directo: ▶ en la curva es contravolante)
 function tyVolanteYo(R,e,c){const man=(S.tyVol||"auto")==="manual";
   if(man){if(R.steer)return R.steer;return Math.max(-1,Math.min(1,-e.vl*.6));}
-  if(R.steer){e.dT=Math.max(TY.IN+.3,Math.min(TY.WALL-.5,e.d+R.steer*2.2));}
+  if(R.steer){e.dT=Math.max(TY.IN+.3,Math.min(TY.WALL-.9,e.d+R.steer*2.2));e.dLin=e.dT;}
+  else{const lin=Math.min(e.dLin??(TY.IN+2.2),TY.WALL-1.2);if(tyLibre(R,e,lin))e.dT+=(lin-e.dT)*Math.min(1,TYH*1.2);}
   if(!tyLibre(R,e,e.dT))e.dT=e.d;
   const lado=R.cars.find(o=>o!==e&&!o.gone&&!o.out&&Math.abs(o.dist-e.dist)<3.4&&Math.abs(o.d-e.d)<2.1);
   if(lado&&!R.steer){const sg=Math.sign(lado.d-e.d)||1;return Math.max(-1,Math.min(1,-sg*.7-e.vl*.9));}
@@ -3825,7 +3832,7 @@ function tyCompletar(R){if(!R.green){tyRelargar(R);R.green=true;R.tGreen=R.tGree
 function tyFinCarrera(R){if(TYR!==R)return;const pos=tyPosiciones(R),J=R.J,c=R.c;
   const res=pos.map(e=>({id:e.id,dnf:!!e.out,t:e.fin}));tyGuardar(J,c,res);
   const yo=res.findIndex(x=>x.id==="yo");if(R.yoFuera)J.fuera=true;
-  {const T=tyState();J.gUso=(J.gUso|0)+1;J.serv=false;J.carreras=(J.carreras|0)+1;T.desg=Math.min(1,(T.desg||0)+c.laps*.0045);save();}
+  {const T=tyState();J.gUso=J.gomaRota?TY_GOMA_MAX:(J.gUso|0)+1;J.gomaRota=false;J.serv=false;J.carreras=(J.carreras|0)+1;T.desg=Math.min(1,(T.desg||0)+c.laps*.0045);save();}
   if(pos[0])narraF("bandera",{a:pos[0]});
   TYR=null;tyBanderaBlanca(false);tyUI(false);tyAudioStop();
   const pasa=c.k==="serie"?yo<2?"¡Pasaste directo a la semifinal!":yo<4?"Vas al repechaje: el ganador pasa a la prefinal.":"No te alcanzó para seguir esta noche.":
