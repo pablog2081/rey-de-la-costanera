@@ -405,7 +405,7 @@ const PACKS = [
  {f:1200,p:"$ 13.999",t:"Lata de fichas",b:"+20% de regalo",dest:true},
  {f:3000,p:"$ 29.999",t:"Cajón del kiosquero",b:"+50% de regalo"},
 ];
-const BUILD="v39";
+const BUILD="v40";
 let DIST = 402; // cuarto de milla (en las Dunas: 1000 m)
 const GHOST_V = 402;
 /* ===== pistas: 1 = Costanera, 2 = El Crack de las Dunas ===== */
@@ -534,10 +534,10 @@ function ovCerrar(T){const tab=ovTabla(T),b=T.b,o=S.ord;
 /* ---------- la carrera ---------- */
 let OVR=null;
 function ovEntrant(id,num,player){
-  if(player){const c=curCar(),st=stats(c);return {id,num,name:ovName(id),player:true,car:c,R:Object.assign(makeRacer(st,c.wear||0),{wearK:.15}),lane:0,laneT:0,a:0,vp:0,cool:0};}
+  if(player){const c=curCar(),st=stats(c);return {id,num,name:ovName(id),player:true,car:c,R:makeRacer(st,c.wear||0),lane:0,laneT:0,a:0,vp:0,cool:0};}
   const b=BOT[id],st=stats({id:b.car,up:b.up,pf:1.02*(1+(Math.random()-.5)*.035)});const sk=Math.min(.99,b.sk*(1+(Math.random()-.5)*.1));
   return {id,num,name:b.n,player:false,car:{id:b.car,color:CAR[b.car].col,up:b.up},R:makeRacer(st),lane:0,laneT:0,a:0,vp:0,cool:0,
-    ai:{sk,shiftX:.93-(1-sk)*.16*Math.random(),react:.15+(1-sk)*.5*Math.random(),agr:.3+sk*.6}};}
+    falla:Math.random()<.09?OVAL.LAP*(1.3+Math.random()*3.4):null,ai:{sk,shiftX:.93-(1-sk)*.16*Math.random(),react:.15+(1-sk)*.5*Math.random(),agr:.3+sk*.6}};}
 function ovStart(opts){
   opts=opts||{};audioInit();narStop();narLoad();const T=opts.live?null:ovTorneo();
   const ids=opts.ids||(T?T.ids:[]);
@@ -579,8 +579,10 @@ function ovPaso(R,dtStep){
     // piloto automático: levanta antes de la curva si viene pasado
     const vC=ovCurveV(P.st,e.lane),look=Math.max(10,P.v*P.v/(2*7)),entrando=ovPose(P.x+look,e.lane).turn,enCurva=ovPose(P.x,e.lane).turn;
     let thr=e.player?R.gas:true;const pasado=(entrando||enCurva)&&P.v>vC;if(pasado)thr=false;
-    {const top=P.gear>=RATIOS[P.st.gears].length-1;if(top&&P.rpm>=P.st.red*.97)thr=false;}
-    if(e.player&&P.rpm>P.st.red&&R.n-(R.cortaN||0)>480){R.cortaN=R.n;say("¡Pasá de cambio! Estás en el corte y se gasta el motor","#ffb4bd");vib(30);}
+    if(!e.player){const top=P.gear>=RATIOS[P.st.gears].length-1;if(top&&P.rpm>=P.st.red*.97)thr=false;}
+    if(e.player){if(P.rpm>P.st.red){e.sobre=(e.sobre||0)+H;if(R.n-(R.cortaN||0)>480){R.cortaN=R.n;say("¡Pasado de vueltas! Cambiá o levantá: se daña el motor","#ffb4bd");vib(30);}
+        if(e.sobre>.8&&R.n-(R.pasN||-1e9)>240*14){R.pasN=R.n;narra("pasado",{a:e});}}else e.sobre=0;}
+    if(e.falla&&!e.player&&!P.blown&&P.x>e.falla){P.blown=true;P.dmg=100;}
     const front=ovDelante(e,45);P.draftK=front&&front.gap<40?.72+.28*front.gap/40:1;
     const v0=P.v;stepRacer(P,H,thr,t);
     if(pasado&&P.v>vC)P.v=Math.max(vC,P.v-7*H);
@@ -801,8 +803,11 @@ function ovDraw(R){const cv=$("#scene"),ctx=cv.getContext("2d"),w=cv.width,h=cv.
   // torre de posiciones (top 5 + vos)
   const pos=R.pos.length?R.pos:ovPosiciones(R),yo=pos.indexOf(R.P),fs=Math.round(h*.032);ctx.font=`700 ${fs}px "Barlow Condensed",sans-serif`;ctx.textAlign="left";
   const show=pos.slice(0,5);if(yo>=5)show.push(R.P);
-  show.forEach((e,i)=>{const k=pos.indexOf(e),y=h*.06+i*fs*1.25;ctx.fillStyle=e.player?"rgba(242,182,50,.92)":"rgba(10,12,18,.72)";ctx.fillRect(10,y-fs,w*.36,fs*1.15);
-    ctx.fillStyle=e.player?"#111":"#f3e9d2";ctx.fillText(`${k+1}  #${e.num} ${e.name}`.slice(0,22),16,y);});
+  const gapDe=(e,k)=>{if(k===0||e.dnf)return e.dnf?"OUT":"";const a=pos[k-1];if(e.R.fin!=null&&a.R.fin!=null)return "+"+(e.R.fin-a.R.fin).toFixed(2);
+      const d=Math.max(0,a.R.x-e.R.x);return "+"+(d/Math.max(8,e.R.v)).toFixed(2);};const bw=w*.47;
+  show.forEach((e,i)=>{const k=pos.indexOf(e),y=h*.06+i*fs*1.25;ctx.fillStyle=e.player?"rgba(242,182,50,.92)":"rgba(10,12,18,.72)";ctx.fillRect(10,y-fs,bw,fs*1.15);
+    ctx.fillStyle=e.player?"#111":"#f3e9d2";ctx.textAlign="left";ctx.fillText(`${k+1}  #${e.num} ${e.name}`.slice(0,19),16,y);
+    ctx.textAlign="right";ctx.fillStyle=e.player?"#111":k===0?"#f2b632":"#9fd3ff";ctx.fillText(k===0&&!e.dnf?"LÍDER":gapDe(e,k),10+bw-6,y);ctx.textAlign="left";});
   const P=R.P.R,lap=Math.min(OVAL.LAPS,Math.max(1,Math.floor(P.x/OVAL.LAP)+1));
   $("#ovP").textContent=`${yo+1}º/${R.cars.length}`;$("#ovL").textContent=`Vuelta ${lap}/${OVAL.LAPS}`;
   const shiftBand=[P.st.red*.86,P.st.red*.985];
@@ -813,7 +818,7 @@ function ovDraw(R){const cv=$("#scene"),ctx=cv.getContext("2d"),w=cv.width,h=cv.
 
 /* ---------- relato (texto ahora; voz de Brok Kettman cuando estén los audios) ---------- */
 /* ---------- relato de Brok Kettman: frases grabadas que se encadenan con nombres o números ---------- */
-const NAR_F={"intro1":"¡Muy buenas tardes, amigos de los fierros! Les habla Brok Kettman, y esto es... ¡El Genio de los Fierros! Dieciséis máquinas en la grilla, cinco vueltas al óvalo. ¡Que empiece el espectáculo!","intro2":"¡Bienvenidos al óvalo! Brok Kettman con ustedes. El sol pega fuerte, las tribunas están repletas y los motores ya rugen. ¡Prepárense, que esto arranca!","intro3":"¡Hola, hola, fanáticos del automovilismo! Acá Brok Kettman, en vivo desde el óvalo. ¡Una nueva fecha de El Genio de los Fierros está por comenzar!","largada1":"¡Verde, verde, verde! ¡Largaron!","largada2":"¡Luz verde! ¡Allá van, aceleradores a fondo!","largada3":"¡Se larga la carrera! ¡Qué arranque, señores!","largada4":"¡Bandera verde! ¡Se lanzan todos juntos hacia la primera curva!","largada5":"¡Ahí se van! ¡Dieciséis fierros a fondo!","pasa_a":"¡pasa a","por_adentro":"¡se le tira por adentro a","le_gana":"¡le gana la posición a","por_afuera":"¡se abre por afuera y supera a","deja_atras":"¡deja atrás a","por_delante":"¡se pone por delante de","que_maniobra":"¡Qué maniobra de","sube_al":"que sube al","ahora_va":"y ahora marcha en el","atencion":"¡Atención, atención!","cambio_pos":"¡Cambio de posiciones!","rebufo":"¡Impresionante cómo aprovecha el rebufo","nuevo_puntero":"¡Hay nuevo puntero en la carrera!","toma_punta":"¡toma la punta!","lider_cambio":"¡Cambio de líder! Ahora manda","cierra":"¡cierra la puerta! ¡No hay lugar!","que_defensa":"¡Qué defensa de","ni_un_cm":"¡no le deja ni un centímetro a","leon":"¡Se defiende como un león","vuelta2a":"¡Vuelta dos! Manda","vuelta2b":"¡Se completa la primera vuelta! Arriba está","vuelta3a":"¡Vuelta tres! Adelante va","vuelta3b":"¡Mitad de carrera! Lidera","vuelta4a":"¡Vuelta cuatro! Sigue arriba","vuelta4b":"¡Faltan dos vueltas! En la punta está","ultima1":"¡Última vuelta! ¡Se define todo! Adelante va","ultima2":"¡Campana! ¡Última vuelta en el óvalo! Defiende la punta","bandera1":"¡Bandera a cuadros! ¡Gana","bandera2":"¡Cruza la meta! ¡Victoria para","bandera3":"¡Y el ganador es...","que_carrera1":"¡Qué carrera, señoras y señores!","que_carrera2":"¡Una carrera para el recuerdo!","que_carrera3":"¡Tremendo espectáculo en el óvalo!","segundo":"En el segundo lugar,","tercero":"y completa el podio,","motor1":"¡Humo, humo! ¡Se rompió el motor de","motor2":"¡Abandono! ¡Se le pasó de vueltas el motor a","nuestro":"nuestro piloto","sigue_punta":"sigue firme en la punta","marcha":"marcha en el","mientras":"Mientras tanto,","r1":"¡Qué ritmo impresionante en la recta!","r2":"¡El público se pone de pie en las tribunas!","r3":"¡Cuánta velocidad en el peralte!","r4":"¡Los motores aúllan en la recta opuesta!","r5":"¡Pelea tremenda en el medio del pelotón!","r6":"Hay que cuidar el motor: cinco vueltas es mucho tiempo.","r7":"¡Pegaditos, pegaditos! ¡Van en fila india!","r8":"¡Esto es automovilismo de verdad, amigos!"};
+const NAR_F={"intro1":"¡Muy buenas tardes, amigos de los fierros! Les habla Brok Kettman, y esto es... ¡El Genio de los Fierros! Dieciséis máquinas en la grilla, cinco vueltas al óvalo. ¡Que empiece el espectáculo!","intro2":"¡Bienvenidos al óvalo! Brok Kettman con ustedes. El sol pega fuerte, las tribunas están repletas y los motores ya rugen. ¡Prepárense, que esto arranca!","intro3":"¡Hola, hola, fanáticos del automovilismo! Acá Brok Kettman, en vivo desde el óvalo. ¡Una nueva fecha de El Genio de los Fierros está por comenzar!","largada1":"¡Verde, verde, verde! ¡Largaron!","largada2":"¡Luz verde! ¡Allá van, aceleradores a fondo!","largada3":"¡Se larga la carrera! ¡Qué arranque, señores!","largada4":"¡Bandera verde! ¡Se lanzan todos juntos hacia la primera curva!","largada5":"¡Ahí se van! ¡Dieciséis fierros a fondo!","pasa_a":"¡pasa a","por_adentro":"¡se le tira por adentro a","le_gana":"¡le gana la posición a","por_afuera":"¡se abre por afuera y supera a","deja_atras":"¡deja atrás a","por_delante":"¡se pone por delante de","que_maniobra":"¡Qué maniobra de","sube_al":"que sube al","ahora_va":"y ahora marcha en el","atencion":"¡Atención, atención!","cambio_pos":"¡Cambio de posiciones!","rebufo":"¡Impresionante cómo aprovecha el rebufo","nuevo_puntero":"¡Hay nuevo puntero en la carrera!","toma_punta":"¡toma la punta!","lider_cambio":"¡Cambio de líder! Ahora manda","cierra":"¡cierra la puerta! ¡No hay lugar!","que_defensa":"¡Qué defensa de","ni_un_cm":"¡no le deja ni un centímetro a","leon":"¡Se defiende como un león","vuelta2a":"¡Vuelta dos! Manda","vuelta2b":"¡Se completa la primera vuelta! Arriba está","vuelta3a":"¡Vuelta tres! Adelante va","vuelta3b":"¡Mitad de carrera! Lidera","vuelta4a":"¡Vuelta cuatro! Sigue arriba","vuelta4b":"¡Faltan dos vueltas! En la punta está","ultima1":"¡Última vuelta! ¡Se define todo! Adelante va","ultima2":"¡Campana! ¡Última vuelta en el óvalo! Defiende la punta","bandera1":"¡Bandera a cuadros! ¡Gana","bandera2":"¡Cruza la meta! ¡Victoria para","bandera3":"¡Y el ganador es...","que_carrera1":"¡Qué carrera, señoras y señores!","que_carrera2":"¡Una carrera para el recuerdo!","que_carrera3":"¡Tremendo espectáculo en el óvalo!","segundo":"En el segundo lugar,","tercero":"y completa el podio,","motor1":"¡Humo, humo! ¡Se rompió el motor de","motor2":"¡Abandono! ¡Se le pasó de vueltas el motor a","nuestro":"nuestro piloto","sigue_punta":"sigue firme en la punta","marcha":"marcha en el","mientras":"Mientras tanto,","r1":"¡Qué ritmo impresionante en la recta!","r2":"¡El público se pone de pie en las tribunas!","r3":"¡Cuánta velocidad en el peralte!","r4":"¡Los motores aúllan en la recta opuesta!","r5":"¡Pelea tremenda en el medio del pelotón!","r6":"Hay que cuidar el motor: cinco vueltas es mucho tiempo.","r7":"¡Pegaditos, pegaditos! ¡Van en fila india!","r8":"¡Esto es automovilismo de verdad, amigos!","pueblo":"el piloto del pueblo","pasado1":"¡Cuidado! ¡Está pasado de vueltas","pasado2":"¡Ojo con ese motor, que se pasa de vueltas","humo":"¡Sale humo del auto de","fundio":"¡Fundió el motor","afuera":"¡Se queda afuera de la carrera!"};
 const NAR_N=["Agus", "Beto Carburador", "Beto Jr.", "Bocha", "Cachete", "Cachito", "Cacho", "Charly", "Chiche", "Chino", "Cholo", "Coca", "Coco", "Coqui", "Dani 'Pistón'", "El Cabezón", "El Flaco Medina", "El Gringo", "El Mono", "El Negro Ríos", "El Oso", "El Pelado", "El Petiso", "El Rey de la Costanera", "El Rulo", "El Ruso", "El Topo", "El Turco", "El Vasco", "El Zurdo", "Euge", "Facu", "Fede", "Fito", "Flor", "Gise", "Gordo Valdez", "Juanca", "Juli", "Kike", "La Colorada", "La Negra", "La Pochi", "La Rubia Gómez", "La Tana", "Lali", "Lalo", "Lito", "Lucho", "Luli", "Marcelo", "Marta", "Mati", "Mica", "Mimí", "Mingo", "Moncho", "Nacho", "Nati", "Nelo", "Nene", "Pancho", "Pato", "Pelusa", "Pili", "Pipo", "Pocho", "Pocholo", "Polaco", "Quique", "Rafa", "Rodo", "Ruli", "Santi", "Sergio 'Tuerca'", "Sole", "Tano Russo", "Tato", "Tincho", "Tito", "Toni", "Toto", "Tucu", "Vicky", "Wally", "Yami", "El Crack de las Dunas", "El Genio de los Fierros"];
 const NARRA_SEQ={intro:[["f:intro1"],["f:intro2"],["f:intro3"]],largada:[["f:largada1"],["f:largada2"],["f:largada3"],["f:largada4"],["f:largada5"]],
   pasa:[["a","f:pasa_a","b"],["a","f:por_adentro","b"],["a","f:le_gana","b"],["a","f:por_afuera","b"],["a","f:deja_atras","b"],["a","f:por_delante","b"],
@@ -822,7 +827,8 @@ const NARRA_SEQ={intro:[["f:intro1"],["f:intro2"],["f:intro3"]],largada:[["f:lar
   defensa:[["a","f:cierra"],["f:que_defensa","a"],["a","f:ni_un_cm","b"],["f:leon","a"]],
   vuelta:[["f:vuelta{lap}a","lider"],["f:vuelta{lap}b","lider"]],ultima:[["f:ultima1","lider"],["f:ultima2","lider"]],
   bandera:[["f:bandera1","lider","f:que_carrera1"],["f:bandera2","lider","f:que_carrera2"],["f:bandera3","lider","f:que_carrera3"],["f:bandera1","lider","f:que_carrera3"]],
-  podio:[["f:segundo","b","f:tercero","c"]],motor:[["f:motor1","a"],["f:motor2","a"]],
+  podio:[["f:segundo","b","f:tercero","c"]],motor:[["f:motor1","a"],["f:motor2","a"],["f:humo","a","f:afuera"],["f:fundio","a","f:afuera"]],
+  pasado:[["f:pasado1","a"],["f:pasado2","a"]],
   relleno:[["f:r1"],["f:r2"],["f:r3"],["f:r4"],["f:r5"],["f:r6"],["f:r7"],["f:r8"],["lider","f:sigue_punta"],["f:mientras","a","f:marcha","pos"]]};
 const NAR_BOLSA={};
 function narElegir(k){const n=NARRA_SEQ[k].length;let b=NAR_BOLSA[k];if(!b||!b.length){b=NAR_BOLSA[k]=[...Array(n).keys()].sort(()=>Math.random()-.5);if(NAR_BOLSA["_"+k]!==undefined&&b[0]===NAR_BOLSA["_"+k]&&n>1)b.push(b.shift());}
@@ -833,7 +839,7 @@ function narra(k,p){p=p||{};const R=OVR;const live=!!(R&&R.opts&&R.opts.live);
     if(sg==="pos"){txt.push((p.pos||1)+"º puesto!");clips.push("p_"+String(p.pos||1).padStart(2,"0"));continue;}
     const e=p[sg];if(!e)continue;
     if(live){txt.push("el número "+e.num);clips.push("k_"+String(e.num).padStart(2,"0"));}
-    else if(e.player){txt.push(e.name);clips.push("f_nuestro");}
+    else if(e.player){txt.push("el piloto del pueblo");clips.push("f_pueblo");}
     else{txt.push(e.name);const i=NAR_N.indexOf(e.name);clips.push(i>=0?"n_"+String(i).padStart(3,"0"):null);}}
   let t=txt.join(" ").replace(/ ([,!])/g,"$1");if((t.match(/¡/g)||[]).length>(t.match(/!/g)||[]).length)t+="!";
   if(typeof relatorVoz==="function")relatorVoz(k,clips);
@@ -844,13 +850,15 @@ function narLoad(){if(NARV.buf||NARV.loading||!AC)return;NARV.loading=true;
   Promise.all([fetch("escenario/relato.json").then(r=>r.json()),fetch("escenario/relato.mp3").then(r=>r.arrayBuffer())]).then(([m,ab])=>{NARV.map=m;return new Promise((res,rej)=>AC.decodeAudioData(ab,res,rej));}).then(b=>{NARV.buf=b;narPlay();}).catch(()=>{NARV.loading=false;});}
 function narPlay(){if(NARV.busy||!NARV.q.length||!NARV.buf||!AC)return;const it=NARV.q.shift();const cl=it.clips.filter(c=>c&&NARV.map[c]);if(!cl.length){narPlay();return;}
   NARV.busy=true;if(!NARV.gain){NARV.gain=AC.createGain();NARV.gain.gain.value=1.15;NARV.gain.connect(AC.destination);}
-  let t=AC.currentTime+.03;const srcs=[];for(const c of cl){const [o,d]=NARV.map[c];const s=AC.createBufferSource();s.buffer=NARV.buf;s.connect(NARV.gain);s.start(t,o,d);srcs.push(s);t+=d+.04;}
-  NARV.src=srcs;srcs[srcs.length-1].onended=()=>{NARV.busy=false;NARV.src=null;narPlay();};}
+  let t=AC.currentTime+.03;const srcs=[];cl.forEach((c,i)=>{const [o,d]=NARV.map[c];const s=AC.createBufferSource(),g=AC.createGain();s.buffer=NARV.buf;
+    // cada pedazo entra y sale suave, y se encadena casi pegado al anterior para que suene como una sola frase
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(1,t+.025);g.gain.setValueAtTime(1,t+Math.max(.03,d-.04));g.gain.linearRampToValueAtTime(0,t+d);
+    s.connect(g);g.connect(NARV.gain);s.start(t,o,d);srcs.push(s);t+=d+(i<cl.length-1?.06:0);});
+  NARV.src=srcs;srcs[srcs.length-1].onended=()=>{NARV.src=null;setTimeout(()=>{NARV.busy=false;narPlay();},500);};}
 function narStop(){NARV.q=[];if(NARV.src)NARV.src.forEach(s=>{try{s.onended=null;s.stop();}catch(e){}});NARV.src=null;NARV.busy=false;}
 function relatorVoz(k,clips){if(muted||noVoz||!AC)return;narLoad();
-  const prio=k==="largada"||k==="ultima"||k==="bandera"||k==="intro"||k==="lider";if(k==="relleno"&&(NARV.busy||NARV.q.length))return;
-  if(k==="largada"||k==="bandera")narStop();if(prio){NARV.q=NARV.q.filter(x=>x.prio);}else if(NARV.q.length>=1||(NARV.busy&&k==="pasa"&&Math.random()<.5))return;
-  NARV.q.push({k,clips,prio});narPlay();}
+  const prio=k==="largada"||k==="ultima"||k==="bandera"||k==="intro"||k==="lider"||k==="motor"||k==="podio";if(k==="relleno"&&(NARV.busy||NARV.q.length))return;
+  if(prio){NARV.q=NARV.q.filter(x=>x.prio);NARV.q.push({k,clips,prio});}else{if(NARV.q.length>=1)return;NARV.q.push({k,clips,prio});}narPlay();}
 const narLibre=()=>!NARV.busy&&!NARV.q.length;
 /* ---------- música de largada (country) ---------- */
 const COUNTRY=new Audio();COUNTRY.preload="none";
