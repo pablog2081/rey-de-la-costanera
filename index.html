@@ -108,9 +108,12 @@ h2{font-family:var(--f-display);font-weight:400;font-size:24px;margin:0 0 4px;co
 #ovHud .ovpos{background:rgba(10,12,18,.75);border:1px solid var(--linea);border-radius:10px;padding:4px 10px;text-align:right;margin-left:auto}
 #ovHud .ovpos b{font:800 26px "Barlow Condensed",sans-serif;color:var(--oro);display:block;line-height:1}
 #ovHud .ovpos span{font:600 13px "Barlow Condensed",sans-serif;color:var(--crema)}
-#ovHud .ovlane{position:absolute;left:0;right:0;top:34vh;display:flex;justify-content:space-between;padding:0 10px;pointer-events:none}
+#ovHud .ovlane{position:absolute;left:0;right:0;top:44%;display:flex;justify-content:space-between;padding:0 10px;pointer-events:none}
 #ovHud .ovlane button{pointer-events:auto;min-width:64px;height:54px;border-radius:14px;background:rgba(10,12,18,.62);border:2px solid var(--linea);color:var(--crema);font:800 22px "Barlow Condensed",sans-serif}
-#ovHud #ovGyro{font-size:15px;min-width:56px}
+#ovHud #ovGyro{position:absolute;right:10px;top:66px;pointer-events:auto;font:800 14px "Barlow Condensed",sans-serif;min-width:92px;height:46px;line-height:1.05;border-radius:12px;background:rgba(10,12,18,.62);border:2px solid var(--linea);color:var(--crema)}
+#ovHud #ovBaja{position:absolute;left:10px;top:calc(44% + 62px);pointer-events:auto;height:50px;min-width:86px;border-radius:14px;background:rgba(10,12,18,.7);border:2px solid var(--celeste);color:var(--crema);font:800 19px "Barlow Condensed",sans-serif}
+#ovHud .kb{position:absolute;left:50%;transform:translateX(-50%);bottom:6px;white-space:nowrap;font:600 12px "Barlow Condensed",sans-serif;color:var(--crema);background:rgba(10,12,18,.6);border-radius:8px;padding:3px 8px;pointer-events:none}
+@media (hover:none){#ovHud .kb{display:none}}
 body.ovrun #bVista{visibility:hidden}
 .ovtab{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}.ovtab th{text-align:left;color:var(--crema-2);font-weight:600;padding:3px 4px}.ovtab td{padding:4px;border-top:1px solid var(--linea)}.ovtab tr.yo td{color:var(--oro);font-weight:800}
 .jefe{background:rgba(116,185,239,.12);border:1px solid rgba(116,185,239,.35);border-radius:12px;padding:8px 10px;margin:8px 0;font-size:14px}
@@ -189,7 +192,7 @@ body.dunas{--asfalto:#2b2418}
 .opts .btn{white-space:normal}
 
 #race{position:fixed;inset:0;z-index:40;background:#000;display:flex;flex-direction:column;align-items:center}
-#race .wrap{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column;background:var(--noche);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+#race .wrap{position:relative;width:100%;max-width:480px;height:100%;display:flex;flex-direction:column;background:var(--noche);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 #scene{width:100%;flex:1 1 auto;min-height:180px;display:block;touch-action:none}
 .hud{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;padding:10px 14px 4px}
 #tacho{width:170px;height:170px}
@@ -402,7 +405,7 @@ const PACKS = [
  {f:1200,p:"$ 13.999",t:"Lata de fichas",b:"+20% de regalo",dest:true},
  {f:3000,p:"$ 29.999",t:"Cajón del kiosquero",b:"+50% de regalo"},
 ];
-const BUILD="v37";
+const BUILD="v38";
 let DIST = 402; // cuarto de milla (en las Dunas: 1000 m)
 const GHOST_V = 402;
 /* ===== pistas: 1 = Costanera, 2 = El Crack de las Dunas ===== */
@@ -460,7 +463,7 @@ const curCar=()=>S.cars.find(c=>c.uid===S.cur)||null;
 // MODO PRUEBA (provisorio): todos los autos en el garage y plata/fichas sin límite. Poner en false para el lanzamiento.
 const PRUEBA=false;
 function pruebaTopUp(){if(!PRUEBA)return;if(S.pesos<5e8)S.pesos=1e9;if(S.fichas<5e5)S.fichas=1e6;}
-function applyPrueba(){if(!PRUEBA)return;for(const id in CAR){if(!S.cars.some(c=>c.id===id))S.cars.push(newCar(id));if(!S.unl.includes(id))S.unl.push(id);}
+function applyPrueba(){if(!PRUEBA)return;S.dunasOk=true;S.ovalOk=true;for(const id in CAR){if(!S.cars.some(c=>c.id===id))S.cars.push(newCar(id));if(!S.unl.includes(id))S.unl.push(id);}
   if(!S.cur&&S.cars.length)S.cur=S.cars[0].uid;pruebaTopUp();}
 applyPrueba();
 /* ===== niveles: cada pista tiene su propio ranking, copas, récord y mejoras de los autos ===== */
@@ -584,7 +587,7 @@ function ovPaso(R,dtStep){
     if(!e.player&&P.shiftT<=0&&!P.clutch&&P.rpm>=P.st.red*e.ai.shiftX)doShift(P);
     if(!e.player&&P.nitroN>0&&P.nitroT<=0&&P.shiftT<=0&&P.gear>=2&&!enCurva&&Math.floor(P.x/OVAL.LAP)>=OVAL.LAPS-2&&Math.random()<H*.6){P.nitroN--;P.nitroT=2;}
     e.lane+=Math.sign(e.laneT-e.lane)*Math.min(Math.abs(e.laneT-e.lane),1.7*H);
-    if(e.cool>0)e.cool-=H;if(e.cerro>0)e.cerro-=H;
+    if(e.cool>0)e.cool-=H;if(e.cerro>0)e.cerro-=H;if(e.manT>0)e.manT-=H;
     if(P.fin===null&&P.x>=OVAL.LAPS*OVAL.LAP){P.fin=t-(R.greenN*H);e.done=true;if(e.player)R.done=true;}
     if(P.blown&&!e.done){e.done=true;e.dnf=true;P.fin=null;e.laneT=e.lane=2.6;if(R.greenN!==null&&!R.finished)narra("motor",{a:e});if(e.player){R.done=true;R.dnf=true;}}
   }
@@ -593,9 +596,11 @@ function ovPaso(R,dtStep){
   for(let i=1;i<ord.length;i++){const e=ord[i];if(e.done||e.remote)continue;for(let j=i-1;j>=0;j--){const f=ord[j];if(f.R.x-e.R.x>OVAL.GAP+1)break;if(f.done)continue;
       const mismo=Math.abs(f.lane-e.lane)<.7;if(mismo&&f.R.x-e.R.x<OVAL.GAP){e.R.x=f.R.x-OVAL.GAP;if(e.R.v>f.R.v){e.R.v=f.R.v;e.trabado=(e.trabado||0)+H;}}}}
   // la máquina decide: busca el hueco cuando viene más rápido, y vuelve al carril de adentro cuando puede
-  if(R.greenN!==null&&R.n%30===0)for(const e of R.cars){if(e.player||e.remote||e.done||!e.R.launched)continue;
+  if(R.greenN!==null&&R.n%30===0)for(const e of R.cars){if(e.remote||e.done||!e.R.launched)continue;
+    if(e.player){if((S.ovVol||"auto")!=="auto"||(e.manT>0))continue;}
+    else if(e.R.shiftT<=0&&e.R.gear>1&&e.R.rpm<e.R.st.red*.45){const g=RATIOS[e.R.st.gears],w=e.R.v/WR*g[e.R.gear-1]*e.R.st.fd*30/Math.PI;if(w<e.R.st.red*.9){e.R.gear--;e.R.rpm=w;}}
     const f=ovDelante(e,18);
-    if(f&&(e.R.v>=f.o.R.v*1.02||e.trabado>.6)&&Math.random()<e.ai.agr){const dir=e.laneT<=0?1:-1;if(ovPasar(e,dir)!=="ok")ovPasar(e,-dir);e.trabado=0;}
+    if(f&&(e.R.v>=f.o.R.v*1.02||e.trabado>.6)&&Math.random()<(e.player?.85:e.ai.agr)){const dir=e.laneT<=0?1:-1;if(ovPasar(e,dir)!=="ok")ovPasar(e,-dir);e.trabado=0;}
     else if(!f&&e.laneT!==-1&&!ovOcupado(e,-1,12,10)&&e.cool<=0&&Math.random()<.3){e.laneT=Math.max(-1,e.laneT-1);e.cool=1.5;}}
   // defensa de la máquina: si alguien se le tira por el costado y no cumple, lo cierra
   R.n++;}
@@ -608,7 +613,11 @@ function ovLoop(now){const R=OVR;if(!R)return;const dt=Math.min(.1,(now-R.last)/
   R.acc+=dt;let g=0;while(R.acc>=H&&g++<60){R.acc-=H;ovPaso(R);}
   // relato de posiciones y vueltas
   if(R.greenN!==null&&now-R.posAt>600){R.posAt=now;const pos=ovPosiciones(R);
-    if(R.pos.length){pos.forEach((e,i)=>{const was=R.pos.indexOf(e);if(was>i&&i<6&&Math.random()<.5)narra("pasa",{a:e,b:R.pos[i],pos:i+1});});
+    if(R.pos.length){let dijo=false;
+      if(pos[0]!==R.pos[0]&&R.pos[0]&&(R.n-R.greenN)*H>6){narra("lider",{a:pos[0],b:R.pos[0]});dijo=true;}
+      if(!dijo&&now-(R.pasaAt||0)>4500){const cand=pos.map((e,i)=>({e,i,was:R.pos.indexOf(e)})).filter(o=>o.was>o.i&&(o.i<8||o.e.player||R.pos[o.i]===R.P)).sort((x,y)=>(y.e.player||R.pos[y.i]===R.P?10:0)-(x.e.player||R.pos[x.i]===R.P?10:0)||x.i-y.i)[0];
+        if(cand){narra("pasa",{a:cand.e,b:R.pos[cand.i],pos:cand.i+1});R.pasaAt=now;dijo=true;}}
+      if(!dijo&&now-(R.narAt||now)>11000&&R.greenN!==null&&!R.done&&Math.random()<.5){const k=Math.floor(Math.random()*Math.min(8,pos.length));narra("relleno",{a:pos[k],lider:pos[0],pos:k+1});}
       const yo=pos.indexOf(R.P),antes=R.pos.indexOf(R.P);if(yo<antes)say(`¡Subiste al ${yo+1}º!`,"var(--verde)");else if(yo>antes)say(`Te pasaron: ${yo+1}º`,"#ffb4bd");}
     R.pos=pos;const lap=Math.floor(R.P.R.x/OVAL.LAP)+1;if(lap!==R.lapN&&lap>1&&lap<=OVAL.LAPS){R.lapN=lap;narra(lap===OVAL.LAPS?"ultima":"vuelta",{lap,lider:pos[0]});}else R.lapN=R.lapN||lap;}
   // cuando cruzás la meta se completa la carrera de los demás
@@ -620,22 +629,35 @@ function ovLoop(now){const R=OVR;if(!R)return;const dt=Math.min(.1,(now-R.last)/
   engineSet(R.P.R.rpm,R.gas);ovDraw(R);requestAnimationFrame(ovLoop);}
 
 /* ---------- controles: acelerador, cambio, nitro, carril (botones, deslizar o giroscopio) ---------- */
-function ovCarril(dir){if(!OVR||!OVR.P.R.launched||OVR.done)return;const r=ovPasar(OVR.P,dir);if(r==="ocupado")say("Carril ocupado","#ffb4bd");}
+function ovCarril(dir){if(!OVR||!OVR.P.R.launched||OVR.done)return;OVR.P.manT=3;const r=ovPasar(OVR.P,dir);if(r==="ocupado")say("Carril ocupado","#ffb4bd");}
 const GYRO={on:false,arm:true,base:null};
 function gyroPedir(){const go=()=>{GYRO.on=true;GYRO.base=null;toast("Giroscopio activado: inclinate para cambiar de carril");try{localStorage.setItem("rc.gyro","1");}catch(e){}};
   try{if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==="function")DeviceOrientationEvent.requestPermission().then(r=>{if(r==="granted")go();else toast("Sin permiso del giroscopio");}).catch(()=>toast("Sin permiso del giroscopio"));else go();}catch(e){go();}}
-window.addEventListener("deviceorientation",ev=>{if(!GYRO.on||!OVR)return;const land=Math.abs(window.orientation||0)===90||(screen.orientation&&/landscape/.test(screen.orientation.type));
+window.addEventListener("deviceorientation",ev=>{if(!GYRO.on||!OVR||S.ovVol!=="giro")return;const land=Math.abs(window.orientation||0)===90||(screen.orientation&&/landscape/.test(screen.orientation.type));
   let v=land?ev.beta:ev.gamma;if(v==null)return;if(land&&(window.orientation===-90||(screen.orientation&&screen.orientation.type==="landscape-secondary")))v=-v;
   if(GYRO.base==null)GYRO.base=v;const d=v-GYRO.base;
   if(GYRO.arm&&Math.abs(d)>16){GYRO.arm=false;ovCarril(d>0?1:-1);}if(Math.abs(d)<7)GYRO.arm=true;});
 function ovHud(on){let h=$("#ovHud");
   if(!on){if(h)h.remove();document.body.classList.remove("ovrun");return;}
-  if(!h){h=el(`<div id="ovHud"><div class="ovpos"><b id="ovP">–</b><span id="ovL"></span></div><div class="ovlane"><button id="ovIzq" aria-label="Carril de adentro">◀</button><button id="ovGyro">Giro</button><button id="ovDer" aria-label="Carril de afuera">▶</button></div></div>`);
+  if(!h){h=el(`<div id="ovHud"><div class="ovpos"><b id="ovP">–</b><span id="ovL"></span></div><div class="ovlane"><button id="ovIzq" aria-label="Carril de adentro">◀</button><button id="ovDer" aria-label="Carril de afuera">▶</button></div><button id="ovGyro"></button></div>`);
+    h.append(el(`<button id="ovBaja" aria-label="Bajar un cambio">▼ Bajar</button>`),el(`<div class="kb">W/↑ acelerar · S/↓ bajar · Espacio subir · A D / ← → carril · N nitro · V volante</div>`));
     $("#race .wrap").append(h);
+    $("#ovBaja").addEventListener("pointerdown",e=>{e.preventDefault();ovBajar();});
     $("#ovIzq").addEventListener("pointerdown",e=>{e.preventDefault();ovCarril(-1);});$("#ovDer").addEventListener("pointerdown",e=>{e.preventDefault();ovCarril(1);});
-    $("#ovGyro").addEventListener("pointerdown",e=>{e.preventDefault();if(GYRO.on){GYRO.on=false;toast("Giroscopio apagado");}else gyroPedir();});
+    $("#ovGyro").addEventListener("pointerdown",e=>{e.preventDefault();ovVolanteSig();});
     let sx=null;$("#scene").addEventListener("pointerdown",e=>{sx=e.clientX;});$("#scene").addEventListener("pointerup",e=>{if(sx!=null&&Math.abs(e.clientX-sx)>40)ovCarril(e.clientX>sx?1:-1);sx=null;});}
-  try{if(localStorage.getItem("rc.gyro")==="1"&&!GYRO.on&&!(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==="function"))GYRO.on=true;}catch(e){}}
+  if(S.ovVol==="giro"&&!GYRO.on&&!(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==="function"))GYRO.on=true;
+  ovVolanteBtn();}
+const VOL_N={auto:"Volante<br>automático",manual:"Volante<br>manual",giro:"Volante<br>giroscopio"};
+function ovVolanteBtn(){const b=$("#ovGyro");if(b)b.innerHTML=VOL_N[S.ovVol||"auto"];}
+function ovVolanteSig(){const L=["auto","manual","giro"],v=L[(L.indexOf(S.ovVol||"auto")+1)%3];S.ovVol=v;save();
+  if(v==="giro")gyroPedir();else GYRO.on=false;
+  toast(v==="auto"?"Volante automático: el auto busca el hueco y pasa solo":v==="manual"?"Volante manual: botones ◀ ▶, deslizar o teclas A/D":"Volante con giroscopio: inclinate para cambiar de carril");ovVolanteBtn();}
+// bajar un cambio: si el motor se pasaría de vueltas, no entra
+function ovBajar(){if(!OVR||!OVR.P.R.launched||OVR.done)return;const P=OVR.P.R;if(P.shiftT>0||P.gear<=0)return;
+  const g=RATIOS[P.st.gears],w=P.v/WR*g[P.gear-1]*P.st.fd*30/Math.PI;
+  if(w>hardOf(P.st)*.97){say("¡Ojo! Te pasarías de vueltas","#ffb4bd");vib(40);return;}
+  P.gear--;P.rpm=Math.max(P.rpm,w);P.limT=0;P.clutch=false;vib(20);blip(520,.06);say("Bajaste a "+(P.gear+1)+"ª","var(--celeste)");}
 
 /* ---------- final de carrera: puntos, premio, consejos del jefe de equipo ---------- */
 function ovFin(){const R=OVR;if(!R)return;narStop();const pos=ovPosiciones(R),yo=pos.indexOf(R.P);
@@ -694,13 +716,19 @@ function ovBuild(){
       if(k){const a=(k-1)*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}k++;}
     const g=new TH.BufferGeometry();g.setAttribute("position",new TH.Float32BufferAttribute(pts,3));g.setAttribute("uv",new TH.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
     const m=new TH.Mesh(g,mat);m.material.side=TH.DoubleSide;sc.add(m);return m;};
-  strip(-1.75,1.75,std({map:otex("asfalto",3,3),color:0x7a7a7a,roughness:.85}),.02);
+  strip(-1.75,1.75,std({map:otex("asfalto",5,5),color:0x6c6c6c,roughness:.92}),.02);
+  // goma de las cubiertas: la línea de carrera más oscura, con marcas de frenadas
+  {const gT=dTex(64,512,(x,w,h)=>{x.clearRect(0,0,w,h);const g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(.25,"rgba(10,10,10,.45)");g.addColorStop(.5,"rgba(10,10,10,.55)");g.addColorStop(.75,"rgba(10,10,10,.45)");g.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=g;x.fillRect(0,0,w,h);
+      for(let i=0;i<40;i++){x.fillStyle=`rgba(0,0,0,${.15+(i%5)*.06})`;const xx=8+((i*37)%48),yy=(i*97)%h;x.fillRect(xx,yy,2+(i%3),40+(i*13)%120);}});gT.wrapS=gT.wrapT=TH.RepeatWrapping;
+    const pts=[],uv=[],idx=[];let k=0;for(let s2=0;s2<=L+.01;s2+=4){const ln=-.55+ovBank(s2)*-.35;for(const l of[ln-.75,ln+.75]){const p=ovPose(s2,l);pts.push(p.x,ovY(s2,l)+.035,p.z);uv.push(l<ln?0:1,s2/60);}if(k){const a=(k-1)*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}k++;}
+    const g=new TH.BufferGeometry();g.setAttribute("position",new TH.Float32BufferAttribute(pts,3));g.setAttribute("uv",new TH.Float32BufferAttribute(uv,2));g.setIndex(idx);
+    sc.add(new TH.Mesh(g,new TH.MeshBasicMaterial({map:gT,transparent:true,depthWrite:false,side:TH.DoubleSide})));}
   strip(-2.6,-1.75,std({color:0x8d8f86,roughness:.95}),.015); // banquina de adentro
   E.trackSamples=true;
   const line=(l,w,col,dash)=>{const pts=[],idx=[];let k=0;for(let s=0;s<=L;s+=2){if(dash&&Math.floor(s/6)%2)continue;for(const d of[-w,w]){const p=ovPose(s,l+d/OVAL.LW);pts.push(p.x,ovY(s,l)+.04,p.z);}
       if(k&&(!dash||Math.floor((s-2)/6)%2===0)){const a=(k-1)*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}k++;}
     const g=new TH.BufferGeometry();g.setAttribute("position",new TH.Float32BufferAttribute(pts,3));g.setIndex(idx);sc.add(new TH.Mesh(g,new TH.MeshBasicMaterial({color:col,side:TH.DoubleSide})));};
-  line(-1.75,.12,0xf4f1e6);line(1.75,.12,0xf4f1e6);line(-.5,.06,0xdedbd0,true);line(.5,.06,0xdedbd0,true);
+  line(-1.75,.1,0xe8c43a);line(1.72,.12,0xf4f1e6);
   // largada y llegada: franja a cuadros
   const chk=dTex(256,32,(x,w,h)=>{for(let i=0;i<16;i++)for(let j=0;j<2;j++){x.fillStyle=(i+j)%2?"#111":"#f4f4f4";x.fillRect(i*16,j*16,16,16);}});
   const fl=new TH.Mesh(new TH.PlaneGeometry(1.4,OVAL.LW*3.5),new TH.MeshBasicMaterial({map:chk}));fl.rotation.x=-Math.PI/2;fl.rotation.z=Math.PI/2;fl.position.set(0,.05,-OVAL.R);sc.add(fl);
@@ -712,18 +740,24 @@ function ovBuild(){
     const g=new TH.BufferGeometry();g.setAttribute("position",new TH.Float32BufferAttribute(pts,3));g.setAttribute("uv",new TH.Float32BufferAttribute(uv,2));g.setIndex(idx);
     sc.add(new TH.Mesh(g,new TH.MeshBasicMaterial({map:fence,transparent:true,depthWrite:false,side:TH.DoubleSide})));}
   // tribunas con público sentado sobre la recta principal y la opuesta
-  const pubT=otex("publico",1,1,true);const concrete=std({color:0xb9b5aa,roughness:.9}),roofM=std({color:0x8a2c22,roughness:.6,metalness:.2});
+  // público sentado: miles de espectadores (cuerpo + cabeza) con ropa de los 70
+  const ROPA=[0xc0562b,0xd8a033,0x7a4a2a,0xeae4d6,0x8fb3d9,0xb8352c,0x4f7a3a,0x3b5a8a,0xe07b39,0xf2d16b,0x6b3d5e,0xffffff,0x2e3a4a,0xa8c48a],PIEL=[0xf1c9a5,0xe0ac80,0xc68a5a,0x9a6440,0xf6d6b8];
+  const per=[];const publico=(x0,x1,zs,dir,filas)=>{for(let r=0;r<filas;r++){const z=zs+dir*(r*1.1+.35),y=1.4+r*.75;for(let x=x0+.4;x<x1-.3;x+=.62){const h=(Math.sin(x*12.9898+r*78.233)*43758.5453)%1,q=Math.abs(h);if(q<.07)continue;
+      per.push([x+(q-.5)*.18,y,z,ROPA[Math.floor(q*1e4)%ROPA.length],PIEL[Math.floor(q*1e5)%PIEL.length],q]);}}};
+  const concrete=std({color:0xb9b5aa,roughness:.9}),roofM=std({color:0x8a2c22,roughness:.6,metalness:.2});
   const tribuna=(x0,x1,zs,dir,filas)=>{const len=x1-x0,cx=(x0+x1)/2;for(let r=0;r<filas;r++){const z=zs+dir*(r*1.1),y=1.4+r*.75;
       const step=new TH.Mesh(new TH.BoxGeometry(len,.75,1.1),concrete);step.position.set(cx,y-.37,z);sc.add(step);
       }
-    {const y0=1.55,y1=1.4+filas*.75+.2,z0=zs,z1=zs+dir*(filas*1.1-.2),rep=len/34,g=new TH.BufferGeometry();
-      g.setAttribute("position",new TH.Float32BufferAttribute([x0,y0,z0,x1,y0,z0,x0,y1,z1,x1,y1,z1],3));g.setAttribute("uv",new TH.Float32BufferAttribute([0,0,rep,0,0,1,rep,1],2));g.setIndex([0,1,2,1,3,2]);
-      sc.add(new TH.Mesh(g,new TH.MeshBasicMaterial({map:pubT,color:0xe8e8e8,side:TH.DoubleSide})));}
+    publico(x0,x1,zs,dir,filas);
     const back=new TH.Mesh(new TH.BoxGeometry(len,filas*.75+4,.5),concrete);back.position.set(cx,(filas*.75+4)/2,zs+dir*(filas*1.1+.3));sc.add(back);
     const roof=new TH.Mesh(new TH.BoxGeometry(len,.3,filas*1.1+3),roofM);roof.position.set(cx,filas*.75+5.2,zs+dir*(filas*1.1/2));sc.add(roof);
     for(let x=x0;x<=x1;x+=24){const col=new TH.Mesh(new TH.CylinderGeometry(.18,.18,filas*.75+5),concrete);col.position.set(x,(filas*.75+5)/2,zs+dir*(filas*1.1));sc.add(col);}};
   const zOut=OVAL.R+2.4*OVAL.LW+5;
   tribuna(-OVAL.S/2+10,OVAL.S/2-10,-zOut,-1,16);tribuna(-OVAL.S/2+30,OVAL.S/2-30,zOut,1,10);
+  {const n=per.length,cuerpo=new TH.InstancedMesh(new TH.BoxGeometry(.44,.62,.3),new TH.MeshLambertMaterial(),n),cabeza=new TH.InstancedMesh(new TH.IcosahedronGeometry(.13,0),new TH.MeshLambertMaterial(),n),M=new TH.Matrix4(),C=new TH.Color();
+    per.forEach((p,i)=>{const pie=p[5]>.93;M.makeTranslation(p[0],p[1]+(pie?.48:.31),p[2]);cuerpo.setMatrixAt(i,M);C.setHex(p[3]);cuerpo.setColorAt(i,C);
+      M.makeTranslation(p[0],p[1]+(pie?.93:.76),p[2]);cabeza.setMatrixAt(i,M);C.setHex(p[4]);cabeza.setColorAt(i,C);});
+    sc.add(cuerpo,cabeza);E.publico=n;}
   // boxes en el interior de la recta principal
   const pitM=std({color:0xe7e2d6,roughness:.8}),doorM=std({color:0x2b3a4a,roughness:.6});
   const pit=new TH.Mesh(new TH.BoxGeometry(OVAL.S*.7,4,8),pitM);pit.position.set(0,2,-OVAL.R+3.2*OVAL.LW+8);sc.add(pit);
@@ -740,6 +774,8 @@ function ovBuild(){
 function ovSetup3D(R){if(!ready3D())return;const E=OV3.env||(OV3.env=ovBuild());E.cars.forEach(c=>E.sc.remove(c));E.cars=[];
   for(const e of R.cars){const o=carObj(e.car,{noLights:true});if(!o){e.g=null;continue;}const TH=T3.TH,u=o.userData;
     const m=new TH.MeshBasicMaterial({map:ovNumTex(e.num),transparent:true,polygonOffset:true,polygonOffsetFactor:-2});
+    if(!OV3.shT)OV3.shT=dTex(128,64,(x,w,h)=>{x.clearRect(0,0,w,h);const g=x.createRadialGradient(w/2,h/2,4,w/2,h/2,w/2);g.addColorStop(0,"rgba(0,0,0,.75)");g.addColorStop(.6,"rgba(0,0,0,.5)");g.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=g;x.save();x.scale(1,h/w);x.beginPath();x.arc(w/2,w/2,w/2,0,7);x.fill();x.restore();});
+    {const sh=new TH.Mesh(new TH.PlaneGeometry(u.L*1.18,u.W*1.45),new TH.MeshBasicMaterial({map:OV3.shT,transparent:true,depthWrite:false,opacity:.8}));sh.rotation.x=-Math.PI/2;sh.position.y=.04;sh.renderOrder=1;o.add(sh);}
     for(const sd of[1,-1]){const d=new TH.Mesh(new TH.CircleGeometry(u.H*.24,24),m);d.position.set(-u.L*.03,u.H*.42,sd*(u.W/2+.015));if(sd<0)d.rotation.y=Math.PI;o.add(d);}
     o.traverse(q=>q.layers.enable(2));E.sc.add(o);E.cars.push(o);e.g=o;}
   R.g3=true;}
@@ -751,9 +787,12 @@ function ovDraw(R){const cv=$("#scene"),ctx=cv.getContext("2d"),w=cv.width,h=cv.
       u.spin-=(e.R.v/Math.max(.1,u.wr))*dt;u.wheels.forEach(q=>q.rotation.z=u.spin);}
     const P=R.P,u=P.g?P.g.userData:{L:4.4},s=P.R.x-u.L/2,asp=w/h;E.cam.aspect=asp;
     if(R.greenN===null){const a=ovPose(-34,-2.6),b=ovPose(-6,.2);E.cam.fov=asp<1?58:46;E.cam.position.set(a.x,7.5,a.z-9);E.cam.lookAt(b.x,1,b.z);}
-    else{const lb=asp<1?11:9,c0=ovPose(s-lb,P.lane*.7),c1=ovPose(s+16,P.lane*.5),yy=ovY(s-lb,P.lane)+(asp<1?3.6:3);
-      const tgt=new TH.Vector3(c0.x,yy,c0.z);if(!E.cp)E.cp=tgt.clone();else E.cp.lerp(tgt,Math.min(1,dt*6));
-      E.cam.fov=(asp<1?62:50)+Math.min(8,P.R.v/8);E.cam.position.copy(E.cp);E.cam.lookAt(c1.x,ovY(s+16,P.lane)+1,c1.z);}
+    else{const lb=asp<1?7.2:6.4,c0=ovPose(s-lb,P.lane*.85),c1=ovPose(s+18,P.lane*.7),yy=ovY(s-lb,P.lane)+(asp<1?2.35:2.05);
+      const tgt=new TH.Vector3(c0.x,yy,c0.z);if(!E.cp)E.cp=tgt.clone();else E.cp.lerp(tgt,Math.min(1,dt*7));
+      const vib=Math.min(1,P.R.v/60)*.025;E.cam.fov=(asp<1?64:52)+Math.min(9,P.R.v/7);E.cam.position.copy(E.cp);E.cam.position.y+=Math.sin(R.n*.9)*vib;
+      E.cam.lookAt(c1.x,ovY(s+18,P.lane)+1.05,c1.z);}
+    if(window.__ovCam){const q=window.__ovCam;E.cam.position.set(...q.p);E.cam.lookAt(...q.l);E.cam.fov=q.f||60;}
+    {const hu=$("#ovHud"),sc=$("#scene");if(hu&&sc&&hu._h!==sc.clientHeight){hu._h=sc.clientHeight;hu.style.height=(sc.offsetTop+sc.clientHeight)+"px";}}
     E.cam.updateProjectionMatrix();E.sky.position.copy(E.cam.position);
     if(ren.domElement.width!==w||ren.domElement.height!==h)ren.setSize(w,h,false);ren.setClearColor(0x9fc3e0,1);ren.render(E.sc,E.cam);ctx.drawImage(ren.domElement,0,0,w,h);}
   else{ctx.fillStyle="#2a3a4a";ctx.fillRect(0,0,w,h);ctx.fillStyle="#f3e9d2";ctx.font=`600 ${Math.round(h*.04)}px sans-serif`;ctx.textAlign="center";ctx.fillText(R.loading?"Cargando la grilla…":"",w/2,h/2);}
@@ -773,17 +812,22 @@ function ovDraw(R){const cv=$("#scene"),ctx=cv.getContext("2d"),w=cv.width,h=cv.
 
 /* ---------- relato (texto ahora; voz de Brok Kettman cuando estén los audios) ---------- */
 /* ---------- relato de Brok Kettman: frases grabadas que se encadenan con nombres o números ---------- */
-const NAR_F={intro:"¡Muy buenas tardes, amigos de los fierros! Les habla Brok Kettman, y esto es... ¡El Genio de los Fierros!",largada1:"¡Verde, verde, verde! ¡Largaron!",largada2:"¡Luz verde! ¡Allá van, aceleradores a fondo!",largada3:"¡Se larga la carrera! ¡Qué arranque, señores!",
-  pasa_a:"¡pasa a",por_adentro:"¡se le tira por adentro a",que_maniobra:"¡Qué maniobra de",sube_al:"que sube al",atencion:"¡Atención, atención!",cierra:"¡cierra la puerta! ¡No hay lugar!",que_defensa:"¡Qué defensa de",
-  vuelta2:"¡Vuelta dos! Manda",vuelta3:"¡Vuelta tres! Adelante va",vuelta4:"¡Vuelta cuatro! Sigue arriba",ultima:"¡Última vuelta! ¡Se define todo! Adelante va",bandera:"¡Bandera a cuadros! ¡Gana",que_carrera:"¡Qué carrera, señoras y señores!",
-  segundo:"En el segundo lugar,",tercero:"y completa el podio,",motor:"¡Humo, humo! ¡Se rompió el motor de",despedida:"¡Esto fue El Genio de los Fierros!"};
+const NAR_F={"intro1":"¡Muy buenas tardes, amigos de los fierros! Les habla Brok Kettman, y esto es... ¡El Genio de los Fierros! Dieciséis máquinas en la grilla, cinco vueltas al óvalo. ¡Que empiece el espectáculo!","intro2":"¡Bienvenidos al óvalo! Brok Kettman con ustedes. El sol pega fuerte, las tribunas están repletas y los motores ya rugen. ¡Prepárense, que esto arranca!","intro3":"¡Hola, hola, fanáticos del automovilismo! Acá Brok Kettman, en vivo desde el óvalo. ¡Una nueva fecha de El Genio de los Fierros está por comenzar!","largada1":"¡Verde, verde, verde! ¡Largaron!","largada2":"¡Luz verde! ¡Allá van, aceleradores a fondo!","largada3":"¡Se larga la carrera! ¡Qué arranque, señores!","largada4":"¡Bandera verde! ¡Se lanzan todos juntos hacia la primera curva!","largada5":"¡Ahí se van! ¡Dieciséis fierros a fondo!","pasa_a":"¡pasa a","por_adentro":"¡se le tira por adentro a","le_gana":"¡le gana la posición a","por_afuera":"¡se abre por afuera y supera a","deja_atras":"¡deja atrás a","por_delante":"¡se pone por delante de","que_maniobra":"¡Qué maniobra de","sube_al":"que sube al","ahora_va":"y ahora marcha en el","atencion":"¡Atención, atención!","cambio_pos":"¡Cambio de posiciones!","rebufo":"¡Impresionante cómo aprovecha el rebufo","nuevo_puntero":"¡Hay nuevo puntero en la carrera!","toma_punta":"¡toma la punta!","lider_cambio":"¡Cambio de líder! Ahora manda","cierra":"¡cierra la puerta! ¡No hay lugar!","que_defensa":"¡Qué defensa de","ni_un_cm":"¡no le deja ni un centímetro a","leon":"¡Se defiende como un león","vuelta2a":"¡Vuelta dos! Manda","vuelta2b":"¡Se completa la primera vuelta! Arriba está","vuelta3a":"¡Vuelta tres! Adelante va","vuelta3b":"¡Mitad de carrera! Lidera","vuelta4a":"¡Vuelta cuatro! Sigue arriba","vuelta4b":"¡Faltan dos vueltas! En la punta está","ultima1":"¡Última vuelta! ¡Se define todo! Adelante va","ultima2":"¡Campana! ¡Última vuelta en el óvalo! Defiende la punta","bandera1":"¡Bandera a cuadros! ¡Gana","bandera2":"¡Cruza la meta! ¡Victoria para","bandera3":"¡Y el ganador es...","que_carrera1":"¡Qué carrera, señoras y señores!","que_carrera2":"¡Una carrera para el recuerdo!","que_carrera3":"¡Tremendo espectáculo en el óvalo!","segundo":"En el segundo lugar,","tercero":"y completa el podio,","motor1":"¡Humo, humo! ¡Se rompió el motor de","motor2":"¡Abandono! ¡Se le pasó de vueltas el motor a","nuestro":"nuestro piloto","sigue_punta":"sigue firme en la punta","marcha":"marcha en el","mientras":"Mientras tanto,","r1":"¡Qué ritmo impresionante en la recta!","r2":"¡El público se pone de pie en las tribunas!","r3":"¡Cuánta velocidad en el peralte!","r4":"¡Los motores aúllan en la recta opuesta!","r5":"¡Pelea tremenda en el medio del pelotón!","r6":"Hay que cuidar el motor: cinco vueltas es mucho tiempo.","r7":"¡Pegaditos, pegaditos! ¡Van en fila india!","r8":"¡Esto es automovilismo de verdad, amigos!"};
 const NAR_N=["Agus", "Beto Carburador", "Beto Jr.", "Bocha", "Cachete", "Cachito", "Cacho", "Charly", "Chiche", "Chino", "Cholo", "Coca", "Coco", "Coqui", "Dani 'Pistón'", "El Cabezón", "El Flaco Medina", "El Gringo", "El Mono", "El Negro Ríos", "El Oso", "El Pelado", "El Petiso", "El Rey de la Costanera", "El Rulo", "El Ruso", "El Topo", "El Turco", "El Vasco", "El Zurdo", "Euge", "Facu", "Fede", "Fito", "Flor", "Gise", "Gordo Valdez", "Juanca", "Juli", "Kike", "La Colorada", "La Negra", "La Pochi", "La Rubia Gómez", "La Tana", "Lali", "Lalo", "Lito", "Lucho", "Luli", "Marcelo", "Marta", "Mati", "Mica", "Mimí", "Mingo", "Moncho", "Nacho", "Nati", "Nelo", "Nene", "Pancho", "Pato", "Pelusa", "Pili", "Pipo", "Pocho", "Pocholo", "Polaco", "Quique", "Rafa", "Rodo", "Ruli", "Santi", "Sergio 'Tuerca'", "Sole", "Tano Russo", "Tato", "Tincho", "Tito", "Toni", "Toto", "Tucu", "Vicky", "Wally", "Yami", "El Crack de las Dunas", "El Genio de los Fierros"];
-const NARRA_SEQ={intro:[["f:intro"]],largada:[["f:largada1"],["f:largada2"],["f:largada3"]],
-  pasa:[["a","f:pasa_a","b"],["a","f:por_adentro","b"],["f:que_maniobra","a","f:sube_al","pos"],["f:atencion","a","f:pasa_a","b"]],
-  defensa:[["a","f:cierra"],["f:que_defensa","a"]],vuelta:[["f:vuelta{lap}","lider"]],ultima:[["f:ultima","lider"]],bandera:[["f:bandera","lider","f:que_carrera"]],
-  podio:[["f:segundo","b","f:tercero","c"]],motor:[["f:motor","a"]]};
+const NARRA_SEQ={intro:[["f:intro1"],["f:intro2"],["f:intro3"]],largada:[["f:largada1"],["f:largada2"],["f:largada3"],["f:largada4"],["f:largada5"]],
+  pasa:[["a","f:pasa_a","b"],["a","f:por_adentro","b"],["a","f:le_gana","b"],["a","f:por_afuera","b"],["a","f:deja_atras","b"],["a","f:por_delante","b"],
+    ["f:que_maniobra","a","f:sube_al","pos"],["f:atencion","a","f:pasa_a","b"],["f:cambio_pos","a","f:por_delante","b"],["f:rebufo","a","f:pasa_a","b"],["a","f:deja_atras","b","f:ahora_va","pos"]],
+  lider:[["f:nuevo_puntero","a","f:toma_punta"],["f:lider_cambio","a"],["f:atencion","a","f:toma_punta"]],
+  defensa:[["a","f:cierra"],["f:que_defensa","a"],["a","f:ni_un_cm","b"],["f:leon","a"]],
+  vuelta:[["f:vuelta{lap}a","lider"],["f:vuelta{lap}b","lider"]],ultima:[["f:ultima1","lider"],["f:ultima2","lider"]],
+  bandera:[["f:bandera1","lider","f:que_carrera1"],["f:bandera2","lider","f:que_carrera2"],["f:bandera3","lider","f:que_carrera3"],["f:bandera1","lider","f:que_carrera3"]],
+  podio:[["f:segundo","b","f:tercero","c"]],motor:[["f:motor1","a"],["f:motor2","a"]],
+  relleno:[["f:r1"],["f:r2"],["f:r3"],["f:r4"],["f:r5"],["f:r6"],["f:r7"],["f:r8"],["lider","f:sigue_punta"],["f:mientras","a","f:marcha","pos"]]};
+const NAR_BOLSA={};
+function narElegir(k){const n=NARRA_SEQ[k].length;let b=NAR_BOLSA[k];if(!b||!b.length){b=NAR_BOLSA[k]=[...Array(n).keys()].sort(()=>Math.random()-.5);if(NAR_BOLSA["_"+k]!==undefined&&b[0]===NAR_BOLSA["_"+k]&&n>1)b.push(b.shift());}
+  const i=b.shift();NAR_BOLSA["_"+k]=i;return NARRA_SEQ[k][i];}
 function narra(k,p){p=p||{};const R=OVR;const live=!!(R&&R.opts&&R.opts.live);
-  const opts=NARRA_SEQ[k];if(!opts)return;const seq=opts[Math.floor(Math.random()*opts.length)];const txt=[],clips=[];
+  if(!NARRA_SEQ[k])return;if(k==="defensa"&&R){const t=performance.now();if(t-(R.defAt||0)<7000&&!(p.a&&p.a.player)&&!(p.b&&p.b.player))return;R.defAt=t;}const seq=narElegir(k);const txt=[],clips=[];if(R)R.narAt=performance.now();
   for(let sg of seq){if(sg.startsWith("f:")){const f=sg.slice(2).replace("{lap}",p.lap||2);txt.push(NAR_F[f]||"");clips.push("f_"+f);continue;}
     if(sg==="pos"){txt.push((p.pos||1)+"º puesto!");clips.push("p_"+String(p.pos||1).padStart(2,"0"));continue;}
     const e=p[sg];if(!e)continue;
@@ -792,7 +836,7 @@ function narra(k,p){p=p||{};const R=OVR;const live=!!(R&&R.opts&&R.opts.live);
     else{txt.push(e.name);const i=NAR_N.indexOf(e.name);clips.push(i>=0?"n_"+String(i).padStart(3,"0"):null);}}
   let t=txt.join(" ").replace(/ ([,!])/g,"$1");if((t.match(/¡/g)||[]).length>(t.match(/!/g)||[]).length)t+="!";
   if(typeof relatorVoz==="function")relatorVoz(k,clips);
-  if(k!=="pasa"||Math.random()<.6)say("🎙️ "+t,"var(--celeste)");}
+  say("🎙️ "+t,"var(--celeste)");}
 /* voz: un sprite de audio con todos los clips; se encolan y se tocan pegados */
 const NARV={buf:null,map:null,q:[],busy:false,src:null,loading:false,gain:null};
 function narLoad(){if(NARV.buf||NARV.loading||!AC)return;NARV.loading=true;
@@ -803,7 +847,7 @@ function narPlay(){if(NARV.busy||!NARV.q.length||!NARV.buf||!AC)return;const it=
   NARV.src=srcs;srcs[srcs.length-1].onended=()=>{NARV.busy=false;NARV.src=null;narPlay();};}
 function narStop(){NARV.q=[];if(NARV.src)NARV.src.forEach(s=>{try{s.onended=null;s.stop();}catch(e){}});NARV.src=null;NARV.busy=false;}
 function relatorVoz(k,clips){if(muted||noVoz||!AC)return;narLoad();
-  const prio=k==="largada"||k==="ultima"||k==="bandera"||k==="intro";
+  const prio=k==="largada"||k==="ultima"||k==="bandera"||k==="intro"||k==="lider";if(k==="relleno"&&(NARV.busy||NARV.q.length))return;
   if(k==="largada"||k==="bandera")narStop();if(prio){NARV.q=NARV.q.filter(x=>x.prio);}else if(NARV.q.length>=1||(NARV.busy&&k==="pasa"&&Math.random()<.5))return;
   NARV.q.push({k,clips,prio});narPlay();}
 const narLibre=()=>!NARV.busy&&!NARV.q.length;
@@ -884,6 +928,7 @@ function vOval(m){
   m.append(box);box.querySelector("#ovGo").onclick=()=>{if(!canRace())return;const cc=curCar();if(!cc){toast("Elegí un auto");return;}ovStart();};
   const vivo=el(`<div class="copa"><div class="row" style="justify-content:space-between;align-items:center"><div><div class="t">🌐 Óvalo en vivo</div><div class="s">Corré contra otros pilotos al mismo tiempo, hasta 16. Lo que falta se completa con máquinas.</div></div><button class="btn" ${NET.room&&NET.room.join?"":"disabled"}>${NET.room&&NET.room.join?"Entrar a la sala":"Sin conexión"}</button></div></div>`);
   vivo.querySelector("button").onclick=ovLiveEntrar;m.append(vivo);
+  if(PRUEBA){const rz=el(`<button class="btn sec sm" style="margin:4px 0 12px">↺ Reiniciar el óvalo (prueba)</button>`);rz.onclick=()=>{if(OVR)return;S.ord=null;S.torneo3=null;S.rank=OV_N;S.genioOk=false;ovOrdInit();save();toast("Óvalo reiniciado: arrancás 80º en Promoción");render();};m.append(rz);}
   m.append(el(`<div class="sec-t">Ranking del óvalo <span>${OV_N} pilotos · vas ${S.ord.indexOf("yo")+1}º · ${CATS[ovBlock(S.ord.indexOf("yo"))].n}</span></div>`));
   const list=el(`<div class="list"></div>`);S.ord.forEach((id,i)=>{if(i%16===0)list.append(el(`<div class="sec-t" style="margin-top:8px">${CATS[i/16].n}</div>`));
     const b=BOT[id];list.append(el(`<div class="rival ${id==="yo"?"yo":""} ${b&&b.rey?"rey":""}"><div class="pos">${i+1}</div><div style="min-width:0"><div class="n">${esc(ovName(id))}${b&&b.rey?" ♛":""}</div><div class="d">${esc(CAR[id==="yo"?c.id:b.car].name)}</div></div></div>`));});
@@ -2262,7 +2307,7 @@ function drawTacho(cv,rpm,red,band,gear,spin,hard){hard=hard||red*1.15;
 /* ================= SONIDO ================= */
 let AC=null,eng=null,muted=false,noMus=false,noVoz=false,noFx=false;try{muted=localStorage.getItem(KEY+".mute")==="1";noMus=localStorage.getItem(KEY+".nomus")==="1";noVoz=localStorage.getItem(KEY+".novoz")==="1";noFx=localStorage.getItem(KEY+".nofx")==="1";}catch(e){}
 const BGM=new Audio();BGM.src="escenario/tema_rey.mp4";BGM.loop=true;BGM.preload="auto";BGM.volume=0;let bgmLow=false;
-function bgm(){try{{const want="escenario/"+(S.lvl===2?"tema_dunas":S.lvl===3?"tema_genio":"tema_rey")+".mp4";if(!BGM.src.endsWith(want)){const pl=!BGM.paused;BGM.src=want;BGM.currentTime=0;if(pl&&!(muted||noMus))BGM.play().catch(()=>{});}}if(muted||noMus){BGM.pause();return;}BGM.volume=bgmLow?.04:RACE?.1:.32;if(BGM.paused){const p=BGM.play();if(p&&p.catch)p.catch(()=>{});}}catch(e){}}
+function bgm(){try{{const want="escenario/"+(S.lvl===2?"tema_dunas":S.lvl===3?"tema_genio":"tema_rey")+".mp4";if(!BGM.src.endsWith(want)){const pl=!BGM.paused;BGM.src=want;BGM.currentTime=0;if(pl&&!(muted||noMus))BGM.play().catch(()=>{});}}if(muted||noMus||OVR){BGM.pause();return;}BGM.volume=bgmLow?.04:RACE?.1:.32;if(BGM.paused){const p=BGM.play();if(p&&p.catch)p.catch(()=>{});}}catch(e){}}
 ["pointerdown","keydown"].forEach(ev=>window.addEventListener(ev,()=>{if(BGM.paused)bgm();},{passive:true}));
 function audioInit(){bgm();if(AC||muted)return;try{AC=new (window.AudioContext||window.webkitAudioContext)();loadSounds();}catch(e){}}
 // Motores: sonidos reales en bucle según la motorización, con el tono siguiendo las vueltas
@@ -3104,8 +3149,11 @@ const VISTA_N={afuera:"afuera",costado:"de costado",adentro:"adentro"};
 function vistaBtn(){const b=$("#bVista");const v=VISTAS().includes(S.vista)?S.vista:"afuera";b.textContent="Vista: "+(RACE&&RACE.dunas&&v==="afuera"?"de atrás":VISTA_N[v]);b.hidden=!(RACE&&RACE.g3);}
 $("#bVista").addEventListener("pointerdown",e=>{e.preventDefault();{const L=VISTAS();const i=L.indexOf(S.vista);S.vista=L[(i+1)%L.length];}save();if(S.vista==="adentro"&&RACE)loadCabina(RACE.me.id);vistaBtn();});$("#bNitro").addEventListener("pointerdown",nitro);
 $("#race").addEventListener("contextmenu",e=>e.preventDefault());
-window.addEventListener("keydown",e=>{if(!RACE||e.repeat)return;if(e.code==="ArrowUp"||e.code==="KeyW")gasOn(e);if(e.code==="Space"||e.code==="ArrowRight")shift(e);if(e.code==="KeyN")nitro(e);});
-window.addEventListener("keyup",e=>{if(!RACE)return;if(e.code==="ArrowUp"||e.code==="KeyW")gasOff(e);});
+window.addEventListener("keydown",e=>{if(OVR&&!RACE){if(e.repeat)return;const c=e.code;let u=true;
+    if(c==="ArrowUp"||c==="KeyW")gasOn(e);else if(c==="ArrowDown"||c==="KeyS")ovBajar();else if(c==="ArrowLeft"||c==="KeyA")ovCarril(-1);else if(c==="ArrowRight"||c==="KeyD")ovCarril(1);
+    else if(c==="Space"||c==="ShiftLeft"||c==="ShiftRight"||c==="KeyE")shift(e);else if(c==="KeyN")nitro(e);else if(c==="KeyV")ovVolanteSig();else u=false;if(u)e.preventDefault();return;}
+  if(!RACE||e.repeat)return;if(e.code==="ArrowUp"||e.code==="KeyW")gasOn(e);if(e.code==="Space"||e.code==="ArrowRight")shift(e);if(e.code==="KeyN")nitro(e);});
+window.addEventListener("keyup",e=>{if(OVR&&!RACE){if(e.code==="ArrowUp"||e.code==="KeyW")gasOff(e);return;}if(!RACE)return;if(e.code==="ArrowUp"||e.code==="KeyW")gasOff(e);});
 $("#bQuit").onclick=()=>{if(OVR&&!RACE){const R=OVR;R.P.R.x=0;R.P.done=true;R.P.dnf=true;R.dnf=true;R.P.R.fin=9999;R.done=true;R.finishing=performance.now()-3000;toast("Abandonaste: quedás último en esta fecha");return;}if(!RACE)return;starterStop();flagVidStop();const cfg=RACE.cfg;
   if(cfg.kind==="live"&&LIVE&&LIVE.room)LIVE.room.presence({ab:1}).catch(()=>{});
   endRace();if(cfg.kind==="live")endLive();
@@ -3221,6 +3269,6 @@ function diag(extra){try{if(!NET.db||!NET.uid)return;let gl="?";try{const c=docu
   NET.db.doc("data/users/"+NET.uid+"/diag").set({v:BUILD,st:T3.st,err:String(T3.err||""),three:!!window.THREE,gltf:!!(window.THREE&&window.THREE.GLTFLoader),models:Object.keys(T3.models),gl,ua:navigator.userAgent.slice(0,160),at:Date.now(),...(extra||{})}).catch(()=>{});}catch(e){}}
 setTimeout(()=>diag(),12000);
 init3D().then(ok=>{if(ok&&curCar())loadModel(curCar().id).then(()=>{if(!RACE)render();},()=>{});});
-window.__test={ovr:()=>OVR,narv:()=>NARV,narra,ovStart,ovPaso,ovPosiciones,ovFin,ovTorneo,ovTabla,ovPasar,ovPose,OVAL,setLvl3:()=>setLvl(3),sts:()=>STS,banda:()=>BANDA,bandaArrancar,bandaLlave,bandaNombre,bandaMiCruce,enCopa,dunaRelato,startRace,setLvl,setTrack,TRACK,simET,CLIMAS,loadModel,NET,cer:(l)=>playCer(l,()=>{}),go:v=>{view=v;render();},inv:()=>INV,BOTS,botET,myET,ranking,T3,race:()=>RACE,live:()=>LIVE,stats,makeRacer,stepRacer,doShift,optLaunch,CARS,RIVALS,rivalCar,newCar,simGhost,cleanGhost,S:()=>S};
+window.__test={ovr:()=>OVR,narv:()=>NARV,narra,ov3:()=>OV3,ovStart,ovPaso,ovPosiciones,ovFin,ovTorneo,ovTabla,ovPasar,ovPose,OVAL,setLvl3:()=>setLvl(3),sts:()=>STS,banda:()=>BANDA,bandaArrancar,bandaLlave,bandaNombre,bandaMiCruce,enCopa,dunaRelato,startRace,setLvl,setTrack,TRACK,simET,CLIMAS,loadModel,NET,cer:(l)=>playCer(l,()=>{}),go:v=>{view=v;render();},inv:()=>INV,BOTS,botET,myET,ranking,T3,race:()=>RACE,live:()=>LIVE,stats,makeRacer,stepRacer,doShift,optLaunch,CARS,RIVALS,rivalCar,newCar,simGhost,cleanGhost,S:()=>S};
 })();
 </script>
