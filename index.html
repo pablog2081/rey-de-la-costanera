@@ -405,7 +405,7 @@ const PACKS = [
  {f:1200,p:"$ 13.999",t:"Lata de fichas",b:"+20% de regalo",dest:true},
  {f:3000,p:"$ 29.999",t:"Cajón del kiosquero",b:"+50% de regalo"},
 ];
-const BUILD="v38";
+const BUILD="v39";
 let DIST = 402; // cuarto de milla (en las Dunas: 1000 m)
 const GHOST_V = 402;
 /* ===== pistas: 1 = Costanera, 2 = El Crack de las Dunas ===== */
@@ -534,7 +534,7 @@ function ovCerrar(T){const tab=ovTabla(T),b=T.b,o=S.ord;
 /* ---------- la carrera ---------- */
 let OVR=null;
 function ovEntrant(id,num,player){
-  if(player){const c=curCar(),st=stats(c);return {id,num,name:ovName(id),player:true,car:c,R:makeRacer(st,c.wear||0),lane:0,laneT:0,a:0,vp:0,cool:0};}
+  if(player){const c=curCar(),st=stats(c);return {id,num,name:ovName(id),player:true,car:c,R:Object.assign(makeRacer(st,c.wear||0),{wearK:.15}),lane:0,laneT:0,a:0,vp:0,cool:0};}
   const b=BOT[id],st=stats({id:b.car,up:b.up,pf:1.02*(1+(Math.random()-.5)*.035)});const sk=Math.min(.99,b.sk*(1+(Math.random()-.5)*.1));
   return {id,num,name:b.n,player:false,car:{id:b.car,color:CAR[b.car].col,up:b.up},R:makeRacer(st),lane:0,laneT:0,a:0,vp:0,cool:0,
     ai:{sk,shiftX:.93-(1-sk)*.16*Math.random(),react:.15+(1-sk)*.5*Math.random(),agr:.3+sk*.6}};}
@@ -572,14 +572,15 @@ function ovPasar(e,dir){if(e.cool>0)return "";const tgt=Math.max(-1,Math.min(1,M
   e.laneT=tgt;return "ok";}
 function ovPaso(R,dtStep){
   const t=R.n*H;
-  for(const e of R.cars){const P=e.R;if(e.remote){ovRemoto(R,e);continue;}if(e.done){coast(P);P.x+=0;continue;}
+  for(const e of R.cars){const P=e.R;if(e.remote){ovRemoto(R,e);continue;}if(e.done){coast(P);if(e.dnf)e.lane+=Math.sign(e.laneT-e.lane)*Math.min(Math.abs(e.laneT-e.lane),1.1*H);continue;}
     if(R.greenN===null){ // grilla: motores en marcha
       const thr=e.player?R.gas:true,hard=hardOf(P.st);if(thr)P.rpm=Math.min(e.player?hard:optLaunch(P.st),P.rpm+3600*H);else P.rpm=Math.max(900,P.rpm-2600*H);continue;}
     if(!P.launched){const k=(R.n-R.greenN)*H;if(e.player||k>=e.ai.react){P.launched=true;P.clutch=true;if(!e.player)P.rpm=optLaunch(P.st);}else continue;}
     // piloto automático: levanta antes de la curva si viene pasado
     const vC=ovCurveV(P.st,e.lane),look=Math.max(10,P.v*P.v/(2*7)),entrando=ovPose(P.x+look,e.lane).turn,enCurva=ovPose(P.x,e.lane).turn;
     let thr=e.player?R.gas:true;const pasado=(entrando||enCurva)&&P.v>vC;if(pasado)thr=false;
-    if(!e.player){const top=P.gear>=RATIOS[P.st.gears].length-1;if(top&&P.rpm>=P.st.red*.97)thr=false;}
+    {const top=P.gear>=RATIOS[P.st.gears].length-1;if(top&&P.rpm>=P.st.red*.97)thr=false;}
+    if(e.player&&P.rpm>P.st.red&&R.n-(R.cortaN||0)>480){R.cortaN=R.n;say("¡Pasá de cambio! Estás en el corte y se gasta el motor","#ffb4bd");vib(30);}
     const front=ovDelante(e,45);P.draftK=front&&front.gap<40?.72+.28*front.gap/40:1;
     const v0=P.v;stepRacer(P,H,thr,t);
     if(pasado&&P.v>vC)P.v=Math.max(vC,P.v-7*H);
@@ -589,7 +590,7 @@ function ovPaso(R,dtStep){
     e.lane+=Math.sign(e.laneT-e.lane)*Math.min(Math.abs(e.laneT-e.lane),1.7*H);
     if(e.cool>0)e.cool-=H;if(e.cerro>0)e.cerro-=H;if(e.manT>0)e.manT-=H;
     if(P.fin===null&&P.x>=OVAL.LAPS*OVAL.LAP){P.fin=t-(R.greenN*H);e.done=true;if(e.player)R.done=true;}
-    if(P.blown&&!e.done){e.done=true;e.dnf=true;P.fin=null;e.laneT=e.lane=2.6;if(R.greenN!==null&&!R.finished)narra("motor",{a:e});if(e.player){R.done=true;R.dnf=true;}}
+    if(P.blown&&!e.done){e.done=true;e.dnf=true;P.fin=null;e.laneT=-2.3;P.blown=true;if(R.greenN!==null&&!R.finished)narra("motor",{a:e});if(e.player){say("¡Fundiste el motor! Te quedaste en la banquina","#ff8f9c");vib([80,60,80]);R.done=true;R.dnf=true;}}
   }
   // tráfico: nadie se superpone; el de atrás queda a la velocidad del de adelante (rebufo)
   const ord=R.cars.slice().sort((a,b)=>b.R.x-a.R.x);
@@ -678,7 +679,7 @@ function ovFin(){const R=OVR;if(!R)return;narStop();const pos=ovPosiciones(R),yo
     <p>${esc(line)}</p><div class="jefe"><b>Tu jefe de equipo:</b> ${esc(consejo)}</div>
     <table class="ovtab"><tr><th>Pos</th><th>Piloto</th><th>Tiempo</th><th>Pts</th></tr>${tabla}</table><div class="opts" id="ropts"></div>`,"resplaca");
     const o=$("#ropts");const b=el(`<button class="btn oro">${!live&&R.T.fecha<5?`Fecha ${R.T.fecha+1} de 5`:"Volver"}</button>`);b.onclick=()=>{closeModal();render();};o.append(b);};
-  const P=R.P.R,info={oval:true,win:yo<3,puesto:R.dnf?"—":(yo+1)+"º",nombre:R.P.name||"Vos",tiempo:R.dnf||(P.fin!=null&&P.fin>=9000)?"ABANDONO":P.fin!=null?P.fin.toFixed(2)+" s":"—",dif:(F1_PTS[yo]||0)+" PUNTOS"};
+  const P=R.P.R,info={oval:true,win:yo<3,puesto:R.dnf?"—":(yo+1)+"º",nombre:R.P.name||"Vos",tiempo:P.blown?"MOTOR FUNDIDO":R.dnf||(P.fin!=null&&P.fin>=9000)?"ABANDONO":P.fin!=null?P.fin.toFixed(2)+" s":"—",dif:(F1_PTS[yo]||0)+" PUNTOS"};
   playResult(info,()=>jefeVideo(yo,()=>playCer(cer,show)));render();}
 function jefeConsejo(yo,R){const P=R.P.R,lowShift=R.P.cambiosMalos|0;
   const L=[yo===0?"Excelente carrera. Mantenga esa concentración en la próxima fecha.":yo<3?"Buen trabajo, estuvimos cerca. Busque el rebufo en la recta para preparar el sobrepaso.":yo<8?"Carrera correcta. Péguese al de adelante en la recta y salga con más velocidad antes de intentar pasarlo.":"Hoy costó. Revisemos el auto en el taller: con mejor motor y caja va a pasar más rápido en las rectas.",
@@ -909,9 +910,9 @@ function ovRemoto(R,e){const P=e.R,bot=e.bk!==undefined,h=OVL&&OVL.st[e.peer];le
   const pred=x+v*Math.min(1.5,(performance.now()-s.rt)/1000);
   if(Math.abs(pred-P.x)>40)P.x=pred;else P.x+=(pred-P.x)*Math.min(1,H*6);P.v=v;e.laneT=Math.max(-1.6,Math.min(2.6,l));
   e.lane+=Math.sign(e.laneT-e.lane)*Math.min(Math.abs(e.laneT-e.lane),1.7*H);P.launched=P.x>0||v>0;P.rpm=Math.min(P.st.red,1500+v*90);
-  if(s.dnf&&!e.done){e.done=true;e.dnf=true;P.fin=null;e.laneT=e.lane=2.6;}
+  if(s.dnf&&!e.done){e.done=true;e.dnf=true;P.fin=null;e.laneT=-2.3;}
   if(s.fin!=null&&Number.isFinite(+s.fin)&&P.fin===null&&!e.dnf){P.fin=+s.fin;e.done=true;}
-  if(s.gone&&!bot&&!e.done){e.done=true;e.dnf=true;e.laneT=e.lane=2.6;}}
+  if(s.gone&&!bot&&!e.done){e.done=true;e.dnf=true;e.laneT=-2.3;}}
 function ovLiveTick(R,now){if(!OVL||!OVL.room||now-(OVL.sent||0)<200)return;OVL.sent=now;const P=R.P,q={apodo:S.apodo||"Piloto",car:cleanCar(P.car),num:P.num,
     x:Math.round(P.R.x*10)/10,v:Math.round(P.R.v*10)/10,l:Math.round(P.laneT*10)/10,fin:P.R.fin!=null&&P.R.fin<9000?Math.round(P.R.fin*1000)/1000:null,dnf:P.dnf?1:0};
   if(OVL.host===OVL.me)q.b=R.cars.filter(e=>e.bk!==undefined).sort((a,b)=>a.bk-b.bk).map(e=>[Math.round(e.R.x*10)/10,Math.round(e.R.v*10)/10,Math.round(e.laneT*10)/10,e.R.fin!=null?Math.round(e.R.fin*1000)/1000:null,e.dnf?1:0]);
@@ -925,6 +926,7 @@ function vOval(m){
   const T=ovTorneo(),tab=ovTabla(T);
   const box=el(`<div class="copa"><div class="row" style="justify-content:space-between;align-items:center"><div><div class="t">Torneo de ${CATS[T.b].n}</div><div class="s">Fecha ${Math.min(5,T.fecha+1)} de 5 · número ${S.ord.indexOf("yo")+1} en tu puerta</div></div><button class="btn oro" id="ovGo">${T.fecha?"Correr fecha "+(T.fecha+1):"Largar el torneo"}</button></div>
     <table class="ovtab"><tr><th>Pos</th><th>Piloto</th><th>Auto</th><th>Pts</th></tr>${tab.map((r,i)=>`<tr${r.id==="yo"?' class="yo"':''}><td>${i+1}${i<2&&T.b>0?" ▲":i>13&&T.b<4?" ▼":""}</td><td>#${S.ord.indexOf(r.id)+1} ${esc(ovName(r.id))}</td><td>${esc(CAR[r.id==="yo"?c.id:BOT[r.id].car].name)}</td><td>${r.p}</td></tr>`).join("")}</table></div>`);
+  if((c.wear||0)>=45)box.append(el(`<p class="nota" style="border-color:var(--oro)">Tu motor tiene ${Math.round(c.wear)}% de desgaste: hacé un service en el taller antes de correr o se puede fundir en carrera.</p>`));
   m.append(box);box.querySelector("#ovGo").onclick=()=>{if(!canRace())return;const cc=curCar();if(!cc){toast("Elegí un auto");return;}ovStart();};
   const vivo=el(`<div class="copa"><div class="row" style="justify-content:space-between;align-items:center"><div><div class="t">🌐 Óvalo en vivo</div><div class="s">Corré contra otros pilotos al mismo tiempo, hasta 16. Lo que falta se completa con máquinas.</div></div><button class="btn" ${NET.room&&NET.room.join?"":"disabled"}>${NET.room&&NET.room.join?"Entrar a la sala":"Sin conexión"}</button></div></div>`);
   vivo.querySelector("button").onclick=ovLiveEntrar;m.append(vivo);
@@ -1071,7 +1073,7 @@ function optLaunch(st){
 function makeRacer(st,wear){return {st,x:0,v:0,gear:0,rpm:900,shiftT:0,launched:false,clutch:false,spin:false,nitroT:0,nitroN:st.nitro,limT:0,fin:null,top:0,dmg:wear||0,blown:false};}
 const hardOf=st=>st.red*1.15; // corte de encendido real, por encima del rojo
 // Daño del motor: cuanto más arriba del rojo y más tiempo, más rápido se funde.
-function engineWear(R,dt,neutral){const st=R.st,hard=hardOf(st);if(R.rpm>st.red&&!R.blown){const f=Math.min(1,(R.rpm-st.red)/(hard-st.red));R.dmg+=dt*(8+38*f*f)*(neutral?.5:1);if(R.dmg>=100){R.dmg=100;R.blown=true;}}}
+function engineWear(R,dt,neutral){const st=R.st,hard=hardOf(st);if(R.rpm>st.red&&!R.blown){const f=Math.min(1,(R.rpm-st.red)/(hard-st.red));R.dmg+=dt*(8+38*f*f)*(neutral?.5:1)*(R.wearK||1);if(R.dmg>=100){R.dmg=100;R.blown=true;}}}
 const wearFactor=d=>1-.2*Math.max(0,Math.min(1,(d-40)/60));
 const SUELTA=1.2; // al soltar el acelerador: rpm y velocidad caen 20% más rápido
 function stepRacer(R,dt,thr,t,rng){
@@ -3154,7 +3156,7 @@ window.addEventListener("keydown",e=>{if(OVR&&!RACE){if(e.repeat)return;const c=
     else if(c==="Space"||c==="ShiftLeft"||c==="ShiftRight"||c==="KeyE")shift(e);else if(c==="KeyN")nitro(e);else if(c==="KeyV")ovVolanteSig();else u=false;if(u)e.preventDefault();return;}
   if(!RACE||e.repeat)return;if(e.code==="ArrowUp"||e.code==="KeyW")gasOn(e);if(e.code==="Space"||e.code==="ArrowRight")shift(e);if(e.code==="KeyN")nitro(e);});
 window.addEventListener("keyup",e=>{if(OVR&&!RACE){if(e.code==="ArrowUp"||e.code==="KeyW")gasOff(e);return;}if(!RACE)return;if(e.code==="ArrowUp"||e.code==="KeyW")gasOff(e);});
-$("#bQuit").onclick=()=>{if(OVR&&!RACE){const R=OVR;R.P.R.x=0;R.P.done=true;R.P.dnf=true;R.dnf=true;R.P.R.fin=9999;R.done=true;R.finishing=performance.now()-3000;toast("Abandonaste: quedás último en esta fecha");return;}if(!RACE)return;starterStop();flagVidStop();const cfg=RACE.cfg;
+$("#bQuit").onclick=()=>{if(OVR&&!RACE){const R=OVR;R.P.done=true;R.P.dnf=true;R.dnf=true;R.P.R.fin=null;R.P.laneT=-2.3;R.done=true;R.finishing=performance.now()-3000;toast("Abandonaste: quedás último en esta fecha");return;}if(!RACE)return;starterStop();flagVidStop();const cfg=RACE.cfg;
   if(cfg.kind==="live"&&LIVE&&LIVE.room)LIVE.room.presence({ab:1}).catch(()=>{});
   endRace();if(cfg.kind==="live")endLive();
   if(cfg.mode!=="practica"&&(cfg.bet||cfg.mode==="papeles"||cfg.modo==="papeles")){toast("Abandonaste: la apuesta se pierde igual");settle(false,cfg);}render();};
