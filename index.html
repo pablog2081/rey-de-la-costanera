@@ -443,7 +443,7 @@ const PACKS = [
  {f:1200,p:"$ 13.999",t:"Lata de fichas",b:"+20% de regalo",dest:true},
  {f:3000,p:"$ 29.999",t:"Cajón del kiosquero",b:"+50% de regalo"},
 ];
-const BUILD="v45";
+const BUILD="v46";
 let DIST = 402; // cuarto de milla (en las Dunas: 1000 m)
 const GHOST_V = 402;
 /* ===== pistas: 1 = Costanera, 2 = El Crack de las Dunas ===== */
@@ -3367,11 +3367,14 @@ const TY={R:34.5,S:91.6,W:13,LAPS:{serie:5,repe:5,semi:6,pre:6,final:8}};
 TY.LAP=2*TY.S+2*Math.PI*TY.R;           // ≈ 400 m
 TY.WALL=TY.W/2-.85;                     // centro del auto contra el paredón de afuera
 TY.IN=-TY.W/2+.7;                       // borde de adentro (después hay pasto y cubiertas)
-const TY_M=["m6","m99","m14","m2"];     // los 4 chasis modelados
-const TY_PTS_FINAL=[20,17,15,13,11,10,9,8,7,6];
-const TY_PREMIO=[140000,100000,80000,65000,55000,48000,42000,37000,33000,30000];
+const TY_FILA=[-4.3,-1.55,1.2,3.95]; // 4 autos por fila en la largada
+const TY_BLANCOS=["ma","mb","mc","md"]; // chasis nuevos con la carrocería blanca: se pintan del color del piloto
+const TY_M=["ma","mb","mc","md"];     // los 4 chasis (modelos realistas de Meshy, carrocería blanca para pintar)
+const TY_M_VIEJO={m6:"ma",m99:"mb",m14:"mc",m2:"md"};
+const TY_PTS_FINAL=[20,17,15,13,11,10,9,8,7,6,5,4];
+const TY_PREMIO=[140000,100000,80000,65000,55000,48000,42000,37000,33000,30000,28000,26000];
 const TY_FECHAS=16,TY_REG=10;
-const TY_HUMAN={"m6":"Médano","m99":"Carancho","m14":"Salitral","m2":"Tero"};
+const TY_HUMAN={"m6":"Médano","m99":"Carancho","m14":"Salitral","m2":"Tero","ma":"Bahiense","mb":"Pampa","mc":"Ventarrón","md":"Saeta"};
 
 // posición en el óvalo: s = metros por el medio de la pista desde la línea de llegada (mitad de la recta principal)
 // d = metros hacia afuera (+) o hacia adentro (−) desde el medio de la pista. Se dobla siempre a la izquierda.
@@ -3387,7 +3390,7 @@ function tyBank(s){const L=TY.LAP,a=TY.S/2,arc=Math.PI*TY.R;s=((s%L)+L)%L;const 
   return Math.max(sm((s-(a-r))/r)*sm((a+arc+r-s)/r),sm((s-(a+arc+TY.S-r))/r)*sm((a+2*arc+TY.S+r-s)/r));}
 const tyY=(s,d)=>tyBank(s)*Math.max(0,d+TY.W/2)*.09;
 
-/* ---------- pilotos: 90 inscriptos ---------- */
+/* ---------- pilotos: 140 inscriptos (139 + vos) ---------- */
 const TY_NOM=["Pochón","Tito Ramírez","Cacho Benítez","El Ruso Kovalenko","Lalo Sartori","Beto Ferreyra","Chiche Duarte","El Vasco Iturbe","Quique Lombardo","Pato Gallardo",
   "El Tano Bruzzone","Coco Arrieta","Mingo Salvatierra","Nacho Pereyra","Fito Barrionuevo","El Turco Haddad","Rulo Mansilla","Toto Ledesma","Juanca Medina","Kike Olmos",
   "El Flaco Gauna","Gringo Weber","Pipo Aguirre","Moncho Rivas","Tincho Sosa","Lucho Barrera","El Negro Funes","Polaco Zelinski","Charly Villalba","Rodo Gaitán",
@@ -3396,22 +3399,23 @@ const TY_NOM=["Pochón","Tito Ramírez","Cacho Benítez","El Ruso Kovalenko","La
   "El Petiso Acuña","Chino Takahashi","Beto Jr. Ferreyra","Agus Molina","Nelo Castaño","Coqui Herrera","El Oso Maldonado","Gordo Valdez","Pocholo Ríos","Sergio Tuerca Díaz",
   "El Zurdo Ponce","Tano Russo","Marcelo Ibáñez","Kevin Montiel","Brian Álvarez","Lauti Giménez","Nico Peralta","Ema Toledo","Gonza Ríos","Maxi Ferreira",
   "Euge Báez","Flor Castro","La Colorada Sánchez","Vicky Núñez","Juli Pacheco","El Topo Rivero","Lucas Bianchi","Mauro Spinelli","Hernán Gutiérrez","Diego Calvo",
-  "Martín Carrizo","Walter Ocampo","Ariel Méndez","Gustavo Pintos","Pablo Arce","Jorge Vidal","Raúl Benegas","Omar Figueroa","Darío Escobar","Claudio Robles"];
+  "Martín Carrizo","Walter Ocampo","Ariel Méndez","Gustavo Pintos","Pablo Arce","Jorge Vidal","Raúl Benegas","Omar Figueroa","Darío Escobar","Claudio Robles",
+  "El Chueco Arias","Tero Benavídez","Pirata Morales","Cuervo Sández","Lagarto Funes","Pinino Ruiz","Tony Calderón","El Galgo Ferraro","Mono Sepúlveda","Cachi Ferro","Ñato Barragán","Poroto Insaurralde","El Mosca Villar","Chula Garay","Tito Jr. Ramírez","Pájaro Molina","Piraña Coria","Chino Ledesma","Topo Gigena","El Rubio Sander","Carpincho Díaz","Lolo Echeverría","Yayo Bermúdez","Fideo Cabrera","Picu Albornoz","Chanchi Rojas","Pitu Galván","Bocha Jr. Ruiz","Tuerca Ojeda","El Loco Pereira","Manu Iriarte","Seba Quiroga","Leo Etchegaray","Tomi Zabala","Fran Bonetto","Ale Montero","Joaco Urquiza","Cristian Lastra","Bruno Sanz","Germán Etcheverry","Lorena Aguilar","Mica Pérez","Sol Iturralde","Rocío Bravo","Ceci Ponce","Gaby Lucero","Andrés Cortese","Rubén Lazarte","Néstor Gorostiaga"];
 const TY_COL=["#f2c230","#c0392b","#1f5fa8","#ececec","#1e8a4c","#e46b1c","#6c2a8a","#111111","#7ec8e3","#d63384","#8d6e3b","#2b9aa0","#b5d334","#a01e2e","#355070"];
 const TY_SPON=["Lubricantes Pampa","Transporte Sur","Agro Médano","Fierros Tito","Automotores Costa","Repuestos El Galpón","Cubiertas Tornado","Radio Fierrera","Panadería La Aldea","Corralón Bahía",
   "Frigorífico Romana","Gomería El Puerto","Pinturas Salitral","Distribuidora Ingeniero White","Ferretería Los Andes","Pizzería Don Tito","Cerealera Sur","Talleres Napostá","Seguros La Rural","Carnicería El Tero"];
 // cada piloto: número, chasis, color, sponsor, habilidad y caballos (fijos por semilla)
 const tyRnd=k=>{const x=Math.sin(k*127.1+311.7)*43758.5453;return x-Math.floor(x);};
-const TY_PIL=TY_NOM.map((n,i)=>({id:"t"+i,n,num:i===0?7:((i*37)%98)+2,m:TY_M[i%4],col:TY_COL[(i*7+3)%TY_COL.length],spon:TY_SPON[(i*11)%TY_SPON.length],
+const TY_PIL=TY_NOM.map((n,i)=>({id:"t"+i,n,num:i===0?7:((i*37)%158)+2,m:TY_M[i%4],col:TY_COL[(i*7+3)%TY_COL.length],spon:TY_SPON[(i*11)%TY_SPON.length],
   sk:i===0?.95:.55+.42*tyRnd(i+1),hp:i===0?179:162+Math.round(17*tyRnd(i+40)),kg:i%3===0?540:455}));
 // números sin repetir
-{const used=new Set();TY_PIL.forEach(p=>{while(used.has(p.num))p.num=(p.num%98)+2;used.add(p.num);});}
+{const used=new Set();TY_PIL.forEach(p=>{while(used.has(p.num)||p.num===77)p.num=(p.num%158)+2;used.add(p.num);});}
 const TY_P={};TY_PIL.forEach(p=>TY_P[p.id]=p);
 
 /* ---------- estado del campeonato ---------- */
 function tyState(){let T=S.taya;
-  if(!T||!T.pts){T=S.taya={fecha:0,pts:{},po:null,hist:[],up:{motor:0,gomas:0},m:"m6",col:"#f2b632",num:(S.apodo?77:77),champ:null,yaSabe:false};save();}
-  if(!T.up)T.up={motor:0,gomas:0};return T;}
+  if(!T||!T.pts){T=S.taya={fecha:0,pts:{},po:null,hist:[],up:{motor:0,gomas:0},m:"ma",col:"#f2b632",num:(S.apodo?77:77),champ:null,yaSabe:false};save();}
+  if(!T.up)T.up={motor:0,gomas:0};if(T.desg==null)T.desg=0;if(TY_M_VIEJO[T.m])T.m=TY_M_VIEJO[T.m];return T;}
 const tyNombre=id=>id==="yo"?(S.apodo||"Vos"):TY_P[id]?TY_P[id].n:"?";
 const tyNum=id=>id==="yo"?tyState().num:TY_P[id].num;
 function tyIds(){return ["yo",...TY_PIL.map(p=>p.id)];}
@@ -3423,14 +3427,15 @@ function tyTabla(){const T=tyState();const ids=T.po&&T.po.vivos?null:tyIds();
 function tyRating(id){if(id==="yo"){const T=tyState();return .74+T.up.motor*.012+T.up.gomas*.01;}const p=TY_P[id];return p.sk*.75+(p.hp-160)/20*.18+(p.kg===455?.03:0);}
 
 /* ---------- la jornada: series, repechajes, semifinales, prefinal y final ---------- */
-// 84 autos por noche: 12 series de 7 → los 2 primeros a semis, 3º y 4º a repechaje (4 de 6, pasan 2)
-// 4 semis de 8 → 1º y 2º a la final, 3º y 4º a la prefinal; prefinal de 8: los 2 primeros completan la final de 10
+// 128 autos por noche (de 140 inscriptos): 16 series de 8 (2 filas de 4) → 1º y 2º a semis, 3º y 4º a repechaje
+// 4 repechajes de 8 → el ganador va a la prefinal · 4 semis de 8 → 1º y 2º a la final, 3º y 4º a la prefinal
+// prefinal de 12 → los 4 primeros completan la Gran Final de 12 (3 filas de 4)
 function tyJornadaNueva(){const T=tyState();
-  const presentes=TY_PIL.map(p=>p.id).filter((id,i)=>i===0||tyRnd(i*13+T.fecha*7)>.08).slice(0,83);
-  while(presentes.length<83)presentes.push(TY_PIL.find(p=>!presentes.includes(p.id)).id);
+  const presentes=TY_PIL.map(p=>p.id).filter((id,i)=>i===0||tyRnd(i*13+T.fecha*7)>.08).slice(0,127);
+  while(presentes.length<127)presentes.push(TY_PIL.find(p=>!presentes.includes(p.id)).id);
   const todos=["yo",...presentes].sort((a,b)=>tyRnd(T.fecha*97+tyIds().indexOf(a))-tyRnd(T.fecha*97+tyIds().indexOf(b)));
-  const series=[];for(let i=0;i<12;i++)series.push(todos.slice(i*7,i*7+7));
-  const J={fecha:T.fecha+1,ent:todos,series,res:{},pend:[],pts:{},log:[],fuera:false,etapa:"serie"};
+  const series=[];for(let i=0;i<16;i++)series.push(todos.slice(i*8,i*8+8));
+  const J={fecha:T.fecha+1,ent:todos,series,res:{},pend:[],pts:{},log:[],fuera:false,etapa:"serie",gUso:0,serv:false,carreras:0};
   todos.forEach(id=>J.pts[id]=5); // presentismo
   J.mio=series.findIndex(s=>s.includes("yo"));
   return J;}
@@ -3445,14 +3450,14 @@ function tySiguiente(J){
     const reps=[0,1,2,3].map(i=>tercerosCuartos.filter((_,k)=>k%4===i));J.repes=reps;
     const k=reps.findIndex(r=>r.includes("yo"));if(k>=0)return {k:"repe",n:k+1,ids:reps[k],laps:TY.LAPS.repe,nom:"Repechaje "+(k+1)};
     R.repes=reps.map(r=>tySimular(r,TY.LAPS.repe));}
-  if(!R.semis){if(!J.semis){const q=[...R.series.flatMap(s=>s.slice(0,2)),...R.repes.flatMap(r=>r.slice(0,2))].sort((a,b)=>(a.t??99)-(b.t??99)).map(x=>x.id);
+  if(!R.semis){if(!J.semis){const q=R.series.flatMap(s=>s.slice(0,2)).sort((a,b)=>(a.t??99)-(b.t??99)).map(x=>x.id);
       J.semis=[0,1,2,3].map(i=>q.filter((_,k)=>k%4===i));}
     const k=J.semis.findIndex(s=>s.includes("yo"));if(k>=0&&!J.fuera)return {k:"semi",n:k+1,ids:J.semis[k],laps:TY.LAPS.semi,nom:"Semifinal "+(k+1)};
     R.semis=J.semis.map(s=>tySimular(s,TY.LAPS.semi));}
-  if(!R.pre){if(!J.pre)J.pre=R.semis.flatMap(s=>s.slice(2,4).map(x=>x.id));
+  if(!R.pre){if(!J.pre)J.pre=[...R.semis.flatMap(s=>s.slice(2,4).map(x=>x.id)),...R.repes.map(r=>r[0]&&r[0].id).filter(Boolean)];
     if(J.pre.includes("yo")&&!J.fuera)return {k:"pre",n:1,ids:J.pre,laps:TY.LAPS.pre,nom:"Prefinal"};
     R.pre=tySimular(J.pre,TY.LAPS.pre);}
-  if(!R.final){if(!J.final)J.final=[...R.semis.flatMap(s=>s.slice(0,2).map(x=>x.id)),...R.pre.slice(0,2).map(x=>x.id)];
+  if(!R.final){if(!J.final)J.final=[...R.semis.flatMap(s=>s.slice(0,2).map(x=>x.id)),...R.pre.slice(0,4).map(x=>x.id)];
     if(J.final.includes("yo")&&!J.fuera)return {k:"final",n:1,ids:J.final,laps:TY.LAPS.final,nom:"Gran Final"};
     R.final=tySimular(J.final,TY.LAPS.final);}
   return null;}
@@ -3485,15 +3490,45 @@ function tyCerrarNoche(J){const T=tyState(),P=tyPuntosNoche(J);T.fecha++;
     msg+=T.champ==="yo"?" ¡¡SOS CAMPEÓN DE TAYA'xs!!":` Campeón: ${tyNombre(T.champ)}.`;if(T.champ==="yo"){S.pesos+=500000;}}
   T.hist.unshift({f:T.fecha,yo:P.yo|0,pos:yo});T.hist=T.hist.slice(0,16);save();return msg;}
 
+
+/* ---------- box: gomas, service y desgaste del motor ---------- */
+const TY_GOMA_MAX=3,TY_GOMA_P=18000,TY_SERV_P=12000,TY_RECT_P=90000,TY_CHASIS_P=250000;
+// las gomas pierden agarre con cada carrera; después de 3 no dan más
+const tyGomaK=u=>[1,.965,.93,.9][Math.min(3,u|0)];
+// el motor pierde potencia con el uso: hasta un 12% si nunca se rectifica
+function tyMotorK(){const T=tyState();return 1-.12*Math.min(1,T.desg||0);}
+const tyPct=x=>Math.round(x*100)+"%";
+// panel del box entre carrera y carrera (no se puede tocar el motor por dentro ni el chasis)
+function tyBox(J,cont){const T=tyState();
+  const html=()=>{const u=J.gUso|0,venc=u>=TY_GOMA_MAX;
+    return `<div class="copa tybox"><div class="t">Box · entre carreras</div>
+      <div class="s">Plata: ${fmt(S.pesos)}</div>
+      <p class="nota" style="margin:6px 0">Gomas: ${u} de ${TY_GOMA_MAX} carreras · agarre ${tyPct(tyGomaK(u))}${venc?" · <b style=\"color:var(--rojo)\">ya no aguantan otra carrera</b>":""}<br>
+      Motor: ${tyPct(tyMotorK())} de potencia (${Math.round((168+T.up.motor*3)*tyMotorK())} HP). El motor no se rectifica durante la noche.</p>
+      <div class="row" style="flex-wrap:wrap;gap:6px">
+        <button class="btn sm${venc?" oro":""}" data-b="gomas"${u===0?" disabled":""}>Cambiar gomas · ${fmt(TY_GOMA_P)}</button>
+        <button class="btn sm" data-b="mejora"${T.up.gomas>=4?" disabled":""}>Mejorar cubiertas ${T.up.gomas}/4${T.up.gomas<4?" · "+fmt(45000*(T.up.gomas+1)):""}</button>
+        <button class="btn sm" data-b="serv"${J.serv||T.desg<.01?" disabled":""}>${J.serv?"Service hecho":"Service · "+fmt(TY_SERV_P)}</button></div></div>`;};
+  let box=el(html());
+  const pinta=()=>{const n=el(html());box.replaceWith(n);wire(n);cont&&cont();};
+  const pagar=p=>{if(S.pesos<p){toast("No te alcanza la plata");return false;}S.pesos-=p;return true;};
+  const wire=b=>{b.querySelectorAll("[data-b]").forEach(x=>x.onclick=()=>{const k=x.dataset.b;
+      if(k==="gomas"){if(S.pesos>=TY_GOMA_P){S.pesos-=TY_GOMA_P;J.gUso=0;toast("Gomas nuevas");}else if((J.gUso|0)>=TY_GOMA_MAX){J.gUso=1;toast("No te alcanzaba: un amigo te prestó unas recapadas");}else toast("No te alcanza la plata");}
+      else if(k==="mejora"){const n=T.up.gomas,p=45000*(n+1);if(n<4&&pagar(p)){T.up.gomas=n+1;J.gUso=0;toast("Cubiertas mejores, y nuevas");}}
+      else if(k==="serv"&&!J.serv&&pagar(TY_SERV_P)){J.serv=true;T.desg=Math.max(0,T.desg*.75);toast("Service hecho: bujías, filtro y carburación");}
+      save();pinta();});box=b;};
+  wire(box);return ()=>box;}
+
 /* ---------- la carrera ---------- */
 var TYR=null;
 const TYH=1/120; // paso de física del midget
 function tyAuto(id,i,grid){const p=id==="yo"?null:TY_P[id],T=tyState();
-  const hp=id==="yo"?168+T.up.motor*3:p.hp,kg=id==="yo"?455:p.kg,mu=1.5*(id==="yo"?1+T.up.gomas*.012:1)*(1+(p?(p.sk-.75)*.05:0));
-  return {id,yo:id==="yo",n:tyNombre(id),num:tyNum(id),m:id==="yo"?T.m:p.m,col:id==="yo"?T.col:p.col,
+  const J=S.tayaJ,uso=J?J.gUso|0:0;
+  const hp=id==="yo"?(168+T.up.motor*3)*tyMotorK():p.hp,kg=id==="yo"?455:p.kg,mu=1.5*(id==="yo"?(1+T.up.gomas*.012)*tyGomaK(uso):1)*(1+(p?(p.sk-.75)*.05:0));
+  return {id,yo:id==="yo",n:tyNombre(id),num:tyNum(id),m:id==="yo"?T.m:p.m,col:id==="yo"?T.col:p.col,spon:id==="yo"?(S.apodo||""):p.spon,
     hp,kg:kg+70,mu,sk:id==="yo"?1:p.sk,s:0,d:0,vl:0,v:0,th:0,sa:0,pitch:0,lap:0,dist:0,fin:null,out:null,dmg:0,
     dT:0,ai:{err:0,errT:0,pase:0,linea:-2.2+Math.random()*1.4},grid:i,g:null,lastS:0};}
-function tyLargar(c,J){audioInit();narStopF();narLoadF();
+function tyLargar(c,J){audioInit();tyBanderaBlanca(false);narStopF();narLoadF();
   const ids=c.ids.slice();
   // grilla: en las series por sorteo; después por cómo vienen clasificados (el orden de la lista)
   const cars=ids.map((id,i)=>tyAuto(id,i));
@@ -3506,7 +3541,7 @@ function tyLargar(c,J){audioInit();narStopF();narLoadF();
     // la chica anuncia la carrera; Fefón se presenta en la primera de la noche
     const prim=!J.yaPresento;J.yaPresento=true;
     tyAnuncio(c,()=>{if(!TYR)return;if(prim)fefonIntro(()=>tySemaforo());else{narraF("previa",{});setTimeout(tySemaforo,2200);}});};
-  Promise.all([init3D(),...[...new Set(cars.map(e=>e.m))].map(tyModelo)]).then(go,go);
+  Promise.all([init3D(),...[...new Set(cars.map(e=>e.m))].map(m=>tyModelo(m))]).then(go,go);
   requestAnimationFrame(tyLoop);}
 function tySemaforo(){if(!TYR)return;TYR.lightT=performance.now();TYR.phase=0;TYR.esperaLuz=true;}
 // acomoda los autos de a dos detrás de la línea (largada parada)
@@ -3514,7 +3549,7 @@ function tySemaforo(){if(!TYR)return;TYR.lightT=performance.now();TYR.phase=0;TY
 function tyRelargar(R){R.roja=null;R.cars.forEach(e=>{if(e.out&&!e.gone){e.gone=true;e.v=0;e.d=-TY.W/2-5;}});tyGrilla(R,tyPosiciones(R),true);}
 function tyGrilla(R,orden,parada){const vivos=orden.filter(e=>!e.out&&e.fin===null);
   const base=R.green?Math.max(...vivos.map(e=>e.dist)):0;
-  vivos.forEach((e,i)=>{const row=i>>1;e.dist=base-6-row*7.5;e.s=e.dist;e.d=i%2?1.6:-2.2;e.vl=0;e.v=parada?0:0;e.th=0;e.sa=0;e.dT=e.d;});
+  vivos.forEach((e,i)=>{const row=i>>2;e.dist=base-6-row*7.5;e.s=e.dist;e.d=TY_FILA[i%4];e.vl=0;e.v=parada?0:0;e.th=0;e.sa=0;e.dT=e.d;});
   R.green=false;}
 function tyLoop(now){const R=TYR;if(!R)return;const dt=Math.min(.1,(now-R.last)/1000);R.last=now;R.dt=dt;
   if(!R.loading){
@@ -3631,21 +3666,25 @@ function tyCompletar(R){if(!R.green){tyRelargar(R);R.green=true;R.tGreen=R.tGree
 function tyFinCarrera(R){if(TYR!==R)return;const pos=tyPosiciones(R),J=R.J,c=R.c;
   const res=pos.map(e=>({id:e.id,dnf:!!e.out,t:e.fin}));tyGuardar(J,c,res);
   const yo=res.findIndex(x=>x.id==="yo");if(R.yoFuera)J.fuera=true;
+  {const T=tyState();J.gUso=(J.gUso|0)+1;J.serv=false;J.carreras=(J.carreras|0)+1;T.desg=Math.min(1,(T.desg||0)+c.laps*.0045);save();}
   if(pos[0])narraF("bandera",{a:pos[0]});
-  TYR=null;tyUI(false);tyAudioStop();
-  const pasa=c.k==="serie"?yo<2?"¡Pasaste directo a la semifinal!":yo<4?"Vas al repechaje: los 2 primeros entran a la semifinal.":"No te alcanzó para seguir esta noche.":
-    c.k==="repe"?yo<2?"¡Entraste a la semifinal!":"Afuera: quedaste en el repechaje.":
-    c.k==="semi"?yo<2?"¡¡ESTÁS EN LA GRAN FINAL!!":yo<4?"Vas a la prefinal: los 2 primeros completan la final.":"Hasta acá llegaste esta noche.":
-    c.k==="pre"?yo<2?"¡Te metiste en la Gran Final!":"Quedaste afuera de la final.":"";
-  if(c.k==="serie"&&yo>=4||c.k==="repe"&&yo>=2||c.k==="semi"&&yo>=4||c.k==="pre"&&yo>=2)J.fuera=true;
+  TYR=null;tyBanderaBlanca(false);tyUI(false);tyAudioStop();
+  const pasa=c.k==="serie"?yo<2?"¡Pasaste directo a la semifinal!":yo<4?"Vas al repechaje: el ganador pasa a la prefinal.":"No te alcanzó para seguir esta noche.":
+    c.k==="repe"?yo<1?"¡Ganaste el repechaje: vas a la prefinal!":"Afuera: solo el ganador del repechaje sigue.":
+    c.k==="semi"?yo<2?"¡¡ESTÁS EN LA GRAN FINAL!!":yo<4?"Vas a la prefinal: los 4 primeros completan la final.":"Hasta acá llegaste esta noche.":
+    c.k==="pre"?yo<4?"¡Te metiste en la Gran Final!":"Quedaste afuera de la final: pasaban los 4 primeros.":"";
+  if(c.k==="serie"&&yo>=4||c.k==="repe"&&yo>=1||c.k==="semi"&&yo>=4||c.k==="pre"&&yo>=4)J.fuera=true;
   if(R.yoFuera)J.fuera=true;
   const tabla=pos.map((e,i)=>`<tr${e.yo?' class="yo"':''}><td>${i+1}</td><td>#${e.num} ${esc(e.n)}</td><td>${e.out?(e.out==="rueda"?"Toque":e.out==="pared"?"Paredón":e.out==="trompo"?"Trompo":"Choque"):e.fin!=null?e.fin.toFixed(2)+" s":"—"}</td></tr>`).join("");
   const sig=tySiguiente(J);
   modal(`<h3 class="gan" style="color:${yo===0?"var(--oro)":"var(--crema)"}">${esc(c.nom)}: ${R.yoFuera?"¡Afuera!":(yo+1)+"º"}</h3>
     <p>${R.yoFuera?"Un choque en los midgets termina la noche: el auto queda para el taller.":esc(pasa)}</p>
-    <table class="ovtab"><tr><th>Pos</th><th>Piloto</th><th>Tiempo</th></tr>${tabla}</table><div class="opts" id="tyOpts"></div>`,"resplaca");
+    <table class="ovtab"><tr><th>Pos</th><th>Piloto</th><th>Tiempo</th></tr>${tabla}</table><div id="tyBoxW"></div><div class="opts" id="tyOpts"></div>`,"resplaca");
   const o=$("#tyOpts");
-  if(sig&&!J.fuera){const b=el(`<button class="btn oro">Largar ${esc(sig.nom)}</button>`);b.onclick=()=>{closeModal();tyLargar(sig,J);};o.append(b);}
+  if(sig&&!J.fuera){const b=el(`<button class="btn oro">Largar ${esc(sig.nom)}</button>`);
+    const chk=()=>{const v=(J.gUso|0)>=TY_GOMA_MAX;b.disabled=v;b.textContent=v?"Cambiá las gomas para largar":"Largar "+sig.nom;};
+    const bx=tyBox(J,chk);$("#tyBoxW").append(bx());chk();
+    b.onclick=()=>{if((J.gUso|0)>=TY_GOMA_MAX)return;closeModal();tyLargar(sig,J);};o.append(b);}
   else{const b=el(`<button class="btn oro">${J.res.final?"Ver la Gran Final y el podio":"Terminar la noche"}</button>`);b.onclick=()=>{closeModal();tyTerminarNoche(J);};o.append(b);}}
 function tyTerminarNoche(J){const pF=withTimeout(tyModelo("f100",5.25),6000).catch(()=>{});while(tySiguiente(J)){const c=tySiguiente(J);tyGuardar(J,c,tySimular(c.ids,c.laps));}
   const msg=tyCerrarNoche(J);S.tayaJ=null;save();
@@ -3697,14 +3736,27 @@ function tyModelo(m,largo){largo=largo||3.05;if(TY3.mod[m])return Promise.resolv
     inner.traverse(o=>{if(o.isMesh){o.material.roughness=.75;o.material.metalness=.1;}});
     TY3.mod[m]=holder;res(holder);},rej)));}
 const TY_FWD=Math.PI,TY_FWD_F100=Math.PI; // el frente de los modelos de Meshy mira a −x: se dan vuelta
-function tyNumTex(n,col){return dTex(128,128,(x,w,h)=>{x.fillStyle=col||"#fff";x.fillRect(0,0,w,h);x.fillStyle="#fff";x.beginPath();x.arc(64,64,52,0,7);x.fill();
-  x.fillStyle="#111";x.font=`900 ${n>9?70:82}px 'Barlow Condensed',Arial Narrow,sans-serif`;x.textAlign="center";x.textBaseline="middle";x.fillText(String(n),64,70);});}
+function tyNumTex(n,col,spon){return dTex(256,160,(x,w,h)=>{x.clearRect(0,0,w,h);
+  const c=new T3.TH.Color(col||"#fff"),lum=c.r*.3+c.g*.59+c.b*.11,tinta=lum>.55?"#111":"#fff",borde=lum>.55?"#fff":"#111";
+  x.font=`900 ${String(n).length>2?118:136}px 'Barlow Condensed',Arial Narrow,sans-serif`;x.textAlign="center";x.textBaseline="middle";x.lineJoin="round";
+  x.lineWidth=16;x.strokeStyle=borde;x.strokeText(String(n),w/2,h*.44);x.fillStyle=tinta;x.fillText(String(n),w/2,h*.44);
+  if(spon){x.font="800 26px 'Barlow Condensed',Arial Narrow,sans-serif";x.lineWidth=6;x.strokeText(spon.toUpperCase(),w/2,h*.88);x.fillText(spon.toUpperCase(),w/2,h*.88);}});}
+// busca la chapa del modelo con rayos: los costados detrás del motor y la cola, para pegar los números
+function tyDecalPts(m,src){TY3.dec=TY3.dec||{};if(TY3.dec[m])return TY3.dec[m];const TH=T3.TH,rc=new TH.Raycaster(),out=[];src.updateMatrixWorld(true);
+  const box=new TH.Box3().setFromObject(src),L=box.max.x-box.min.x,cx=(box.max.x+box.min.x)/2;
+  const hit=(o,d)=>{rc.set(o,d);rc.far=8;const h=rc.intersectObject(src,true).find(q=>q.face);if(!h)return null;const n=q=>q.face.normal.clone().transformDirection(q.object.matrixWorld);return {p:h.point,n:n(h)};};
+  for(const sd of[1,-1]){let best=null;
+    for(const fx of[-.08,-.16,0,.06])for(const fy of[.42,.36,.5,.3]){const o=new TH.Vector3(cx+fx*L,box.min.y+fy*(box.max.y-box.min.y),sd*4);const h=hit(o,new TH.Vector3(0,0,-sd));
+      if(h&&Math.abs(h.n.z)>.55&&Math.sign(h.n.z)===sd&&(!best||Math.abs(h.p.z)<Math.abs(best.p.z)+.02&&false||!best)){best=h;}if(best)break;}
+    if(best){best.p.add(best.n.clone().multiplyScalar(.012));out.push({p:best.p,n:best.n,w:.56});}}
+  for(const fx of[-.36,-.3,-.42]){const o=new TH.Vector3(cx+fx*L,box.max.y+2,0);const h=hit(o,new TH.Vector3(0,-1,0));if(h&&h.n.y>.6&&h.p.y<box.min.y+.75*(box.max.y-box.min.y)){h.p.add(h.n.clone().multiplyScalar(.012));out.push({p:h.p,n:h.n,w:.38,top:true});break;}}
+  return TY3.dec[m]=out;}
 function tyAutoObj(e){const TH=T3.TH,src=TY3.mod[e.m];if(!src)return null;const o=src.clone(true);
-  const tint=new TH.Color(e.col);o.traverse(q=>{if(q.isMesh){q.material=q.material.clone();q.material.color=new TH.Color(1,1,1).lerp(tint,.38);}});
+  const tint=new TH.Color(e.col);o.traverse(q=>{if(q.isMesh){q.material=q.material.clone();q.material.color=new TH.Color(1,1,1).lerp(tint,TY_BLANCOS.includes(e.m)?.9:.38);}});
   const grp=new TH.Group(),piv=new TH.Group();grp.add(piv);piv.add(o);
-  // número en el techo y en el alerón
-  const nm=new TH.MeshBasicMaterial({map:tyNumTex(e.num,e.col)});const pl=new TH.Mesh(new TH.PlaneGeometry(.62,.62),nm);pl.rotation.x=-Math.PI/2;pl.position.set(-.35,1.2,0);piv.add(pl);
-  for(const sd of[1,-1]){const p2=new TH.Mesh(new TH.PlaneGeometry(.5,.5),nm);p2.position.set(-.1,.72,sd*.62);if(sd<0)p2.rotation.y=Math.PI;piv.add(p2);}
+  // el número va pegado a la carrocería: calcos en los dos costados y en la cola, apoyados sobre la chapa
+  const dc=tyDecalPts(e.m,src),nm=new TH.MeshStandardMaterial({map:tyNumTex(e.num,e.col,e.spon),transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-4,roughness:.5});
+  for(const d of dc){const pl=new TH.Mesh(new TH.PlaneGeometry(d.w,d.w*.62),nm);pl.position.copy(d.p);pl.lookAt(d.p.clone().add(d.n));if(d.top)pl.rotateZ(-Math.PI/2);piv.add(pl);}
   if(!TY3.shT)TY3.shT=dTex(128,64,(x,w,h)=>{const g=x.createRadialGradient(w/2,h/2,4,w/2,h/2,w/2);g.addColorStop(0,"rgba(0,0,0,.7)");g.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=g;x.save();x.scale(1,h/w);x.beginPath();x.arc(w/2,w/2,w/2,0,7);x.fill();x.restore();});
   const sh=new TH.Mesh(new TH.PlaneGeometry(3.3,1.9),new TH.MeshBasicMaterial({map:TY3.shT,transparent:true,depthWrite:false}));sh.rotation.x=-Math.PI/2;sh.position.y=.03;grp.add(sh);
   grp.userData={piv};return grp;}
@@ -3813,10 +3865,15 @@ function tySetup3D(R){if(!ready3D())return;const E=TY3.env||(TY3.env=tyBuild());
   tyChica(E);R.g3=true;}
 // la chica (modelo 3D con la animación de la bandera) se para en el borde de adentro de la recta principal
 function tyChica(E){if(typeof loadChica==="function")loadChica();}
+function tyBanderaBlanca(on){const F=CH3.flag;if(!F)return;const m=F.cloth.material;if(!CH3.texCuadros)CH3.texCuadros=m.map;
+  if(on&&!CH3.texBlanca)CH3.texBlanca=dTex(64,48,(x,w,h)=>{x.fillStyle="#fbfbf6";x.fillRect(0,0,w,h);});
+  const t=on?CH3.texBlanca:CH3.texCuadros;if(m.map!==t){m.map=t;m.needsUpdate=true;}}
 function tyChicaFrame(E,R,dt){if(CH3.st!=="ok")return;
   if(CH3.obj.parent!==E.sc){E.sc.add(CH3.obj,CH3.flag.grp);CH3.obj.position.set(6,0,TY.R-TY.W/2-1.8);CH3.obj.rotation.y=Math.PI*.15;}
   CH3.obj.visible=CH3.flag.grp.visible=true;R.chT=(R.chT??CH_WAVE[0])+dt;if(R.chT>CH_WAVE[1])R.chT=CH_WAVE[0]+(R.chT-CH_WAVE[1]);
   // agita la bandera fuerte en la última vuelta y cuando llegan
+  // en la última vuelta la chica agita la bandera blanca; cuando llega el primero, la a cuadros
+  const llego=R.done||R.cars.some(e=>e.fin!=null),ultima=R.green&&R.lapN===R.laps&&!llego;tyBanderaBlanca(ultima);
   const agita=R.green&&(R.lapN===R.laps||R.done);CH3.act.time=agita?R.chT:CH_WAVE[0]+.05;CH3.mix.update(0);CH3.obj.updateMatrixWorld(true);updFlag(dt,performance.now()/1000);}
 function tyDraw(R){const cv=$("#tyScene");if(!cv)return;const dpr=Math.min(2,devicePixelRatio||1);if(cv.width!==Math.round(cv.clientWidth*dpr)||cv.height!==Math.round(cv.clientHeight*dpr)){cv.width=Math.round(cv.clientWidth*dpr);cv.height=Math.round(cv.clientHeight*dpr);}
   const ctx=cv.getContext("2d"),w=cv.width,h=cv.height,E=TY3.env;
@@ -3898,15 +3955,15 @@ function tySonido(tipo,vol){if(!AC||muted||noFx)return;const t0=AC.currentTime;
 
 /* ---------- Fefón Marcelo: el relato ---------- */
 const NARF={buf:null,map:null,q:[],busy:false,src:null,loading:false,gain:null};
-const NAR_F4={"previa1": "¡Atención Bahía Blanca, se viene otra carrera! ¡Motores en marcha!", "previa2": "¡Los midgets ya están en la grilla! ¡Que no pare la fiesta!", "previa3": "¡Se prende fuego la Aldea Romana! ¡Vamos con otra!", "previa4": "¡Siguen los TAYA'xs! ¡Agárrense fuerte, que esto vuela!", "largada1": "¡Verde, verde, verde! ¡Largaron!", "largada2": "¡Se larga! ¡Todos a fondo hacia la primera curva!", "largada3": "¡Allá van los midgets! ¡Tierra para todos lados!", "largada4": "¡Luz verde! ¡Pisan el acelerador hasta el fondo!", "relarga1": "¡Relargada! ¡De nuevo en verde!", "relarga2": "¡Se relarga la carrera! ¡Atentos a la primera curva!", "pasa_a": "¡pasa a", "por_adentro": "¡se le tira por adentro a", "por_afuera": "¡lo pasa por afuera, pegado al paredón, a", "atencion": "¡Atención, atención!", "se_tira": "¡se le mete abajo a", "nuevo_puntero": "¡Hay nuevo puntero! ¡Ahora manda", "toma_punta": "¡toma la punta de la carrera!", "vuelta": "¡Pasan por la llegada! Adelante va", "manda": "¡Otra vuelta más! Sigue mandando", "ultima1": "¡Última vuelta! ¡Campana! Adelante va", "ultima2": "¡Se viene la última! Defiende la punta", "bandera1": "¡Bandera a cuadros! ¡Gana", "bandera2": "¡Cruza la meta! ¡Victoria para", "bandera3": "¡Y el ganador es...", "rueda1": "¡Se tocaron rueda con rueda", "y": "y", "rueda2": "¡Se enganchan las ruedas! ¡Vuela el midget! ¡Qué golpe, señores!", "pared1": "¡Al paredón! ¡Se la dio de lleno", "pared2": "¡Contra el paredón! ¡Uy, qué golpazo!", "trompo1": "¡Trompo! ¡Se le fue la cola a", "trompo2": "¡Se le cruzó el auto! ¡Trompo en la curva!", "choque1": "¡Choque! ¡Hay un choque en la pista!", "roja1": "¡Bandera roja! ¡Se para la carrera! Entra la grúa.", "roja2": "¡Roja, roja! ¡Todos frenan, hay autos en la pista!", "pochon1": "¡Pochón! ¡Pochóóón! ¡El ídolo de la tribuna, cómo lo quiere la gente!", "pochon2": "¡Ahí va Pochón, con la gorra amarilla en el corazón! ¡La tribuna se viene abajo!", "pochon3": "¡Escuchen a la hinchada! ¡Po-chón! ¡Po-chón!", "r1": "¡Qué noche de midgets en Bahía Blanca!", "r2": "¡Mucha tierra, mucho derrape! ¡Esto es TAYA'xs!", "r3": "¡Cómo cruzan los autos en la curva!", "r4": "¡Las tribunas están repletas! ¡Hay banderas por todos lados!", "r5": "¡Acelerador a fondo y contravolante! ¡Así se maneja un midget!", "r6": "¡Qué lindo suenan estos motores a carburador!", "podio1": "¡Ahí va la camioneta con el podio! Ganador de la noche,", "segundo": "en el segundo lugar,", "tercero": "y completa el podio,", "adios1": "¡Esto fue TAYA'xs! ¡Gracias, Bahía Blanca! Les habló Fefón Marcelo, el hermano de Sebastián Cessna... ¡comolosaviones! ¡Hasta la próxima!", "adios2": "¡Se terminó la noche! ¡Un abrazo grande a toda la gente! Fefón Marcelo se despide... ¡Chau, chau!", "pueblo": "el piloto del pueblo"};
-const NARRA_F4={previa:[["f:previa1"],["f:previa2"],["f:previa3"],["f:previa4"]],largada:[["f:largada1"],["f:largada2"],["f:largada3"],["f:largada4"]],relargada:[["f:relarga1"],["f:relarga2"]],
+const NAR_F4={"previa1": "¡Atención Bahía Blanca, se viene otra carrera! ¡Motores en marcha!", "previa2": "¡Los TAYA'xs ya están en la grilla! ¡Que no pare la fiesta!", "previa3": "¡Se prende fuego la Aldea Romana! ¡Vamos con otra!", "previa4": "¡Siguen los TAYA'xs! ¡Agárrense fuerte, que esto vuela!", "largada1": "¡Verde, verde, verde! ¡Largaron!", "largada2": "¡Se larga! ¡Todos a fondo hacia la primera curva!", "largada3": "¡Allá van los TAYA'xs! ¡Tierra para todos lados!", "largada4": "¡Luz verde! ¡Pisan el acelerador hasta el fondo!", "relarga1": "¡Relargada! ¡De nuevo en verde!", "relarga2": "¡Se relarga la carrera! ¡Atentos a la primera curva!", "pasa_a": "¡pasa a", "por_adentro": "¡se le tira por adentro a", "por_afuera": "¡lo pasa por afuera, pegado al paredón, a", "atencion": "¡Atención, atención!", "se_tira": "¡se le mete abajo a", "nuevo_puntero": "¡Hay nuevo puntero! ¡Ahora manda", "toma_punta": "¡toma la punta de la carrera!", "vuelta": "¡Pasan por la llegada! Adelante va", "manda": "¡Otra vuelta más! Sigue mandando", "ultima1": "¡Última vuelta! ¡Campana! Adelante va", "ultima2": "¡Se viene la última! Defiende la punta", "bandera1": "¡Bandera a cuadros! ¡Gana", "bandera2": "¡Cruza la meta! ¡Victoria para", "bandera3": "¡Y el ganador es...", "rueda1": "¡Se tocaron rueda con rueda", "y": "y", "rueda2": "¡Se enganchan las ruedas! ¡Vuela el auto! ¡Qué golpe, señores!", "pared1": "¡Al paredón! ¡Se la dio de lleno", "pared2": "¡Contra el paredón! ¡Uy, qué golpazo!", "trompo1": "¡Trompo! ¡Se le fue la cola a", "trompo2": "¡Se le cruzó el auto! ¡Trompo en la curva!", "choque1": "¡Choque! ¡Hay un choque en la pista!", "roja1": "¡Bandera roja! ¡Se para la carrera! Entra la grúa.", "roja2": "¡Roja, roja! ¡Todos frenan, hay autos en la pista!", "pochon1": "¡Pochón! ¡Pochóóón! ¡El ídolo de la tribuna, cómo lo quiere la gente!", "pochon2": "¡Ahí va Pochón, con la gorra amarilla en el corazón! ¡La tribuna se viene abajo!", "pochon3": "¡Escuchen a la hinchada! ¡Po-chón! ¡Po-chón!", "r1": "¡Qué noche de TAYA'xs en Bahía Blanca!", "r2": "¡Mucha tierra, mucho derrape! ¡Esto es TAYA'xs!", "r3": "¡Cómo cruzan los autos en la curva!", "r4": "¡Las tribunas están repletas! ¡Hay banderas por todos lados!", "r5": "¡Acelerador a fondo y contravolante! ¡Así se maneja un TAYA'xs!", "r6": "¡Qué lindo suenan estos motores a carburador!", "podio1": "¡Ahí va la camioneta con el podio! Ganador de la noche,", "segundo": "en el segundo lugar,", "tercero": "y completa el podio,", "adios1": "¡Esto fue TAYA'xs! ¡Gracias, Bahía Blanca! Les habló Fefón Marcelo, el hermano de Sebastián Cessna... ¡comolosaviones! ¡Hasta la próxima!", "adios2": "¡Se terminó la noche! ¡Un abrazo grande a toda la gente! Fefón Marcelo se despide... ¡Chau, chau!", "pueblo": "el piloto del pueblo", "previa5": "¡Buenas noches, Bahía Blanca! ¡Las tribunas explotan y los motores ya rugen!", "previa6": "¡Ya forman de a cuatro! ¡Cuatro por fila, señores, esto es puro corazón!", "previa7": "¡Se acomodan en la grilla! ¡Que nadie se levante de la tribuna!", "previa8": "¡Otra carrera, otra emoción! ¡Bahía Blanca no duerme esta noche!", "previa9": "¡La tierra está regada, la pista está perfecta! ¡Vamos que se larga!", "largada5": "¡Bandera verde! ¡Salen los cuatro de adelante como balas!", "largada6": "¡Arrancó la carrera! ¡Cuidado en la uno, que vienen todos juntos!", "largada7": "¡Se fueron! ¡Qué largada, por favor, qué largada!", "relarga3": "¡Vuelven a largar! ¡Otra vez de a cuatro, todos a fondo!", "vuelta2": "¡Una vuelta menos! Al frente sigue", "vuelta3": "¡Cruzan la recta principal! Encabeza", "vuelta4": "¡Pasa la punta frente a la tribuna! Ahí va", "manda2": "¡No afloja el ritmo! Sigue adelante", "ultima3": "¡Bandera blanca! ¡Última vuelta! Adelante va", "ultima4": "¡La chica sacude la bandera blanca! ¡Última vuelta! Manda", "bandera4": "¡Bandera a cuadros! ¡Qué carrera, señores! Ganó", "bandera5": "¡Llegó primero! ¡Se lleva la carrera", "roja3": "¡Paren todo! ¡Bandera roja en Bahía Blanca!", "r7": "¡Qué manera de tirar tierra a la tribuna! ¡Y nadie se queja, señores!", "r8": "¡Mamita, cómo doblan en la curva tres!", "r9": "¡El que levanta el pie, pierde! ¡Esto es así!", "r10": "¡Vamos, vamos, que esto no termina más!", "r11": "¡La gente de pie! ¡Nadie se sienta en Bahía Blanca!", "r12": "¡Qué espectáculo! ¡Qué espectáculo, por favor!", "r13": "¡Desde la cabina se siente el olor a nafta y a asado!", "r14": "¡Las chicas de la bandera no paran de saludar!", "r15": "¡Cómo trabajan los mecánicos en los boxes esta noche!", "r16": "¡Fíjense cómo tiran la cola en la curva! ¡Una locura!", "r17": "¡Esto es puro fierro y puro corazón!", "r18": "¡Un saludo grande a toda la gente de Ingeniero White!", "r19": "¡Atentos en la uno y en la dos, que se pone picante!", "r20": "¡Para alquilar balcones, señores!", "adios3": "¡Qué noche, Bahía Blanca! ¡Nos vemos en la próxima fecha de TAYA'xs!"};
+const NARRA_F4={previa:[["f:previa1"],["f:previa2"],["f:previa3"],["f:previa4"],["f:previa5"],["f:previa6"],["f:previa7"],["f:previa8"],["f:previa9"]],largada:[["f:largada1"],["f:largada2"],["f:largada3"],["f:largada4"],["f:largada5"],["f:largada6"],["f:largada7"]],relargada:[["f:relarga1"],["f:relarga2"],["f:relarga3"]],
   pasa:[["a","f:pasa_a","b"],["a","f:por_adentro","b"],["a","f:por_afuera","b"],["f:atencion","a","f:pasa_a","b"],["a","f:se_tira","b"]],
   lider:[["f:nuevo_puntero","a"],["a","f:toma_punta"],["f:atencion","a","f:toma_punta"]],
-  vuelta:[["f:vuelta","a"],["f:manda","a"]],ultima:[["f:ultima1","a"],["f:ultima2","a"]],
-  bandera:[["f:bandera1","a"],["f:bandera2","a"],["f:bandera3","a"]],
+  vuelta:[["f:vuelta","a"],["f:manda","a"],["f:vuelta2","a"],["f:vuelta3","a"],["f:vuelta4","a"],["f:manda2","a"]],ultima:[["f:ultima3","a"],["f:ultima4","a"],["f:ultima2","a"]],
+  bandera:[["f:bandera1","a"],["f:bandera2","a"],["f:bandera3","a"],["f:bandera4","a"],["f:bandera5","a"]],
   rueda:[["f:rueda1","a","f:y","b"],["f:rueda2"]],pared:[["f:pared1","a"],["f:pared2"]],trompo:[["f:trompo1","a"],["f:trompo2"]],choque:[["f:choque1"]],
-  roja:[["f:roja1"],["f:roja2"]],pochon:[["f:pochon1"],["f:pochon2"],["f:pochon3"]],relleno:[["f:r1"],["f:r2"],["f:r3"],["f:r4"],["f:r5"],["f:r6"]],
-  podio:[["f:podio1","a","f:segundo","b","f:tercero","c"]],adios:[["f:adios1"],["f:adios2"]]};
+  roja:[["f:roja1"],["f:roja2"],["f:roja3"]],pochon:[["f:pochon1"],["f:pochon2"],["f:pochon3"]],relleno:[["f:r1"], ["f:r2"], ["f:r3"], ["f:r4"], ["f:r5"], ["f:r6"], ["f:r7"], ["f:r8"], ["f:r9"], ["f:r10"], ["f:r11"], ["f:r12"], ["f:r13"], ["f:r14"], ["f:r15"], ["f:r16"], ["f:r17"], ["f:r18"], ["f:r19"], ["f:r20"]],
+  podio:[["f:podio1","a","f:segundo","b","f:tercero","c"]],adios:[["f:adios1"],["f:adios2"],["f:adios3"]]};
 const NARF_BOLSA={};
 function narraF(k,p){p=p||{};const L=NARRA_F4[k];if(!L)return;let b=NARF_BOLSA[k];if(!b||!b.length)b=NARF_BOLSA[k]=[...Array(L.length).keys()].sort(()=>Math.random()-.5);const seq=L[b.shift()];
   const clips=[],txt=[];for(const sg of seq){if(sg.startsWith("f:")){const f=sg.slice(2);txt.push(NAR_F4[f]||"");clips.push("f_"+f);continue;}
@@ -3915,7 +3972,7 @@ function narraF(k,p){p=p||{};const L=NARRA_F4[k];if(!L)return;let b=NARF_BOLSA[k
   if(!(muted||noVoz||!AC)){narLoadF();const it={clips,prio,t:performance.now()};if(prio){NARF.q=NARF.q.filter(x=>x.prio);NARF.q.push(it);}else if(NARF.q.length<1&&!(NARF.busy&&k==="pasa"))NARF.q.push(it);narPlayF();}
   if(TYR)tyMsg("🎙️ "+txt.join(" ").replace(/ ([,!.])/g,"$1"),"var(--celeste)");}
 function narLoadF(){if(NARF.buf||NARF.loading||!AC)return;NARF.loading=true;
-  Promise.all([fetch("taya/relato.json").then(r=>r.json()),fetch("taya/relato.mp3").then(r=>r.arrayBuffer())]).then(([m,ab])=>{NARF.map=m;return new Promise((res,rej)=>AC.decodeAudioData(ab,res,rej));}).then(b=>{NARF.buf=b;narPlayF();}).catch(()=>{NARF.loading=false;});}
+  Promise.all([fetch("taya/relato.json?v=45").then(r=>r.json()),fetch("taya/relato.mp3?v=45").then(r=>r.arrayBuffer())]).then(([m,ab])=>{NARF.map=m;return new Promise((res,rej)=>AC.decodeAudioData(ab,res,rej));}).then(b=>{NARF.buf=b;narPlayF();}).catch(()=>{NARF.loading=false;});}
 function narPlayF(){if(NARF.busy||!NARF.q.length||!NARF.buf||!AC)return;const it=NARF.q.shift();if(!it.prio&&performance.now()-it.t>2500){narPlayF();return;}const cl=it.clips.filter(c=>c&&NARF.map[c]);if(!cl.length){narPlayF();return;}
   NARF.busy=true;if(!NARF.gain){NARF.gain=AC.createGain();NARF.gain.gain.value=1.2;NARF.gain.connect(AC.destination);}
   let t=AC.currentTime+.03;const srcs=[];cl.forEach((c,i)=>{const [o,d]=NARF.map[c];const s=AC.createBufferSource(),g=AC.createGain();s.buffer=NARF.buf;
@@ -3933,24 +3990,24 @@ function tyAnuncio(c,done){const J=c&&TYR?TYR.J:null;const quien=J?((J.anunc=(J.
   const ov=el(`<div class="tyanun"><img src="taya/${quien}.webp" alt=""><div><small>Desde la cabina</small><b>${esc(c.nom)}</b><span>${c.laps} vueltas · ${c.ids.length} autos</span></div></div>`);
   document.body.append(ov);let ok=false;const fin=()=>{if(ok)return;ok=true;ov.classList.add("sale");setTimeout(()=>ov.remove(),400);done();};
   if(muted||noVoz){setTimeout(fin,2200);return;}
-  const a=new Audio(`taya/chica_${quien}_${clip}.mp3`);a.onended=()=>setTimeout(fin,350);a.onerror=()=>setTimeout(fin,1800);a.play().catch(()=>setTimeout(fin,1800));setTimeout(fin,7000);}
+  const a=new Audio(`taya/chica_${quien}_${clip}.mp3?v=45`);a.onended=()=>setTimeout(fin,350);a.onerror=()=>setTimeout(fin,1800);a.play().catch(()=>setTimeout(fin,1800));setTimeout(fin,7000);}
 
 /* ---------- la vuelta de la F-100 con el podio ---------- */
-const TY_F100_POD=[1.45,1.3,1.2],TY_F100_X=-1.55;
+const TY_F100_POD=[1.80,1.59,1.59],TY_F100_PX=[-1.1,-1.8,-0.42],TY_F100_X=-1.55;
 function tyPodio(ids,done){if(!ids.length||!ready3D()){done();return;}
   const E=TY3.env||(TY3.env=tyBuild()),TH=T3.TH;E.cars.forEach(c=>c.visible=false);tyUI(true);document.body.classList.add("typodio");
   const fake={cars:[],P:{s:0,d:0,v:0,th:0,sa:0,dist:0,num:0,n:"",out:null},pos:[],laps:1,g3:true,green:false,cam:"lado",t:5,relargadas:1,podio:true};
   const real=TY3.mod.f100;const camioneta=real?(()=>{const g=new TH.Group();g.add(real.clone(true));const fa=new TH.PointLight(0xfff0c0,1.2,18);fa.position.set(3,1,0);g.add(fa);return g;})():tyF100(TH);E.sc.add(camioneta);
   // los tres pilotos arriba del podio, en la caja de la camioneta
   const podY=real?TY_F100_POD:[1.85,1.6,1.45],podX=real?TY_F100_X:-1.4;
-  const pilotos=ids.map((id,i)=>{const g=tyPilotoFig(TH,id);g.scale.setScalar(1.05);g.position.set(podX,podY[i],i===0?0:i===1?-.6:.6);camioneta.add(g);return g;});
+  const pilotos=ids.map((id,i)=>{const g=tyPilotoFig(TH,id);g.scale.setScalar(1.05);if(real)g.position.set(TY_F100_PX[i],podY[i],0);else g.position.set(podX,podY[i],i===0?0:i===1?-.6:.6);camioneta.add(g);return g;});
   narStopF();const bgmWas=!BGM.paused;tyCumbia(true);
   const nm=ids.map(id=>({id,n:tyNombre(id),yo:id==="yo"}));narraF("podio",{a:nm[0],b:nm[1],c:nm[2]});
   tyMsg(`🏆 1º ${tyNombre(ids[0])} · 2º ${ids[1]?tyNombre(ids[1]):"-"} · 3º ${ids[2]?tyNombre(ids[2]):"-"}`,"var(--oro)");
   let s=0,t0=performance.now(),dijoAdios=false,fin=false;
   const end=()=>{if(fin)return;fin=true;E.sc.remove(camioneta);document.body.classList.remove("typodio");tyUI(false);tyCumbia(false);done();};
   $("#tyQuit").onclick=end;
-  const loop=now=>{if(fin)return;const tt=(now-t0)/1000;s=tt*7;const p=tyPose(s+10,2);camioneta.position.set(p.x,tyY(s,2),p.z);camioneta.rotation.y=p.h;
+  const loop=now=>{if(fin)return;const tt=(now-t0)/1000;s=tt*7;const p=tyPose(s+10,2);const yA=tyY(s+10,.9),yB=tyY(s+10,3.1);camioneta.position.set(p.x,Math.max(yA,yB)*.5+Math.min(yA,yB)*.5+.06,p.z);camioneta.rotation.set(0,p.h,0);camioneta.rotateX(Math.atan2(yB-yA,2.2));
     pilotos.forEach((g,i)=>{g.children[2].rotation.z=Math.sin(tt*6+i)*.6-1.2;});
     fake.P.s=s+10;fake.P.d=2;
     const cv=$("#tyScene"),dpr=Math.min(2,devicePixelRatio||1);if(cv.width!==Math.round(cv.clientWidth*dpr)){cv.width=Math.round(cv.clientWidth*dpr);cv.height=Math.round(cv.clientHeight*dpr);}
@@ -3995,21 +4052,30 @@ function vTaya(m){const T=tyState();
   box.querySelector("#tyGo").onclick=()=>{if(TYR)return;if(T.fecha>=TY_FECHAS){S.taya=null;tyState();render();return;}
     let J=S.tayaJ;if(!J){J=S.tayaJ=tyJornadaNueva();save();}
     const c=tySiguiente(J);if(!c||J.fuera){tyTerminarNoche(J);return;}
-    modal(`<h3 class="gan">Noche de TAYA'xs · Fecha ${J.fecha}</h3><p>${J.ent.length} autos en el autódromo. Arrancás en la <b>${esc(c.nom)}</b> (${c.laps} vueltas, ${c.ids.length} autos). Los 2 primeros pasan directo a la semifinal; 3º y 4º van al repechaje.</p>
-      <p class="nota">Acelerá en verde. En las curvas el auto derrapa: si le das de más se va contra el paredón o hace un trompo; si le das de menos te pasan. ◀ te lleva para adentro, ▶ para afuera (contravolante).</p><div class="opts"><button class="btn oro" id="tyL">¡A la pista!</button></div>`,"resplaca");
-    $("#tyL").onclick=()=>{closeModal();tyLargar(c,J);};};
+    modal(`<h3 class="gan">Noche de TAYA'xs · Fecha ${J.fecha}</h3><p>${J.ent.length} autos en el autódromo. ${J.carreras?"Te toca":"Arrancás en"} la <b>${esc(c.nom)}</b> (${c.laps} vueltas, ${c.ids.length} autos). Se larga de a 4 por fila. Los 2 primeros pasan directo a la semifinal; 3º y 4º van al repechaje. Las gomas aguantan 3 carreras: entre carrera y carrera podés cambiarlas, mejorarlas y hacer el service.</p>
+      <p class="nota">Acelerá en verde. En las curvas el auto derrapa: si le das de más se va contra el paredón o hace un trompo; si le das de menos te pasan. ◀ te lleva para adentro, ▶ para afuera (contravolante).</p><div id="tyBoxW"></div><div class="opts"><button class="btn oro" id="tyL">¡A la pista!</button></div>`,"resplaca");
+    const bL=$("#tyL"),chk=()=>{const v=(J.gUso|0)>=TY_GOMA_MAX;bL.disabled=v;bL.textContent=v?"Cambiá las gomas para largar":"¡A la pista!";};
+    if(J.carreras){const bx=tyBox(J,chk);$("#tyBoxW").append(bx());}chk();
+    bL.onclick=()=>{if((J.gUso|0)>=TY_GOMA_MAX)return;closeModal();tyLargar(c,J);};};
   // tu midget
-  const car=el(`<div class="copa"><div class="t">Tu midget</div><div class="s">Elegí el chasis y el color. Número ${T.num}.</div>
+  const enNoche=!!S.tayaJ;
+  const car=el(`<div class="copa"><div class="t">Tu midget</div><div class="s">Chasis ${TY_HUMAN[T.m]} · número ${T.num}. Cambiar de chasis cuesta ${fmt(TY_CHASIS_P)} y no se puede con la noche empezada.</div>
     <div class="row" style="flex-wrap:wrap;gap:6px;margin:8px 0">${TY_M.map(k=>`<button class="btn sm ${T.m===k?"oro":"sec"}" data-m="${k}">${TY_HUMAN[k]}</button>`).join("")}</div>
     <div class="row" style="flex-wrap:wrap;gap:6px">${TY_COL.slice(0,10).map(c=>`<button aria-label="color" data-c="${c}" style="width:30px;height:30px;border-radius:50%;background:${c};border:3px solid ${T.col===c?"var(--oro)":"var(--linea)"}"></button>`).join("")}</div>
     <div class="row" style="flex-wrap:wrap;gap:8px;margin-top:10px">
       <button class="btn sm" id="tyUpM">Carburación ${T.up.motor}/4 · ${T.up.motor<4?fmt(60000*(T.up.motor+1)):"al máximo"}</button>
       <button class="btn sm" id="tyUpG">Cubiertas ${T.up.gomas}/4 · ${T.up.gomas<4?fmt(45000*(T.up.gomas+1)):"al máximo"}</button></div>
-    <p class="nota" style="margin:8px 0 0">Motor Audi AP a carburador: ${168+T.up.motor*3} HP para 455 kg. Sin caja de cambios.</p></div>`);
-  car.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{T.m=b.dataset.m;save();render();});
+      <button class="btn sm" id="tyRect"${T.desg<.01||enNoche?" disabled":""}>Rectificar motor · ${fmt(TY_RECT_P)}</button></div>
+    <p class="nota" style="margin:8px 0 0">Motor Audi AP a carburador: ${Math.round((168+T.up.motor*3)*tyMotorK())} HP para 455 kg (motor al ${tyPct(tyMotorK())}). Sin caja de cambios. El motor se gasta con cada carrera y solo se rectifica fuera de la noche.${enNoche?" Con la noche empezada solo podés tocar las gomas y hacer el service, desde el box.":""}</p></div>`);
+  car.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{const k=b.dataset.m;if(k===T.m)return;
+    if(S.tayaJ){toast("Con la noche empezada no se puede cambiar el chasis");return;}
+    if(S.pesos<TY_CHASIS_P){toast("Cambiar de chasis cuesta "+fmt(TY_CHASIS_P));return;}
+    modal(`<h3 class="gan">¿Comprar el chasis ${TY_HUMAN[k]}?</h3><p>Cuesta ${fmt(TY_CHASIS_P)}. Tenés ${fmt(S.pesos)}.</p><div class="opts"><button class="btn oro" id="tyCh">Comprar</button><button class="btn sec" id="tyNo">No</button></div>`,"resplaca");
+    $("#tyCh").onclick=()=>{S.pesos-=TY_CHASIS_P;T.m=k;save();closeModal();render();};$("#tyNo").onclick=()=>closeModal();});
   car.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{T.col=b.dataset.c;save();render();});
-  const comprar=(k,base)=>{const n=T.up[k];if(n>=4)return;const p=base*(n+1);if(S.pesos<p){toast("No te alcanza la plata");return;}S.pesos-=p;T.up[k]=n+1;save();render();};
+  const comprar=(k,base)=>{const n=T.up[k];if(n>=4)return;if(k==="motor"&&S.tayaJ){toast("Con la noche empezada no se toca el motor");return;}const p=base*(n+1);if(S.pesos<p){toast("No te alcanza la plata");return;}S.pesos-=p;T.up[k]=n+1;save();render();};
   car.querySelector("#tyUpM").onclick=()=>comprar("motor",60000);car.querySelector("#tyUpG").onclick=()=>comprar("gomas",45000);
+  car.querySelector("#tyRect").onclick=()=>{if(S.tayaJ||T.desg<.01)return;if(S.pesos<TY_RECT_P){toast("No te alcanza la plata");return;}S.pesos-=TY_RECT_P;T.desg=0;save();toast("Motor rectificado: 100%");render();};
   m.append(car);
   // tabla del campeonato
   const tab=tyTabla(),yoI=tab.findIndex(r=>r.id==="yo");const vis=tab.slice(0,20);if(yoI>=20)vis.push(tab[yoI]);
