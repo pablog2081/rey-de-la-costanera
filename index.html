@@ -405,7 +405,7 @@ const PACKS = [
  {f:1200,p:"$ 13.999",t:"Lata de fichas",b:"+20% de regalo",dest:true},
  {f:3000,p:"$ 29.999",t:"Cajón del kiosquero",b:"+50% de regalo"},
 ];
-const BUILD="v40";
+const BUILD="v41";
 let DIST = 402; // cuarto de milla (en las Dunas: 1000 m)
 const GHOST_V = 402;
 /* ===== pistas: 1 = Costanera, 2 = El Crack de las Dunas ===== */
@@ -543,7 +543,7 @@ function ovStart(opts){
   const ids=opts.ids||(T?T.ids:[]);
   // grilla: el mejor rankeado larga adelante; filas de a dos (carriles -0,5 / +0,5)
   const cars=opts.live?ovLiveField(opts.live):ids.map(id=>ovEntrant(id,S.ord.indexOf(id)+1,id==="yo"));
-  cars.sort((a,b)=>a.num-b.num);
+  if(opts.grid)cars.sort((a,b)=>opts.grid.indexOf(a.id)-opts.grid.indexOf(b.id));else cars.sort((a,b)=>a.num-b.num);
   cars.forEach((e,i)=>{const row=i>>1;e.R.x=-row*9-(i%2)*4.5;e.lane=e.laneT=i%2?.5:-.5;e.grid=i+1;});
   DIST=1e9;
   OVR={opts,T,cars,P:cars.find(e=>e.player),n:0,greenN:null,phase:0,lightN:[1.2,2.2,3.2,4.4].map(sec),gas:false,acc:0,t0:performance.now(),done:false,finished:false,
@@ -577,7 +577,7 @@ function ovPaso(R,dtStep){
       const thr=e.player?R.gas:true,hard=hardOf(P.st);if(thr)P.rpm=Math.min(e.player?hard:optLaunch(P.st),P.rpm+3600*H);else P.rpm=Math.max(900,P.rpm-2600*H);continue;}
     if(!P.launched){const k=(R.n-R.greenN)*H;if(e.player||k>=e.ai.react){P.launched=true;P.clutch=true;if(!e.player)P.rpm=optLaunch(P.st);}else continue;}
     // piloto automático: levanta antes de la curva si viene pasado
-    const vC=ovCurveV(P.st,e.lane),look=Math.max(10,P.v*P.v/(2*7)),entrando=ovPose(P.x+look,e.lane).turn,enCurva=ovPose(P.x,e.lane).turn;
+    const vC=ovCurveV(P.st,e.lane),look=Math.max(6,(P.v*P.v-vC*vC)/(2*7)+P.v*.25),entrando=ovPose(P.x+look,e.lane).turn,enCurva=ovPose(P.x,e.lane).turn;
     let thr=e.player?R.gas:true;const pasado=(entrando||enCurva)&&P.v>vC;if(pasado)thr=false;
     if(!e.player){const top=P.gear>=RATIOS[P.st.gears].length-1;if(top&&P.rpm>=P.st.red*.97)thr=false;}
     if(e.player){if(P.rpm>P.st.red){e.sobre=(e.sobre||0)+H;if(R.n-(R.cortaN||0)>480){R.cortaN=R.n;say("¡Pasado de vueltas! Cambiá o levantá: se daña el motor","#ffb4bd");vib(30);}
@@ -610,6 +610,7 @@ function ovPaso(R,dtStep){
 function ovPosiciones(R){return R.cars.slice().sort((a,b)=>{if(a.dnf!==b.dnf)return a.dnf?1:-1;if(a.R.fin!=null&&b.R.fin!=null)return a.R.fin-b.R.fin;if(a.R.fin!=null)return -1;if(b.R.fin!=null)return 1;return b.R.x-a.R.x;});}
 function ovLoop(now){const R=OVR;if(!R)return;const dt=Math.min(.1,(now-R.last)/1000);R.last=now;R.dt=dt;
   if(R.loading){ovDraw(R);requestAnimationFrame(ovLoop);return;}
+  if(R.clasif){R.acc+=dt;let g=0;while(R.acc>=H&&g++<60){R.acc-=H;ovPaso(R);}ovClasifTick(R);if(OVR===R){engineSet(R.P.R.rpm,R.gas);ovDraw(R);requestAnimationFrame(ovLoop);}return;}
   // semáforo de largada
   if(R.greenN===null){const el2=(now-R.t0)/1000;const ph=R.lightN.filter(x=>x*H<=el2).length;
     while(R.phase<ph){R.phase++;pitido(R.phase<4?1320:1760,R.phase<4?.14:.62);if(R.phase===4){R.greenN=R.n;say("¡VERDE!","var(--verde)");narra("largada");musicaLargada(false);}}}
@@ -828,7 +829,7 @@ const NARRA_SEQ={intro:[["f:intro1"],["f:intro2"],["f:intro3"]],largada:[["f:lar
   vuelta:[["f:vuelta{lap}a","lider"],["f:vuelta{lap}b","lider"]],ultima:[["f:ultima1","lider"],["f:ultima2","lider"]],
   bandera:[["f:bandera1","lider","f:que_carrera1"],["f:bandera2","lider","f:que_carrera2"],["f:bandera3","lider","f:que_carrera3"],["f:bandera1","lider","f:que_carrera3"]],
   podio:[["f:segundo","b","f:tercero","c"]],motor:[["f:motor1","a"],["f:motor2","a"],["f:humo","a","f:afuera"],["f:fundio","a","f:afuera"]],
-  pasado:[["f:pasado1","a"],["f:pasado2","a"]],
+  pasado:[["f:pasado1","a"],["f:pasado2","a"]],clasif:[["f:clasif1"],["f:clasif2"]],crono:[["f:cronometro"]],pole:[["f:pole","a"]],clasifica:[["a","f:clasifica","pos"]],
   relleno:[["f:r1"],["f:r2"],["f:r3"],["f:r4"],["f:r5"],["f:r6"],["f:r7"],["f:r8"],["lider","f:sigue_punta"],["f:mientras","a","f:marcha","pos"]]};
 const NAR_BOLSA={};
 function narElegir(k){const n=NARRA_SEQ[k].length;let b=NAR_BOLSA[k];if(!b||!b.length){b=NAR_BOLSA[k]=[...Array(n).keys()].sort(()=>Math.random()-.5);if(NAR_BOLSA["_"+k]!==undefined&&b[0]===NAR_BOLSA["_"+k]&&n>1)b.push(b.shift());}
@@ -848,7 +849,7 @@ function narra(k,p){p=p||{};const R=OVR;const live=!!(R&&R.opts&&R.opts.live);
 const NARV={buf:null,map:null,q:[],busy:false,src:null,loading:false,gain:null};
 function narLoad(){if(NARV.buf||NARV.loading||!AC)return;NARV.loading=true;
   Promise.all([fetch("escenario/relato.json").then(r=>r.json()),fetch("escenario/relato.mp3").then(r=>r.arrayBuffer())]).then(([m,ab])=>{NARV.map=m;return new Promise((res,rej)=>AC.decodeAudioData(ab,res,rej));}).then(b=>{NARV.buf=b;narPlay();}).catch(()=>{NARV.loading=false;});}
-function narPlay(){if(NARV.busy||!NARV.q.length||!NARV.buf||!AC)return;const it=NARV.q.shift();const cl=it.clips.filter(c=>c&&NARV.map[c]);if(!cl.length){narPlay();return;}
+function narPlay(){if(NARV.busy||!NARV.q.length||!NARV.buf||!AC)return;const it=NARV.q.shift();if(!it.prio&&performance.now()-it.t>2500){narPlay();return;}const cl=it.clips.filter(c=>c&&NARV.map[c]);if(!cl.length){narPlay();return;}
   NARV.busy=true;if(!NARV.gain){NARV.gain=AC.createGain();NARV.gain.gain.value=1.15;NARV.gain.connect(AC.destination);}
   let t=AC.currentTime+.03;const srcs=[];cl.forEach((c,i)=>{const [o,d]=NARV.map[c];const s=AC.createBufferSource(),g=AC.createGain();s.buffer=NARV.buf;
     // cada pedazo entra y sale suave, y se encadena casi pegado al anterior para que suene como una sola frase
@@ -857,8 +858,8 @@ function narPlay(){if(NARV.busy||!NARV.q.length||!NARV.buf||!AC)return;const it=
   NARV.src=srcs;srcs[srcs.length-1].onended=()=>{NARV.src=null;setTimeout(()=>{NARV.busy=false;narPlay();},500);};}
 function narStop(){NARV.q=[];if(NARV.src)NARV.src.forEach(s=>{try{s.onended=null;s.stop();}catch(e){}});NARV.src=null;NARV.busy=false;}
 function relatorVoz(k,clips){if(muted||noVoz||!AC)return;narLoad();
-  const prio=k==="largada"||k==="ultima"||k==="bandera"||k==="intro"||k==="lider"||k==="motor"||k==="podio";if(k==="relleno"&&(NARV.busy||NARV.q.length))return;
-  if(prio){NARV.q=NARV.q.filter(x=>x.prio);NARV.q.push({k,clips,prio});}else{if(NARV.q.length>=1)return;NARV.q.push({k,clips,prio});}narPlay();}
+  const prio=k==="clasif"||k==="crono"||k==="pole"||k==="clasifica"||k==="largada"||k==="ultima"||k==="bandera"||k==="intro"||k==="lider"||k==="motor"||k==="podio";if(k==="relleno"&&(NARV.busy||NARV.q.length))return;
+  const it={k,clips,prio,t:performance.now()};if(prio){NARV.q=NARV.q.filter(x=>x.prio);NARV.q.push(it);}else{if(NARV.q.length>=1||NARV.busy&&k==="pasa"&&performance.now()-(NARV.pasaT||0)<6000)return;if(k==="pasa")NARV.pasaT=performance.now();NARV.q.push(it);}narPlay();}
 const narLibre=()=>!NARV.busy&&!NARV.q.length;
 /* ---------- música de largada (country) ---------- */
 const COUNTRY=new Audio();COUNTRY.preload="none";
@@ -871,6 +872,40 @@ function jefeVideo(yo,done){const k=yo===0?"jefe_gano":yo<3?"jefe_podio":yo<10?"
   vv.onerror=end;vv.onended=end;ov.querySelector("button").onclick=end;vv.src="escenario/"+k+".mp4";vv.muted=muted||noVoz;
   document.body.append(ov);bgmLow=true;bgm();const p=vv.play();if(p&&p.catch)p.catch(()=>{vv.muted=true;vv.play().catch(end);});setTimeout(()=>{if(!fin&&vv.readyState<2)end();},5000);}
 
+
+
+/* ---------- clasificación: una vuelta lanzada, solo contra el reloj, para armar la grilla ---------- */
+function ovMarchaPara(P,v){const g=RATIOS[P.st.gears];let k=0;while(k<g.length-1&&v/WR*g[k]*P.st.fd*30/Math.PI>P.st.red*.82)k++;return k;}
+function ovClasif(){audioInit();narStop();narLoad();const T=ovTorneo();const e=ovEntrant("yo",S.ord.indexOf("yo")+1,true),P=e.R;
+  P.launched=true;P.clutch=false;P.x=-300;P.v=30;P.gear=ovMarchaPara(P,P.v);e.lane=e.laneT=-.5;
+  DIST=1e9;OVR={opts:{},T,cars:[e],P:e,n:0,greenN:0,phase:4,lightN:[],gas:false,acc:0,t0:performance.now(),done:false,finished:false,pos:[e],posAt:0,msgT:0,narr:[],laps:1,clasif:{t0:null}};
+  $("#race").hidden=false;document.body.classList.add("ovrun");$("#rMsg").textContent="Clasificación: acelerá, hacé los cambios y no te pases de vueltas";
+  $("#bNitro").textContent=`NITRO ×${P.nitroN}`;$("#bNitro").disabled=!P.nitroN;$("#pOp").style.visibility="hidden";
+  ovHud(true);sizeScene();engineStart(e.car.id,null);narra("clasif");
+  const go=()=>{if(!OVR||!OVR.clasif)return;OVR.loading=false;ovSetup3D(OVR);OVR.last=performance.now();};
+  OVR.loading=true;preload([e.car.id],15000).then(go);OVR.last=performance.now();requestAnimationFrame(ovLoop);}
+function ovClasifTick(R){const P=R.P.R,C=R.clasif;
+  if(C.t0==null&&P.x>=0){C.t0=R.n*H-P.x/Math.max(1,P.v);narra("crono");say("¡Arranca la vuelta lanzada!","var(--verde)");}
+  if(C.t0!=null&&!(R.msgT>0))$("#rMsg").textContent=`Vuelta lanzada: ${(R.n*H-C.t0).toFixed(2)} s`;
+  if(!C.done&&(P.x>=OVAL.LAP||P.blown||C.quit)){C.done=true;const t=P.blown||C.quit||C.t0==null?null:R.n*H-C.t0;setTimeout(()=>ovClasifFin(R,t),P.blown?1500:400);}}
+// vuelta lanzada de una máquina: misma física, piloto automático y cambios según su habilidad
+function ovClasifBot(id){const e=ovEntrant(id,1,false),P=e.R;P.launched=true;P.x=-300;P.v=30;P.gear=ovMarchaPara(P,P.v);e.lane=-1;let t0=null;
+  for(let n=0;n<240*90;n++){const t=n*H,vC=ovCurveV(P.st,e.lane),look=Math.max(6,(P.v*P.v-vC*vC)/(2*7)+P.v*.25);
+    const pas=(ovPose(P.x+look,e.lane).turn||ovPose(P.x,e.lane).turn)&&P.v>vC;let thr=!pas;const top=P.gear>=RATIOS[P.st.gears].length-1;if(top&&P.rpm>=P.st.red*.97)thr=false;
+    stepRacer(P,H,thr,t);if(pas&&P.v>vC)P.v=Math.max(vC,P.v-7*H);
+    if(P.shiftT<=0&&P.rpm>=P.st.red*e.ai.shiftX)doShift(P);
+    if(t0===null&&P.x>=0)t0=t;if(P.x>=OVAL.LAP)return (t-t0)*(1+(Math.random()-.5)*.012)*(1+(1-e.ai.sk)*.04);}
+  return 999;}
+function ovClasifFin(R,t){if(OVR!==R)return;engineStop();OVR=null;$("#race").hidden=true;ovHud(false);$("#bGas").classList.remove("on");
+  const me=R.P.car;if(S.cars.includes(me)){me.wear=Math.round(Math.min(R.P.R.blown?100:99,R.P.R.dmg)*10)/10;me.fundido=!!R.P.R.blown;save();}
+  const T=R.T,L=T.ids.map(id=>({id,t:id==="yo"?t:ovClasifBot(id)}));L.sort((a,b)=>(a.t??998)-(b.t??998));
+  const grid=L.map(x=>x.id),yo=grid.indexOf("yo"),ent=id=>({name:ovName(id),num:S.ord.indexOf(id)+1,player:id==="yo"});
+  narra("pole",{a:ent(grid[0])});if(yo>0)narra("clasifica",{a:ent("yo"),pos:yo+1});
+  const best=L[0].t;
+  modal(`<h3 class="gan" style="color:var(--oro)">Clasificación</h3><p>${t==null?(R.P.R.blown?"Fundiste el motor en la vuelta lanzada: largás último.":"Sin tiempo: largás último."):yo===0?"¡Hiciste la pole position!":`Largás ${yo+1}º.`}</p>
+    <table class="ovtab"><tr><th>Pos</th><th>Piloto</th><th>Vuelta</th><th>Dif.</th></tr>${L.map((r,i)=>`<tr${r.id==="yo"?' class="yo"':''}><td>${i+1}</td><td>#${S.ord.indexOf(r.id)+1} ${esc(ovName(r.id))}</td><td>${r.t==null||r.t>=999?"—":r.t.toFixed(3)+" s"}</td><td>${i===0||r.t==null||r.t>=999?"":"+"+(r.t-best).toFixed(3)}</td></tr>`).join("")}</table><div class="opts" id="ropts"></div>`,"resplaca");
+  modalLock=true;const b=el(`<button class="btn oro">${R.P.R.blown?"Al taller (motor fundido)":"A la grilla"}</button>`);
+  b.onclick=()=>{modalLock=false;closeModal();if(R.P.R.blown){view="taller";render();return;}ovStart({grid});};$("#ropts").append(b);render();}
 
 /* ---------- óvalo en vivo: hasta 16 pilotos a la vez, el resto con máquinas ---------- */
 let OVL=null; // {room,peers,host,st:{peer:{...}},bots,...}
@@ -935,7 +970,7 @@ function vOval(m){
   const box=el(`<div class="copa"><div class="row" style="justify-content:space-between;align-items:center"><div><div class="t">Torneo de ${CATS[T.b].n}</div><div class="s">Fecha ${Math.min(5,T.fecha+1)} de 5 · número ${S.ord.indexOf("yo")+1} en tu puerta</div></div><button class="btn oro" id="ovGo">${T.fecha?"Correr fecha "+(T.fecha+1):"Largar el torneo"}</button></div>
     <table class="ovtab"><tr><th>Pos</th><th>Piloto</th><th>Auto</th><th>Pts</th></tr>${tab.map((r,i)=>`<tr${r.id==="yo"?' class="yo"':''}><td>${i+1}${i<2&&T.b>0?" ▲":i>13&&T.b<4?" ▼":""}</td><td>#${S.ord.indexOf(r.id)+1} ${esc(ovName(r.id))}</td><td>${esc(CAR[r.id==="yo"?c.id:BOT[r.id].car].name)}</td><td>${r.p}</td></tr>`).join("")}</table></div>`);
   if((c.wear||0)>=45)box.append(el(`<p class="nota" style="border-color:var(--oro)">Tu motor tiene ${Math.round(c.wear)}% de desgaste: hacé un service en el taller antes de correr o se puede fundir en carrera.</p>`));
-  m.append(box);box.querySelector("#ovGo").onclick=()=>{if(!canRace())return;const cc=curCar();if(!cc){toast("Elegí un auto");return;}ovStart();};
+  m.append(box);box.querySelector("#ovGo").onclick=()=>{if(!canRace())return;const cc=curCar();if(!cc){toast("Elegí un auto");return;}ovClasif();};
   const vivo=el(`<div class="copa"><div class="row" style="justify-content:space-between;align-items:center"><div><div class="t">🌐 Óvalo en vivo</div><div class="s">Corré contra otros pilotos al mismo tiempo, hasta 16. Lo que falta se completa con máquinas.</div></div><button class="btn" ${NET.room&&NET.room.join?"":"disabled"}>${NET.room&&NET.room.join?"Entrar a la sala":"Sin conexión"}</button></div></div>`);
   vivo.querySelector("button").onclick=ovLiveEntrar;m.append(vivo);
   if(PRUEBA){const rz=el(`<button class="btn sec sm" style="margin:4px 0 12px">↺ Reiniciar el óvalo (prueba)</button>`);rz.onclick=()=>{if(OVR)return;S.ord=null;S.torneo3=null;S.rank=OV_N;S.genioOk=false;ovOrdInit();save();toast("Óvalo reiniciado: arrancás 80º en Promoción");render();};m.append(rz);}
@@ -3164,7 +3199,7 @@ window.addEventListener("keydown",e=>{if(OVR&&!RACE){if(e.repeat)return;const c=
     else if(c==="Space"||c==="ShiftLeft"||c==="ShiftRight"||c==="KeyE")shift(e);else if(c==="KeyN")nitro(e);else if(c==="KeyV")ovVolanteSig();else u=false;if(u)e.preventDefault();return;}
   if(!RACE||e.repeat)return;if(e.code==="ArrowUp"||e.code==="KeyW")gasOn(e);if(e.code==="Space"||e.code==="ArrowRight")shift(e);if(e.code==="KeyN")nitro(e);});
 window.addEventListener("keyup",e=>{if(OVR&&!RACE){if(e.code==="ArrowUp"||e.code==="KeyW")gasOff(e);return;}if(!RACE)return;if(e.code==="ArrowUp"||e.code==="KeyW")gasOff(e);});
-$("#bQuit").onclick=()=>{if(OVR&&!RACE){const R=OVR;R.P.done=true;R.P.dnf=true;R.dnf=true;R.P.R.fin=null;R.P.laneT=-2.3;R.done=true;R.finishing=performance.now()-3000;toast("Abandonaste: quedás último en esta fecha");return;}if(!RACE)return;starterStop();flagVidStop();const cfg=RACE.cfg;
+$("#bQuit").onclick=()=>{if(OVR&&!RACE&&OVR.clasif){OVR.clasif.quit=true;return;}if(OVR&&!RACE){const R=OVR;R.P.done=true;R.P.dnf=true;R.dnf=true;R.P.R.fin=null;R.P.laneT=-2.3;R.done=true;R.finishing=performance.now()-3000;toast("Abandonaste: quedás último en esta fecha");return;}if(!RACE)return;starterStop();flagVidStop();const cfg=RACE.cfg;
   if(cfg.kind==="live"&&LIVE&&LIVE.room)LIVE.room.presence({ab:1}).catch(()=>{});
   endRace();if(cfg.kind==="live")endLive();
   if(cfg.mode!=="practica"&&(cfg.bet||cfg.mode==="papeles"||cfg.modo==="papeles")){toast("Abandonaste: la apuesta se pierde igual");settle(false,cfg);}render();};
@@ -3279,6 +3314,6 @@ function diag(extra){try{if(!NET.db||!NET.uid)return;let gl="?";try{const c=docu
   NET.db.doc("data/users/"+NET.uid+"/diag").set({v:BUILD,st:T3.st,err:String(T3.err||""),three:!!window.THREE,gltf:!!(window.THREE&&window.THREE.GLTFLoader),models:Object.keys(T3.models),gl,ua:navigator.userAgent.slice(0,160),at:Date.now(),...(extra||{})}).catch(()=>{});}catch(e){}}
 setTimeout(()=>diag(),12000);
 init3D().then(ok=>{if(ok&&curCar())loadModel(curCar().id).then(()=>{if(!RACE)render();},()=>{});});
-window.__test={ovr:()=>OVR,narv:()=>NARV,narra,ov3:()=>OV3,ovStart,ovPaso,ovPosiciones,ovFin,ovTorneo,ovTabla,ovPasar,ovPose,OVAL,setLvl3:()=>setLvl(3),sts:()=>STS,banda:()=>BANDA,bandaArrancar,bandaLlave,bandaNombre,bandaMiCruce,enCopa,dunaRelato,startRace,setLvl,setTrack,TRACK,simET,CLIMAS,loadModel,NET,cer:(l)=>playCer(l,()=>{}),go:v=>{view=v;render();},inv:()=>INV,BOTS,botET,myET,ranking,T3,race:()=>RACE,live:()=>LIVE,stats,makeRacer,stepRacer,doShift,optLaunch,CARS,RIVALS,rivalCar,newCar,simGhost,cleanGhost,S:()=>S};
+window.__test={ovr:()=>OVR,ovClasif,ovClasifBot,narv:()=>NARV,narra,ov3:()=>OV3,ovStart,ovPaso,ovPosiciones,ovFin,ovTorneo,ovTabla,ovPasar,ovPose,OVAL,setLvl3:()=>setLvl(3),sts:()=>STS,banda:()=>BANDA,bandaArrancar,bandaLlave,bandaNombre,bandaMiCruce,enCopa,dunaRelato,startRace,setLvl,setTrack,TRACK,simET,CLIMAS,loadModel,NET,cer:(l)=>playCer(l,()=>{}),go:v=>{view=v;render();},inv:()=>INV,BOTS,botET,myET,ranking,T3,race:()=>RACE,live:()=>LIVE,stats,makeRacer,stepRacer,doShift,optLaunch,CARS,RIVALS,rivalCar,newCar,simGhost,cleanGhost,S:()=>S};
 })();
 </script>
