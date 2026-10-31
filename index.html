@@ -447,7 +447,7 @@ function syncBots(){const want=S.lvl===2?[CRACK]:S.lvl===3?[CRACK,GENIO]:[];
   if(BOT.rey)BOT.rey.rey=S.lvl===1?1:0;CRACK.rey=S.lvl===2?1:0;GENIO.rey=S.lvl===3?1:0;
   if(S.ord){for(const B of [CRACK,GENIO]){const has=S.ord.includes(B.id),w=want.includes(B);if(w&&!has&&S.lvl!==3)S.ord.unshift(B.id);if(!w&&has)S.ord=S.ord.filter(x=>x!==B.id);}S.rank=S.ord.indexOf("yo")+1;}}
 if(QS.get("dunas")==="1")S.dunasOk=true;
-if(QS.get("oval")==="1"){S.dunasOk=true;S.ovalOk=true;}
+if(false){S.dunasOk=true;S.ovalOk=true;}
 if(S.lvl===2&&S.dunasOk)setTrack(2,"mojada");else if(S.lvl===3&&S.ovalOk)setTrack(3);else S.lvl=1;
 if(S.lvl===1&&S.rank===1)S.dunasOk=true;
 syncBots();BOTS.forEach(botSand);
